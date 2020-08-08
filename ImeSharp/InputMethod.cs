@@ -1,0 +1,116 @@
+using System;
+using ImeSharp.Native;
+
+namespace ImeSharp
+{
+    public static class InputMethod
+    {
+        private static IntPtr _WindowHandle;
+        public static IntPtr WindowHandle
+        {
+            get { return _WindowHandle; }
+            set { _WindowHandle = value; }
+        }
+
+        // If the system is IMM enabled, this is true.
+        private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
+
+        /// <summary>
+        /// return true if the current keyboard layout is a real IMM32-IME.
+        /// </summary>
+        public static bool IsImm32ImeCurrent()
+        {
+            if (!_immEnabled)
+                return false;
+
+            IntPtr hkl = NativeMethods.GetKeyboardLayout(0);
+
+            return IsImm32Ime(hkl);
+        }
+
+        /// <summary>
+        /// return true if the keyboard layout is a real IMM32-IME.
+        /// </summary>
+        public static bool IsImm32Ime(IntPtr hkl)
+        {
+            if (hkl == IntPtr.Zero)
+                return false;
+
+            return ((NativeMethods.IntPtrToInt32(hkl) & 0xf0000000) == 0xe0000000);
+        }
+
+        public static void EnableOrDisableInputMethod(bool bEnabled)
+        {
+            // InputMethod enable/disabled status was changed on the current focus Element.
+            if (TextServicesLoader.ServicesInstalled)
+            {
+                if (bEnabled)
+                {
+                    // Enabled. SetFocus to the default text store.
+                    TextServicesContext.Current.SetFocusOnDefaultTextStore();
+                }
+                else
+                {
+                    // Disabled. SetFocus to the empty dim.
+                    TextServicesContext.Current.SetFocusOnEmptyDim();
+                }
+            }
+
+            //
+            // Under IMM32 enabled system, we associate default hIMC or null hIMC.
+            //
+            if (_immEnabled)
+            {
+                if (bEnabled)
+                {
+                    //
+                    // Enabled. Use the default hIMC.
+                    //
+                    if (DefaultImc != IntPtr.Zero)
+                    {
+                        NativeMethods.ImmAssociateContext(_WindowHandle, _defaultImc.Value);
+                    }
+                }
+                else
+                {
+                    //
+                    // Disable. Use null hIMC.
+                    //
+                    NativeMethods.ImmAssociateContext(_WindowHandle, IntPtr.Zero);
+                }
+            }
+        }
+
+        private static SecurityCriticalDataClass<IntPtr> _defaultImc;
+        private static IntPtr DefaultImc
+        {
+            get
+            {
+                if (_defaultImc == null)
+                {
+                    IntPtr himc = NativeMethods.ImmGetContext(_WindowHandle);
+
+                    // Store the default imc to _defaultImc.
+                    _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
+
+                    NativeMethods.ImmReleaseContext(_WindowHandle, himc);
+                }
+                return _defaultImc.Value;
+            }
+        }
+
+        private static TextServicesContext _textServicesContext;
+        public static TextServicesContext TextServicesContext
+        {
+            get { return _textServicesContext; }
+            set { _textServicesContext = value; }
+        }
+
+        private static DefaultTextStore _defaultTextStore;
+        public static DefaultTextStore DefaultTextStore
+        {
+            get { return _defaultTextStore; }
+            set { _defaultTextStore = value; }
+        }
+    }
+}
