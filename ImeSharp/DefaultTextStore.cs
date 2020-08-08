@@ -11,7 +11,8 @@ namespace ImeSharp
     // the focus on the document manager for its own TextStore.
     public class DefaultTextStore : NativeMethods.ITfContextOwner,
                                        NativeMethods.ITfContextOwnerCompositionSink,
-                                       NativeMethods.ITfTransitoryExtensionSink
+                                       NativeMethods.ITfTransitoryExtensionSink,
+                                       NativeMethods.ITfUIElementSink
     {
         //------------------------------------------------------
         //
@@ -169,6 +170,28 @@ namespace ImeSharp
         }
 
         #endregion ITfTransitoryExtensionSink
+
+        #region ITfUIElementSink
+
+        public int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow)
+        {
+            // Hide OS rendered Candidate list Window
+            pbShow = false;
+
+            return NativeMethods.S_OK;
+        }
+
+        public int UpdateUIElement(int dwUIElementId)
+        {
+            return NativeMethods.S_OK;
+        }
+
+        public int EndUIElement(int dwUIElementId)
+        {
+            return NativeMethods.S_OK;
+        }
+
+        #endregion ITfUIElementSink
 
         //------------------------------------------------------
         //
