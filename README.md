@@ -13,19 +13,19 @@ Most of the code were extracted from the WPF core repo.
 
 ## MS Docs
 
-1. [TSF Application](https://docs.microsoft.com/en-us/windows/win32/tsf/applications)
-2. [TSF UILess Mode](https://docs.microsoft.com/en-us/windows/win32/tsf/uiless-mode-overview)
-3. [TSF msctf.h header](https://docs.microsoft.com/en-us/windows/win32/api/msctf/)
-4. [IMM32 Use IME in a Game](https://docs.microsoft.com/en-us/windows/win32/dxtecharts/using-an-input-method-editor-in-a-game)
-5. [IMM32 imm.h header](https://docs.microsoft.com/en-us/windows/win32/api/imm/)
+- [TSF Application](https://docs.microsoft.com/en-us/windows/win32/tsf/applications)
+- [TSF UILess Mode](https://docs.microsoft.com/en-us/windows/win32/tsf/uiless-mode-overview)
+- [TSF msctf.h header](https://docs.microsoft.com/en-us/windows/win32/api/msctf/)
+- [IMM32 Use IME in a Game](https://docs.microsoft.com/en-us/windows/win32/dxtecharts/using-an-input-method-editor-in-a-game)
+- [IMM32 imm.h header](https://docs.microsoft.com/en-us/windows/win32/api/imm/)
 
 ## Other samples / implementations
 
-1. [Chromium](https://github.com/chromium/chromium/tree/master/ui/base/ime/win)
-2. [Windows Class Samples](https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/IME/cpp/SampleIME)
-3. [SDL2](https://github.com/spurious/SDL-mirror/blob/master/src/video/windows/SDL_windowskeyboard.c)
-4. [WPF Core](https://github.com/dotnet/wpf/tree/master/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/Input)
+- [Chromium](https://github.com/chromium/chromium/tree/master/ui/base/ime/win)
+- [Windows Class Samples](https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/IME/cpp/SampleIME)
+- [SDL2](https://github.com/spurious/SDL-mirror/blob/master/src/video/windows/SDL_windowskeyboard.c)
+- [WPF Core](https://github.com/dotnet/wpf/tree/master/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/Input)
 
 ## Credits
 
-1. [WPF Core](https://github.com/dotnet/wpf)
+- [WPF Core](https://github.com/dotnet/wpf)
