@@ -177,17 +177,20 @@ namespace ImeSharp
         {
             // Hide OS rendered Candidate list Window
             pbShow = false;
+            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
 
             return NativeMethods.S_OK;
         }
 
         public int UpdateUIElement(int dwUIElementId)
         {
+            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
             return NativeMethods.S_OK;
         }
 
         public int EndUIElement(int dwUIElementId)
         {
+            //TODO: Close candidate list
             return NativeMethods.S_OK;
         }
 
