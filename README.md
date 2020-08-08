@@ -21,7 +21,7 @@ Most of the code were extracted from the WPF core repo.
 
 ## Other samples / implementations
 
-1. [Chromium IME](https://github.com/chromium/chromium/tree/master/ui/base/ime/win)
+1. [Chromium](https://github.com/chromium/chromium/tree/master/ui/base/ime/win)
 2. [Windows Class Samples](https://github.com/microsoft/Windows-classic-samples/blob/master/Samples/IME/cpp/SampleIME)
 3. [SDL2](https://github.com/spurious/SDL-mirror/blob/master/src/video/windows/SDL_windowskeyboard.c)
 4. [WPF Core](https://github.com/dotnet/wpf/tree/master/src/Microsoft.DotNet.Wpf/src/PresentationCore/System/Windows/Input)
