@@ -1,15 +1,47 @@
 using System;
+using System.Runtime.InteropServices;
 using ImeSharp.Native;
 
 namespace ImeSharp
 {
     public static class InputMethod
     {
-        private static IntPtr _WindowHandle;
-        public static IntPtr WindowHandle
+        private static IntPtr _windowHandle;
+
+        private static IntPtr _prevWndProc;
+        private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
+        private static WndProcDelegate _wndProcDelegate;
+
+        private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            get { return _WindowHandle; }
-            set { _WindowHandle = value; }
+            IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
+
+            //TODO:
+            switch (msg)
+            {
+                case NativeMethods.WM_CHAR:
+                    break;
+                case NativeMethods.WM_KEYDOWN:
+                    break;
+                case NativeMethods.WM_KEYUP:
+                    break;
+                default:
+                    break;
+            }
+
+            return returnCode;
+        }
+
+        public static void Initialize(IntPtr windowHandle)
+        {
+            if (_windowHandle != IntPtr.Zero)
+                throw new InvalidOperationException("InputMethod can only be initialized once!");
+
+            _windowHandle = windowHandle;
+            _wndProcDelegate = new WndProcDelegate(WndProc);
+
+            _prevWndProc = (IntPtr)NativeMethods.SetWindowLong(_windowHandle, NativeMethods.GWL_WNDPROC,
+                (int)Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 
         // If the system is IMM enabled, this is true.
@@ -68,7 +100,7 @@ namespace ImeSharp
                     //
                     if (DefaultImc != IntPtr.Zero)
                     {
-                        NativeMethods.ImmAssociateContext(_WindowHandle, _defaultImc.Value);
+                        NativeMethods.ImmAssociateContext(_windowHandle, _defaultImc.Value);
                     }
                 }
                 else
@@ -76,7 +108,7 @@ namespace ImeSharp
                     //
                     // Disable. Use null hIMC.
                     //
-                    NativeMethods.ImmAssociateContext(_WindowHandle, IntPtr.Zero);
+                    NativeMethods.ImmAssociateContext(_windowHandle, IntPtr.Zero);
                 }
             }
         }
@@ -88,12 +120,12 @@ namespace ImeSharp
             {
                 if (_defaultImc == null)
                 {
-                    IntPtr himc = NativeMethods.ImmGetContext(_WindowHandle);
+                    IntPtr himc = NativeMethods.ImmGetContext(_windowHandle);
 
                     // Store the default imc to _defaultImc.
                     _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
 
-                    NativeMethods.ImmReleaseContext(_WindowHandle, himc);
+                    NativeMethods.ImmReleaseContext(_windowHandle, himc);
                 }
                 return _defaultImc.Value;
             }
