@@ -4,6 +4,10 @@ A C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
 
 Most of the code were extracted from the WPF core repo.
 
+## Discord for Dev
+
+https://discord.gg/BC4GKKr
+
 ## TODO
 
 1. Implemented UI-less mode for TSF, namely render IME candidate list manually instead of using the OS renderer one.
