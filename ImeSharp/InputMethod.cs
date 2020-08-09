@@ -9,8 +9,7 @@ namespace ImeSharp
         private static IntPtr _windowHandle;
 
         private static IntPtr _prevWndProc;
-        private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
-        private static WndProcDelegate _wndProcDelegate;
+        private static NativeMethods.WndProcDelegate _wndProcDelegate;
 
         // If the system is IMM enabled, this is true.
         private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
@@ -47,26 +46,6 @@ namespace ImeSharp
             set { _defaultTextStore = value; }
         }
 
-        private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
-        {
-            IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
-
-            //TODO:
-            switch (msg)
-            {
-                case NativeMethods.WM_CHAR:
-                    break;
-                case NativeMethods.WM_KEYDOWN:
-                    break;
-                case NativeMethods.WM_KEYUP:
-                    break;
-                default:
-                    break;
-            }
-
-            return returnCode;
-        }
-
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
         /// </summary>
@@ -76,10 +55,10 @@ namespace ImeSharp
                 throw new InvalidOperationException("InputMethod can only be initialized once!");
 
             _windowHandle = windowHandle;
-            _wndProcDelegate = new WndProcDelegate(WndProc);
+            _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
 
-            var wndProcPtr = Marshal.GetFunctionPointerForDelegate(_wndProcDelegate);
-            _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC, wndProcPtr);
+            _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
+                Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 
         /// <summary>
@@ -146,6 +125,26 @@ namespace ImeSharp
                     NativeMethods.ImmAssociateContext(_windowHandle, IntPtr.Zero);
                 }
             }
+        }
+
+        private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        {
+            IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
+
+            //TODO:
+            switch (msg)
+            {
+                case NativeMethods.WM_CHAR:
+                    break;
+                case NativeMethods.WM_KEYDOWN:
+                    break;
+                case NativeMethods.WM_KEYUP:
+                    break;
+                default:
+                    break;
+            }
+
+            return returnCode;
         }
 
     }
