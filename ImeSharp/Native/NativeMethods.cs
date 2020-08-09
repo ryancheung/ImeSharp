@@ -24,6 +24,7 @@ namespace ImeSharp.Native
         public const int WM_KEYLAST = 0x0109;
         public const int UNICODE_NOCHAR = 0xFFFF;
 
+        public const int WM_CLOSE = 0x0010;
         public const int WM_NOTIFY = 0x004E;
         public const int WM_INPUTLANGCHANGEREQUEST = 0x0050;
         public const int WM_INPUTLANGCHANGE = 0x0051;

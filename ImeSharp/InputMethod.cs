@@ -1,5 +1,6 @@
 using System;
 using System.Runtime.InteropServices;
+using System.Text;
 using ImeSharp.Native;
 
 namespace ImeSharp
@@ -124,25 +125,119 @@ namespace ImeSharp
                 }
             }
         }
+        
+        public static void SetConversionMode(NativeMethods.IMEConversionMode eStatus)
+        {
+            int iConversionMode = 0;
+            int iSentence = 0;
+            NativeMethods.ImmGetConversionStatus(DefaultImc, ref iConversionMode, ref iSentence);
+            NativeMethods.ImmSetConversionStatus(DefaultImc, (int)eStatus, iSentence);
+            NativeMethods.ImmReleaseContext(_windowHandle, DefaultImc);
+        }
+        
+        public static NativeMethods.IMEConversionMode GetConversionMode()
+        {
+            int conversionMode = 0;
+            int sentence = 0;
+            NativeMethods.ImmGetConversionStatus(DefaultImc, ref conversionMode, ref sentence);
+            NativeMethods.ImmReleaseContext(_windowHandle, DefaultImc);
+            return (NativeMethods.IMEConversionMode)conversionMode;
+        }
 
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
-
             //TODO:
             switch (msg)
             {
+                case NativeMethods.WM_IME_SETCONTEXT:
+                    
+                    if (_immEnabled)
+                    {
+                        lParam = DisableOSCompositionWindow(lParam);    
+                    }
+                    
+                    break;
                 case NativeMethods.WM_CHAR:
                     break;
                 case NativeMethods.WM_KEYDOWN:
                     break;
                 case NativeMethods.WM_KEYUP:
                     break;
+                case NativeMethods.WM_IME_NOTIFY:
+                    
+                    switch (NativeMethods.IntPtrToInt32(wParam))
+                    {
+                        case NativeMethods.IMN_CHANGECANDIDATE:
+                            break;
+                    }
+                    break;
+                case NativeMethods.WM_CLOSE:
+                    //if the context is created manually, it also should be destroyed manually
+                    NativeMethods.ImmDestroyContext(DefaultImc);
+                    break;
+                
                 default:
                     break;
             }
 
+            IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
             return returnCode;
+        }
+        
+        /// <summary>
+        /// Retrieves the candidate list.
+        /// </summary>
+        private static void RetrieveCandidateList()
+        {
+            uint size = NativeMethods.ImmGetCandidateList(DefaultImc, 0, IntPtr.Zero, 0);
+            if (size <= 0)
+            {
+                return;
+            }
+
+            var candidateList = new NativeMethods.CandidateList();
+            var ptr = Marshal.AllocHGlobal((int)size);
+            NativeMethods.ImmGetCandidateList(DefaultImc, 0, ptr, size);
+            Marshal.PtrToStructure(ptr, candidateList);
+            
+            var buffer = new byte[size];
+            
+            Marshal.Copy(ptr, buffer, 0, (int)size);
+            Marshal.FreeHGlobal(ptr);
+
+            const int iMembers = 6;
+            var candidates = new string[candidateList.dwCount];
+            for (var index = 0; index < candidateList.dwCount; index++)
+            {
+                var ithOffset = BitConverter.ToUInt32(buffer, (iMembers + index) * (sizeof(uint)));
+                int strLen;
+                if (index == candidateList.dwCount - 1)
+                {
+                    strLen = (int)(candidateList.dwSize - ithOffset - 2);
+                }
+                else
+                {
+                    var offset = BitConverter.ToUInt32(buffer, (iMembers + index + 1) * (sizeof(uint)));
+                    strLen = (int)(offset - ithOffset - 2);
+                }
+
+                string ithStr = Encoding.Unicode.GetString(buffer, (int)ithOffset, strLen);
+                candidates[index] = ithStr;
+            }
+            //TODO event to emit the candidate list(string[]) and selection (candidateList.dwSelection) or cache?
+        }
+        
+        /// <summary>
+        /// Turn off default IME composition window.
+        /// </summary>
+        /// <param name="lParam">lParam from WM_IME_SETCONTEXT</param>
+        /// <returns>Modified lParam that has to be used within CallWindowProc </returns>
+        private static IntPtr DisableOSCompositionWindow(IntPtr lParam)
+        {
+            int lParamValue = NativeMethods.IntPtrToInt32(lParam);
+            lParamValue &= ~NativeMethods.ISC_SHOWUICANDIDATEWINDOW;
+            lParam = (IntPtr)lParamValue;
+            return lParam;
         }
 
     }
