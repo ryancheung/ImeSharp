@@ -12,6 +12,41 @@ namespace ImeSharp
         private delegate IntPtr WndProcDelegate(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam);
         private static WndProcDelegate _wndProcDelegate;
 
+        // If the system is IMM enabled, this is true.
+        private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
+
+        private static SecurityCriticalDataClass<IntPtr> _defaultImc;
+        private static IntPtr DefaultImc
+        {
+            get
+            {
+                if (_defaultImc == null)
+                {
+                    IntPtr himc = NativeMethods.ImmGetContext(_windowHandle);
+
+                    // Store the default imc to _defaultImc.
+                    _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
+
+                    NativeMethods.ImmReleaseContext(_windowHandle, himc);
+                }
+                return _defaultImc.Value;
+            }
+        }
+
+        private static TextServicesContext _textServicesContext;
+        public static TextServicesContext TextServicesContext
+        {
+            get { return _textServicesContext; }
+            set { _textServicesContext = value; }
+        }
+
+        private static DefaultTextStore _defaultTextStore;
+        public static DefaultTextStore DefaultTextStore
+        {
+            get { return _defaultTextStore; }
+            set { _defaultTextStore = value; }
+        }
+
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
@@ -32,6 +67,9 @@ namespace ImeSharp
             return returnCode;
         }
 
+        /// <summary>
+        /// Initialize InputMethod with a Window Handle.
+        /// </summary>
         public static void Initialize(IntPtr windowHandle)
         {
             if (_windowHandle != IntPtr.Zero)
@@ -40,12 +78,9 @@ namespace ImeSharp
             _windowHandle = windowHandle;
             _wndProcDelegate = new WndProcDelegate(WndProc);
 
-            _prevWndProc = (IntPtr)NativeMethods.SetWindowLong(_windowHandle, NativeMethods.GWL_WNDPROC,
-                (int)Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+            var wndProcPtr = Marshal.GetFunctionPointerForDelegate(_wndProcDelegate);
+            _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC, wndProcPtr);
         }
-
-        // If the system is IMM enabled, this is true.
-        private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
 
         /// <summary>
         /// return true if the current keyboard layout is a real IMM32-IME.
@@ -113,36 +148,5 @@ namespace ImeSharp
             }
         }
 
-        private static SecurityCriticalDataClass<IntPtr> _defaultImc;
-        private static IntPtr DefaultImc
-        {
-            get
-            {
-                if (_defaultImc == null)
-                {
-                    IntPtr himc = NativeMethods.ImmGetContext(_windowHandle);
-
-                    // Store the default imc to _defaultImc.
-                    _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
-
-                    NativeMethods.ImmReleaseContext(_windowHandle, himc);
-                }
-                return _defaultImc.Value;
-            }
-        }
-
-        private static TextServicesContext _textServicesContext;
-        public static TextServicesContext TextServicesContext
-        {
-            get { return _textServicesContext; }
-            set { _textServicesContext = value; }
-        }
-
-        private static DefaultTextStore _defaultTextStore;
-        public static DefaultTextStore DefaultTextStore
-        {
-            get { return _defaultTextStore; }
-            set { _defaultTextStore = value; }
-        }
     }
 }
