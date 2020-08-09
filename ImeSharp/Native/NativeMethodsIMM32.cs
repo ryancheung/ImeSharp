@@ -67,6 +67,19 @@ namespace ImeSharp.Native
 
         #endregion Constants
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CandidateList
+        {
+            public uint dwSize;
+            public uint dwStyle;
+            public uint dwCount;
+            public uint dwSelection;
+            public uint dwPageStart;
+            public uint dwPageSize;
+            [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1, ArraySubType = UnmanagedType.U4)]
+            public uint[] dwOffset;
+        }
+
         [DllImport("imm32.dll", SetLastError = true)]
         public static extern IntPtr ImmCreateContext();
 
