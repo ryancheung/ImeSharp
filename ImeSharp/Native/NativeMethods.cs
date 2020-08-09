@@ -31,6 +31,8 @@ namespace ImeSharp.Native
         public const int WM_USERCHANGED = 0x0054;
         public const int WM_NOTIFYFORMAT = 0x0055;
 
+        public const int GWL_WNDPROC = -4;
+
         #endregion Constants
 
         [DllImport("user32.dll")]
@@ -45,8 +47,6 @@ namespace ImeSharp.Native
 
         [DllImport("user32.dll", ExactSpelling = true, CharSet = CharSet.Auto)]
         public static extern IntPtr GetKeyboardLayout(int dwLayout);
-
-        public const int GWL_WNDPROC = -4;
 
         [DllImport("user32.dll")]
         public static extern IntPtr CallWindowProc(IntPtr lpPrevWndFunc, IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
