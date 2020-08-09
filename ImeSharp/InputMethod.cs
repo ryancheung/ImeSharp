@@ -21,12 +21,10 @@ namespace ImeSharp
             {
                 if (_defaultImc == null)
                 {
-                    IntPtr himc = NativeMethods.ImmGetContext(_windowHandle);
+                    IntPtr himc = NativeMethods.ImmCreateContext();
 
                     // Store the default imc to _defaultImc.
                     _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
-
-                    NativeMethods.ImmReleaseContext(_windowHandle, himc);
                 }
                 return _defaultImc.Value;
             }
