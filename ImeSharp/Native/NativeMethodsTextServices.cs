@@ -85,6 +85,11 @@ namespace ImeSharp.Native
         public const int TF_COMMANDING_ON = 0x00000008;
 
         /// <summary></summary>
+        public static readonly Guid IID_ITfThreadMgr = new Guid("aa80e801-2021-11d2-93e0-0060b067b86e");
+        /// <summary></summary>
+        public static readonly Guid IID_ITfThreadMgrEx = new Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c");
+
+        /// <summary></summary>
         public static readonly Guid IID_ITextStoreACPSink = new Guid(0x22d44c94, 0xa419, 0x4542, 0xa2, 0x72, 0xae, 0x26, 0x09, 0x3e, 0xce, 0xcf);
 
         /// <summary></summary>
@@ -1710,7 +1715,7 @@ namespace ImeSharp.Native
             int ActivateEx(out int clientId, TfTMAE dwFlags);
 
             [PreserveSig]
-            int GetActiveFlags( out TfTMAE lpdwFlags);
+            int GetActiveFlags(out TfTMAE lpdwFlags);
         }
 
         /// <summary></summary>
