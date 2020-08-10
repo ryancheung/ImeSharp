@@ -14,7 +14,7 @@ namespace ImeSharp
         // If the system is IMM enabled, this is true.
         private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
 
-        private static SecurityCriticalDataClass<IntPtr> _defaultImc;
+        private static IntPtr _defaultImc;
         private static IntPtr DefaultImc
         {
             get
@@ -24,9 +24,9 @@ namespace ImeSharp
                     IntPtr himc = NativeMethods.ImmCreateContext();
 
                     // Store the default imc to _defaultImc.
-                    _defaultImc = new SecurityCriticalDataClass<IntPtr>(himc);
+                    _defaultImc = himc;
                 }
-                return _defaultImc.Value;
+                return _defaultImc;
             }
         }
 
@@ -142,7 +142,7 @@ namespace ImeSharp
                     //
                     if (DefaultImc != IntPtr.Zero)
                     {
-                        NativeMethods.ImmAssociateContext(_windowHandle, _defaultImc.Value);
+                        NativeMethods.ImmAssociateContext(_windowHandle, _defaultImc);
                     }
                 }
                 else

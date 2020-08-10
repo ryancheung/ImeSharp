@@ -104,7 +104,7 @@ namespace ImeSharp
                 // be added to WPF setup....
                 if (!appDomainShutdown || System.Environment.OSVersion.Version.Major >= 6)
                 {
-                    _threadManager.Value.Deactivate();
+                    _threadManager.Deactivate();
                 }
                 _istimactivated = false;
             }
@@ -112,9 +112,9 @@ namespace ImeSharp
             // Release the empty dim.
             if (_dimEmpty != null)
             {
-                if (_dimEmpty.Value != null)
+                if (_dimEmpty != null)
                 {
-                    Marshal.ReleaseComObject(_dimEmpty.Value);
+                    Marshal.ReleaseComObject(_dimEmpty);
                 }
                 _dimEmpty = null;
             }
@@ -124,9 +124,9 @@ namespace ImeSharp
             // called get_ThreadManager after the last TextStore was unregistered.
             if (_threadManager != null)
             {
-                if (_threadManager.Value != null)
+                if (_threadManager != null)
                 {
-                    Marshal.ReleaseComObject(_threadManager.Value);
+                    Marshal.ReleaseComObject(_threadManager);
                 }
                 _threadManager = null;
             }
@@ -152,10 +152,10 @@ namespace ImeSharp
 
             // We delay load cicero until someone creates an ITextStore.
             // Or this thread may not have a ThreadMgr.
-            if ((_threadManager == null) || (_threadManager.Value == null))
+            if ((_threadManager == null) || (_threadManager == null))
                 return false;
 
-            keystrokeMgr = _threadManager.Value as NativeMethods.ITfKeystrokeMgr;
+            keystrokeMgr = _threadManager as NativeMethods.ITfKeystrokeMgr;
 
             switch (op)
             {
@@ -204,13 +204,13 @@ namespace ImeSharp
                     // which is then stored in the critical data.
                     int clientIdTemp;
                     threadManager.Activate(out clientIdTemp);
-                    _clientId = new SecurityCriticalData<int>(clientIdTemp);
+                    _clientId = clientIdTemp;
                     _istimactivated = true;
                 }
 
                 // Create a TSF document.
                 threadManager.CreateDocumentMgr(out doc);
-                doc.CreateContext(_clientId.Value, 0 /* flags */, _defaultTextStore, out context, out editCookie);
+                doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out context, out editCookie);
                 doc.Push(context);
 
                 // Release any native resources we're done with.
@@ -258,10 +258,10 @@ namespace ImeSharp
             {
                 if (_threadManager == null)
                 {
-                    _threadManager = new SecurityCriticalDataClass<NativeMethods.ITfThreadMgr>(TextServicesLoader.Load());
+                    _threadManager = TextServicesLoader.Load();
                 }
 
-                return _threadManager.Value;
+                return _threadManager;
             }
         }
 
@@ -413,13 +413,13 @@ namespace ImeSharp
                     {
                         return null;
                     }
-                    //creating temp variable to retrieve from call and store in security critical data
+
                     NativeMethods.ITfDocumentMgr dimEmptyTemp;
                     // Create a TSF document.
                     threadManager.CreateDocumentMgr(out dimEmptyTemp);
-                    _dimEmpty = new SecurityCriticalDataClass<NativeMethods.ITfDocumentMgr>(dimEmptyTemp);
+                    _dimEmpty = dimEmptyTemp;
                 }
-                return _dimEmpty.Value;
+                return _dimEmpty;
             }
         }
 
@@ -441,13 +441,13 @@ namespace ImeSharp
         private bool _istimactivated;
 
         // The root TSF object, created on demand.
-        private SecurityCriticalDataClass<NativeMethods.ITfThreadMgr> _threadManager;
+        private NativeMethods.ITfThreadMgr _threadManager;
 
         // TSF ClientId from Activate call.
-        private SecurityCriticalData<int> _clientId;
+        private int _clientId;
 
         // The empty dim for this thread. Created on demand.
-        private SecurityCriticalDataClass<NativeMethods.ITfDocumentMgr> _dimEmpty;
+        private NativeMethods.ITfDocumentMgr _dimEmpty;
 
         #endregion Private Fields
     }

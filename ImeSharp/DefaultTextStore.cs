@@ -246,9 +246,8 @@ namespace ImeSharp
         // Pointer to ITfDocumentMgr interface.
         public NativeMethods.ITfDocumentMgr DocumentManager
         {
-            get { return _doc.Value; }
-
-            set { _doc = new SecurityCriticalData<NativeMethods.ITfDocumentMgr>(value); }
+            get { return _doc; }
+            set { _doc = value; }
         }
 
         // EditCookie for ITfContext.
@@ -343,7 +342,7 @@ namespace ImeSharp
         private TextComposition _composition;
 
         // The TSF document object.  This is a native resource.
-        private SecurityCriticalData<NativeMethods.ITfDocumentMgr> _doc;
+        private NativeMethods.ITfDocumentMgr _doc;
 
         // The edit cookie TSF returns from CreateContext.
         private int _editCookie;
