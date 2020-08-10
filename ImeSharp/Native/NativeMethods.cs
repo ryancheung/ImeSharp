@@ -34,6 +34,15 @@ namespace ImeSharp.Native
 
         public const int GWL_WNDPROC = -4;
 
+        public const int WM_ACTIVATE = 0x0006;
+        // WM_ACTIVATE state values
+        public const int WA_INACTIVE = 0;
+        public const int WA_ACTIVE = 1;
+        public const int WA_CLICKACTIVE = 2;
+
+        public const int WM_SETFOCUS = 0x0007;
+        public const int WM_KILLFOCUS = 0x0008;
+
         #endregion Constants
 
         [DllImport("user32.dll")]

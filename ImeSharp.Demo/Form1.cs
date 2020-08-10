@@ -12,7 +12,6 @@ namespace ImeSharp.Demo
 {
     public partial class Form1 : Form
     {
-        private bool _inputMethodEnabled;
         public Form1()
         {
             InitializeComponent();
@@ -33,11 +32,7 @@ namespace ImeSharp.Demo
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.F1)
-            {
-                InputMethod.EnableOrDisableInputMethod(!_inputMethodEnabled);
-
-                _inputMethodEnabled = !_inputMethodEnabled;
-            }
+                InputMethod.Enabled = !InputMethod.Enabled;
         }
 
         private void FakeDraw()

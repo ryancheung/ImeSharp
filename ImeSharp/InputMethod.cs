@@ -44,6 +44,20 @@ namespace ImeSharp
             set { _defaultTextStore = value; }
         }
 
+        private static bool _enabled;
+        public static bool Enabled
+        {
+            get { return _enabled; }
+            set
+            {
+                if (_enabled == value) return;
+
+                _enabled = value;
+
+                EnableOrDisableInputMethod(_enabled);
+            }
+        }
+
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
         /// </summary>
@@ -83,7 +97,21 @@ namespace ImeSharp
             return ((NativeMethods.IntPtrToInt32(hkl) & 0xf0000000) == 0xe0000000);
         }
 
-        public static void EnableOrDisableInputMethod(bool bEnabled)
+        /// <summary>
+        /// return true if current OS version is Windows 7 or below.
+        /// </summary>
+        public static bool IsWindows7OrBelow()
+        {
+            if (Environment.OSVersion.Version.Major <= 5)
+                return true;
+
+            if (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor <= 1)
+                return true;
+
+            return false;
+        }
+
+        private static void EnableOrDisableInputMethodTSF(bool bEnabled)
         {
             // InputMethod enable/disabled status was changed on the current focus Element.
             if (TextServicesLoader.ServicesInstalled)
@@ -99,8 +127,10 @@ namespace ImeSharp
                     TextServicesContext.Current.SetFocusOnEmptyDim();
                 }
             }
+        }
 
-            //
+        private static void EnableOrDisableInputMethodIMM32(bool bEnabled)
+        {
             // Under IMM32 enabled system, we associate default hIMC or null hIMC.
             //
             if (_immEnabled)
@@ -125,6 +155,16 @@ namespace ImeSharp
             }
         }
 
+        private static void EnableOrDisableInputMethod(bool bEnabled)
+        {
+            if (IsWindows7OrBelow())
+                EnableOrDisableInputMethodIMM32(bEnabled);
+            else if (IsImm32ImeCurrent())
+                EnableOrDisableInputMethodIMM32(bEnabled);
+            else
+                EnableOrDisableInputMethodTSF(bEnabled);
+        }
+
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             IntPtr returnCode = NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
@@ -137,6 +177,10 @@ namespace ImeSharp
                 case NativeMethods.WM_KEYDOWN:
                     break;
                 case NativeMethods.WM_KEYUP:
+                    break;
+                case NativeMethods.WM_SETFOCUS:
+                    if (_enabled)
+                        EnableOrDisableInputMethod(true);
                     break;
                 default:
                     break;
