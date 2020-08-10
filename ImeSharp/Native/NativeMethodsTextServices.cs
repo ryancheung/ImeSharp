@@ -1064,6 +1064,38 @@ namespace ImeSharp.Native
         //
         //------------------------------------------------------
 
+        #region Classses
+        [ComImport, Guid(CLSIDs.CLSID_TF_ThreadMgr)]
+        public class TF_ThreadMgr
+        {
+        }
+
+        [ComImport, Guid(CLSIDs.CLSID_TF_InputProcessorProfiles)]
+        public class TF_InputProcessorProfiles
+        {
+        }
+
+        [ComImport, Guid(CLSIDs.CLSID_TF_LangBarMgr)]
+        public class TF_LangBarMgr
+        {
+        }
+
+        [ComImport, Guid(CLSIDs.CLSID_TF_DisplayAttributeMgr)]
+        public class TF_DisplayAttributeMgr
+        {
+        }
+
+        [ComImport, Guid(CLSIDs.CLSID_TF_CategoryMgr)]
+        public class TF_CategoryMgr
+        {
+        }
+
+        [ComImport, Guid(CLSIDs.CLSID_TF_LangBarItemMgr)]
+        public class TF_LangBarItemMgr
+        {
+        }
+        #endregion
+
         #region Interfaces
 
         [ComImport]
@@ -1648,6 +1680,7 @@ namespace ImeSharp.Native
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [CoClass(typeof(TF_ThreadMgr))]
         [Guid("aa80e801-2021-11d2-93e0-0060b067b86e")]
         public interface ITfThreadMgr
         {
@@ -1703,6 +1736,7 @@ namespace ImeSharp.Native
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [CoClass(typeof(TF_ThreadMgr))]
         [Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c")]
         public interface ITfThreadMgrEx : ITfThreadMgr
         {
@@ -1711,6 +1745,77 @@ namespace ImeSharp.Native
 
             [PreserveSig]
             int GetActiveFlags( out TfTMAE lpdwFlags);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [CoClass(typeof(TF_ThreadMgr))]
+        [Guid("3E90ADE3-7594-4CB0-BB58-69628F5F458C")]
+        public interface ITfThreadMgr2
+        {
+            // <summary></summary>
+            //HRESULT Activate([out] TfClientId *ptid);
+            void Activate(out int clientId);
+
+            // <summary></summary>
+            //HRESULT Deactivate();
+            void Deactivate();
+
+            // <summary></summary>
+            //HRESULT CreateDocumentMgr([out] ITfDocumentMgr **ppdim);
+            void CreateDocumentMgr(out ITfDocumentMgr docMgr);
+
+            /// <summary></summary>
+            //HRESULT EnumDocumentMgrs([out] IEnumTfDocumentMgrs **ppEnum);
+            void EnumDocumentMgrs(out IEnumTfDocumentMgrs enumDocMgrs);
+
+            /// <summary></summary>
+            //HRESULT GetFocus([out] ITfDocumentMgr **ppdimFocus);
+            void GetFocus(out ITfDocumentMgr docMgr);
+
+            // <summary></summary>
+            //HRESULT SetFocus([in] ITfDocumentMgr *pdimFocus);
+            void SetFocus(ITfDocumentMgr docMgr);
+
+            /// <summary></summary>
+            //HRESULT AssociateFocus([in] HWND hwnd,
+            //                       [in, unique] ITfDocumentMgr *pdimNew,
+            //                       [out] ITfDocumentMgr **ppdimPrev);
+            void AssociateFocus(IntPtr hwnd, ITfDocumentMgr newDocMgr, out ITfDocumentMgr prevDocMgr);
+
+            /// <summary></summary>
+            //HRESULT IsThreadFocus([out] BOOL *pfThreadFocus);
+            void IsThreadFocus([MarshalAs(UnmanagedType.Bool)] out bool isFocus);
+
+            //HRESULT GetFunctionProvider([in] REFCLSID clsid,
+            //                            [out] ITfFunctionProvider **ppFuncProv);
+            /// <summary></summary>
+            [PreserveSig]
+            int GetFunctionProvider(ref Guid classId, out ITfFunctionProvider funcProvider);
+
+            /// <summary></summary>
+            //HRESULT EnumFunctionProviders([out] IEnumTfFunctionProviders **ppEnum);
+            void EnumFunctionProviders(out IEnumTfFunctionProviders enumProviders);
+
+            //HRESULT GetGlobalCompartment([out] ITfCompartmentMgr **ppCompMgr);
+            /// <summary></summary>
+            void GetGlobalCompartment(out ITfCompartmentMgr compartmentMgr);
+
+            //virtual HRESULT STDMETHODCALLTYPE ActivateEx( /* [out] */ __RPC__out TfClientId *ptid,/* [in] */ DWORD dwFlags) = 0;
+            [PreserveSig]
+            int ActivateEx(out int clientId, TfTMAE dwFlags);
+
+            //virtual HRESULT STDMETHODCALLTYPE GetActiveFlags( /* [out] */ __RPC__out DWORD *lpdwFlags) = 0;
+            [PreserveSig]
+            int GetActiveFlags(out TfTMAE lpdwFlags);
+
+            //virtual HRESULT STDMETHODCALLTYPE SuspendKeystrokeHandling( void) = 0;
+            [PreserveSig]
+            int SuspendKeystrokeHandling();
+
+            //virtual HRESULT STDMETHODCALLTYPE ResumeKeystrokeHandling( void) = 0;
+            [PreserveSig]
+            int ResumeKeystrokeHandling();
         }
 
         /// <summary></summary>

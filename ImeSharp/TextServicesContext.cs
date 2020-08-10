@@ -19,7 +19,7 @@ namespace ImeSharp
     //------------------------------------------------------
 
     /// <summary>
-    /// This class manages the ITfThreadMgr, EmptyDim and the reference to
+    /// This class manages the ITfThreadMgr2, EmptyDim and the reference to
     /// the default TextStore.
     /// </summary>
     /// <remarks>
@@ -94,7 +94,7 @@ namespace ImeSharp
                 // Shut down the thread manager when the last TextStore goes away.
                 // On XP, if we're called on a worker thread (during AppDomain shutdown)
                 // we can't call call any methods on _threadManager.  The problem is
-                // that there's no proxy registered for ITfThreadMgr on OS versions
+                // that there's no proxy registered for ITfThreadMgr2 on OS versions
                 // previous to Vista.  Not calling Deactivate will leak the IMEs, but
                 // in practice (1) they're singletons, so it's not unbounded; and (2)
                 // most applications will share the thread with other AppDomains that
@@ -189,7 +189,7 @@ namespace ImeSharp
             // is shutdown.
             _defaultTextStore = defaultTextStore;
 
-            NativeMethods.ITfThreadMgr threadManager = ThreadManager;
+            NativeMethods.ITfThreadMgr2 threadManager = ThreadManager;
 
             if (threadManager != null)
             {
@@ -203,7 +203,11 @@ namespace ImeSharp
                     //temp variable created to retrieve the value
                     // which is then stored in the critical data.
                     int clientIdTemp;
-                    threadManager.Activate(out clientIdTemp);
+                    var hResult = threadManager.ActivateEx(out clientIdTemp,NativeMethods.TfTMAE.TF_TMAE_UIELEMENTENABLEDONLY);
+                    if(hResult == NativeMethods.S_FALSE)
+                    {
+                        Console.WriteLine("An unspecified error occurred.");
+                    }
                     _clientId = clientIdTemp;
                     _istimactivated = true;
                 }
@@ -226,13 +230,13 @@ namespace ImeSharp
         }
 
 
-        // Cal ITfThreadMgr.SetFocus() with the dim for the default text store
+        // Cal ITfThreadMgr2.SetFocus() with the dim for the default text store
         public void SetFocusOnDefaultTextStore()
         {
             SetFocusOnDim(DefaultTextStore.Current.DocumentManager);
         }
 
-        // Cal ITfThreadMgr.SetFocus() with the empty dim.
+        // Cal ITfThreadMgr2.SetFocus() with the empty dim.
         public void SetFocusOnEmptyDim()
         {
             SetFocusOnDim(EmptyDocumentManager);
@@ -251,9 +255,9 @@ namespace ImeSharp
         /// <summary>
         /// This is an internal, link demand protected method.
         /// </summary>
-        public NativeMethods.ITfThreadMgr ThreadManager
+        public NativeMethods.ITfThreadMgr2 ThreadManager
         {
-            // The ITfThreadMgr for this thread.
+            // The ITfThreadMgr2 for this thread.
             get
             {
                 if (_threadManager == null)
@@ -314,10 +318,10 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        // Cal ITfThreadMgr.SetFocus() with dim
+        // Cal ITfThreadMgr2.SetFocus() with dim
         private void SetFocusOnDim(NativeMethods.ITfDocumentMgr dim)
         {
-            NativeMethods.ITfThreadMgr threadmgr = ThreadManager;
+            NativeMethods.ITfThreadMgr2 threadmgr = ThreadManager;
 
             if (threadmgr != null)
             {
@@ -408,7 +412,7 @@ namespace ImeSharp
             {
                 if (_dimEmpty == null)
                 {
-                    NativeMethods.ITfThreadMgr threadManager = ThreadManager;
+                    NativeMethods.ITfThreadMgr2 threadManager = ThreadManager;
                     if (threadManager == null)
                     {
                         return null;
@@ -441,7 +445,7 @@ namespace ImeSharp
         private bool _istimactivated;
 
         // The root TSF object, created on demand.
-        private NativeMethods.ITfThreadMgr _threadManager;
+        private NativeMethods.ITfThreadMgr2 _threadManager;
 
         // TSF ClientId from Activate call.
         private int _clientId;

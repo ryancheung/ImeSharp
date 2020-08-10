@@ -1,7 +1,7 @@
 //
 // 
 //
-// Description: Creates ITfThreadMgr instances, the root object of the Text
+// Description: Creates ITfThreadMgr2 instances, the root object of the Text
 //              Services Framework.
 //
 //  
@@ -16,7 +16,7 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
-    // Creates ITfThreadMgr instances, the root object of the Text Services
+    // Creates ITfThreadMgr2 instances, the root object of the Text Services
     // Framework.
     public class TextServicesLoader
     {
@@ -77,9 +77,9 @@ namespace ImeSharp
         /// <returns>
         /// May return null if no text services are available.
         /// </returns>
-        public static NativeMethods.ITfThreadMgr Load()
+        public static NativeMethods.ITfThreadMgr2 Load()
         {
-            NativeMethods.ITfThreadMgr threadManager;
+            NativeMethods.ITfThreadMgr2 threadManager;
             
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
 
@@ -90,10 +90,17 @@ namespace ImeSharp
                 // loaded (no TIPs to run), you can check that in msctf.dll's NoTipsInstalled
                 // which lives in nt\windows\advcore\ctf\lib\immxutil.cpp.  If that's the
                 // problem, ServicesInstalled is out of sync with Cicero's thinking.
-                if (NativeMethods.TF_CreateThreadMgr(out threadManager) == NativeMethods.S_OK)
+
+                using (var releaser = new ComReleaser())
                 {
-                    return threadManager;
+                    threadManager = new ComReleaser().CreateComObject<NativeMethods.ITfThreadMgr2>();
                 }
+                return threadManager;
+
+                //if (NativeMethods.TF_CreateThreadMgr(out threadManager) == NativeMethods.S_OK)
+                //{
+                //    return threadManager;
+                //}
             }
 
             return null;
