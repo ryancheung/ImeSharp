@@ -715,6 +715,19 @@ namespace ImeSharp.Native
             CAND_CANCELED = 0x2,
         }
 
+        /// <summary></summary>
+        [Flags]
+        public enum TfTMAE : uint
+        {
+            TF_TMAE_NOACTIVATETIP = 0x00000001,
+            TF_TMAE_SECUREMODE = 0x00000002,
+            TF_TMAE_UIELEMENTENABLEDONLY = 0x00000004,
+            TF_TMAE_COMLESS = 0x00000008,
+            TF_TMAE_WOW16 = 0x00000010,
+            TF_TMAE_NOACTIVATEKEYBOARDLAYOUT = 0x00000020,
+            TF_TMAE_CONSOLE = 0x00000040,
+        }
+
         #endregion Enums
 
         //------------------------------------------------------
@@ -1687,6 +1700,18 @@ namespace ImeSharp.Native
             void GetGlobalCompartment(out ITfCompartmentMgr compartmentMgr);
         }
 
+        /// <summary></summary>
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c")]
+        public interface ITfThreadMgrEx : ITfThreadMgr
+        {
+            [PreserveSig]
+            int ActivateEx(out int clientId, TfTMAE dwFlags);
+
+            [PreserveSig]
+            int GetActiveFlags( out TfTMAE lpdwFlags);
+        }
 
         /// <summary></summary>
         [ComImport]
