@@ -1701,10 +1701,10 @@ namespace ImeSharp.Native
         }
 
         /// <summary></summary>
-        [Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c")]
+        [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        [ComVisible(true)]
-        public interface ITfThreadMgrEx
+        [Guid("e2449660-9542-11d2-bf46-00105a2799b5")]
+        public interface ITfThreadMgrEx : ITfThreadMgr
         {
             [PreserveSig]
             int ActivateEx(out int clientId, TfTMAE dwFlags);
