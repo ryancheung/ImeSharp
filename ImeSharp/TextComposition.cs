@@ -109,8 +109,7 @@ namespace ImeSharp
         /// </summary>
         public virtual void Complete()
         {
-
-            //TextCompositionManager.CompleteComposition(this);
+            TextCompositionManager.CompleteComposition(this);
         }
 
         //------------------------------------------------------
