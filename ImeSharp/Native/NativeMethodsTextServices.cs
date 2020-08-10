@@ -94,6 +94,9 @@ namespace ImeSharp.Native
         public static readonly Guid IID_ITfUIElementSink = new Guid(0xea1ea136, 0x19df, 0x11d7, 0xa6, 0xd2, 0x00, 0x06, 0x5b, 0x84, 0x43, 0x5c);
 
         /// <summary></summary>
+        public static readonly Guid IID_ITfTransitoryExtensionUIElement = new Guid(0x858f956a, 0x972f, 0x42a2, 0xa2, 0xf2, 0x03, 0x21, 0xe1, 0xab, 0xe2, 0x09);
+
+        /// <summary></summary>
         public static readonly Guid IID_ITfThreadFocusSink = new Guid(0xc0f1db0c, 0x3a20, 0x405c, 0xa3, 0x03, 0x96, 0xb6, 0x01, 0x0a, 0x88, 0x5f);
 
         /// <summary></summary>
@@ -1433,6 +1436,32 @@ namespace ImeSharp.Native
             int EndUIElement(int dwUIElementId);
         };
 
+        /// <summary></summary>
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("858f956a-972f-42a2-a2f2-0321e1abe209")]
+        public interface ITfTransitoryExtensionUIElement
+        {
+            //HRESULT GetDocumentMgr(
+            //    [out] ITfDocumentMgr **ppdim) = 0;
+            int GetDocumentMgr(out ITfDocumentMgr docMgr);
+
+            //HRESULT GetDescription(
+            //    [out] BSTR *pbstrDescription) = 0;
+            void GetDescription([MarshalAs(UnmanagedType.BStr)] out string description);
+
+            //HRESULT GetGUID(
+            //    [out] GUID *pguid) = 0;
+            void GetGUID(out Guid guid);
+
+            //HRESULT Show(
+            //    [in] BOOL bShow) = 0;
+            int Show([MarshalAs(UnmanagedType.Bool)] bool bShow);
+
+            //HRESULT IsShown(
+            //    [out] BOOL *pbShow) = 0;
+            void IsShown([MarshalAs(UnmanagedType.Bool)] out bool bShow);
+        };
 
         /// <summary></summary>
         [ComImport]
