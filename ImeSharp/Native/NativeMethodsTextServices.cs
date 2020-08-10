@@ -1703,7 +1703,7 @@ namespace ImeSharp.Native
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        [Guid("e2449660-9542-11d2-bf46-00105a2799b5")]
+        [Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c")]
         public interface ITfThreadMgrEx : ITfThreadMgr
         {
             [PreserveSig]
