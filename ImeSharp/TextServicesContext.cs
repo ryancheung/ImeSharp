@@ -203,7 +203,7 @@ namespace ImeSharp
                     //temp variable created to retrieve the value
                     // which is then stored in the critical data.
                     int clientIdTemp;
-                    threadManager.Activate(out clientIdTemp);
+                    threadManager.ActivateEx(out clientIdTemp, NativeMethods.TfTMAE.TF_TMAE_UIELEMENTENABLEDONLY);
                     _clientId = clientIdTemp;
                     _istimactivated = true;
                 }
