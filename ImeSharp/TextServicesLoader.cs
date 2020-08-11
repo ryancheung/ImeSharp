@@ -9,6 +9,7 @@
 //
 
 using System;
+using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
 using Microsoft.Win32;
@@ -77,10 +78,8 @@ namespace ImeSharp
         /// <returns>
         /// May return null if no text services are available.
         /// </returns>
-        public static NativeMethods.ITfThreadMgr Load()
+        public static NativeMethods.ITfThreadMgrEx Load()
         {
-            NativeMethods.ITfThreadMgr threadManager;
-            
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
 
             if (ServicesInstalled)
@@ -90,10 +89,14 @@ namespace ImeSharp
                 // loaded (no TIPs to run), you can check that in msctf.dll's NoTipsInstalled
                 // which lives in nt\windows\advcore\ctf\lib\immxutil.cpp.  If that's the
                 // problem, ServicesInstalled is out of sync with Cicero's thinking.
-                if (NativeMethods.TF_CreateThreadMgr(out threadManager) == NativeMethods.S_OK)
-                {
-                    return threadManager;
-                }
+                IntPtr ret;
+                var hr = NativeMethods.CoCreateInstance(NativeMethods.CLSID_TF_ThreadMgr,
+                    IntPtr.Zero,
+                    NativeMethods.CLSCTX_INPROC_SERVER,
+                    NativeMethods.IID_ITfThreadMgrEx, out ret);
+
+                if (hr == NativeMethods.S_OK)
+                    return (NativeMethods.ITfThreadMgrEx)Marshal.GetObjectForIUnknown(ret);
             }
 
             return null;

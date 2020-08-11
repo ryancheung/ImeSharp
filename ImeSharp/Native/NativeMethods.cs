@@ -43,6 +43,8 @@ namespace ImeSharp.Native
         public const int WM_SETFOCUS = 0x0007;
         public const int WM_KILLFOCUS = 0x0008;
 
+        public const int CLSCTX_INPROC_SERVER = 0x1;
+
         #endregion Constants
 
         [DllImport("user32.dll")]
@@ -93,5 +95,9 @@ namespace ImeSharp.Native
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);
+
+
+        [DllImport("ole32.dll", CharSet = CharSet.Auto, ExactSpelling = true, PreserveSig = false)]
+        public static extern int CoCreateInstance(Guid rclsid, IntPtr pUnkOuter, int dwClsContext, Guid riid, out IntPtr ppv);
     }
 }

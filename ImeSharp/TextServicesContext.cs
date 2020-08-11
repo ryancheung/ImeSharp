@@ -189,7 +189,7 @@ namespace ImeSharp
             // is shutdown.
             _defaultTextStore = defaultTextStore;
 
-            NativeMethods.ITfThreadMgr threadManager = ThreadManager;
+            NativeMethods.ITfThreadMgrEx threadManager = ThreadManager;
 
             if (threadManager != null)
             {
@@ -249,9 +249,9 @@ namespace ImeSharp
 
 
         /// <summary>
-        /// This is an internal, link demand protected method.
+        /// The default ITfThreadMgrEx object.
         /// </summary>
-        public NativeMethods.ITfThreadMgr ThreadManager
+        public NativeMethods.ITfThreadMgrEx ThreadManager
         {
             // The ITfThreadMgr for this thread.
             get
@@ -317,7 +317,7 @@ namespace ImeSharp
         // Cal ITfThreadMgr.SetFocus() with dim
         private void SetFocusOnDim(NativeMethods.ITfDocumentMgr dim)
         {
-            NativeMethods.ITfThreadMgr threadmgr = ThreadManager;
+            NativeMethods.ITfThreadMgrEx threadmgr = ThreadManager;
 
             if (threadmgr != null)
             {
@@ -408,7 +408,7 @@ namespace ImeSharp
             {
                 if (_dimEmpty == null)
                 {
-                    NativeMethods.ITfThreadMgr threadManager = ThreadManager;
+                    NativeMethods.ITfThreadMgrEx threadManager = ThreadManager;
                     if (threadManager == null)
                     {
                         return null;
@@ -441,7 +441,7 @@ namespace ImeSharp
         private bool _istimactivated;
 
         // The root TSF object, created on demand.
-        private NativeMethods.ITfThreadMgr _threadManager;
+        private NativeMethods.ITfThreadMgrEx _threadManager;
 
         // TSF ClientId from Activate call.
         private int _clientId;

@@ -84,6 +84,13 @@ namespace ImeSharp.Native
         /// <summary></summary>
         public const int TF_COMMANDING_ON = 0x00000008;
 
+        public static readonly Guid CLSID_TF_ThreadMgr = new Guid("529a9e6b-6587-4f23-ab9e-9c7d683e3c50");
+        public static readonly Guid CLSID_TF_InputProcessorProfiles = new Guid("33c53a50-f456-4884-b049-85fd643ecfed");
+        public static readonly Guid CLSID_TF_LangBarMgr = new Guid("ebb08c45-6c4a-4fdc-ae53-4eb8c4c7db8e");
+        public static readonly Guid CLSID_TF_DisplayAttributeMgr = new Guid("3ce74de4-53d3-4d74-8b83-431b3828ba53");
+        public static readonly Guid CLSID_TF_CategoryMgr = new Guid("a4b544a1-438d-4b41-9325-869523e2d6c7");
+        public static readonly Guid CLSID_TF_LangBarItemMgr = new Guid("b9931692-a2b3-4fab-bf33-9ec6f9fb96ac");
+
         /// <summary></summary>
         public static readonly Guid IID_ITfThreadMgr = new Guid("aa80e801-2021-11d2-93e0-0060b067b86e");
         /// <summary></summary>
