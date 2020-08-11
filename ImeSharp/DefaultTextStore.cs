@@ -11,7 +11,6 @@ namespace ImeSharp
     // the focus on the document manager for its own TextStore.
     public class DefaultTextStore : NativeMethods.ITfContextOwner,
                                        NativeMethods.ITfContextOwnerCompositionSink,
-                                       NativeMethods.ITfTransitoryExtensionSink,
                                        NativeMethods.ITfUIElementSink
     {
         //------------------------------------------------------
@@ -26,7 +25,7 @@ namespace ImeSharp
         public DefaultTextStore()
         {
             _editCookie = NativeMethods.TF_INVALID_COOKIE;
-            _transitoryExtensionSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            _uiElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
         }
 
         #endregion Constructors
@@ -62,12 +61,13 @@ namespace ImeSharp
 
         public void GetStatus(out NativeMethods.TS_STATUS status)
         {
+            // Disable IME by default.
             status = new NativeMethods.TS_STATUS();
         }
 
         public void GetWnd(out IntPtr hwnd)
         {
-            hwnd = IntPtr.Zero;
+            hwnd = InputMethod.WindowHandle;
         }
 
         public void GetValue(ref Guid guidAttribute, out object varValue)
@@ -108,75 +108,12 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region ITfTransitoryExtensionSink
-
-        // Transitory Document has been updated.
-        // This is the notification of the changes of the result string and the composition string.
-        public void OnTransitoryExtensionUpdated(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfRange rangeResult, NativeMethods.ITfRange rangeComposition, out bool fDeleteResultRange)
-        {
-
-            fDeleteResultRange = true;
-
-            if (rangeResult != null)
-            {
-                string result = StringFromITfRange(rangeResult, ecReadOnly);
-                if (result.Length > 0)
-                {
-                    if (_composition == null)
-                    {
-                        // We don't have the composition now and we got the result string.
-                        // The result text is result and automatic termination is true.
-                        _composition = new DefaultTextStoreTextComposition(result, TextCompositionAutoComplete.On);
-                        TextCompositionManager.StartComposition(_composition);
-
-                        // relese composition.
-                        _composition = null;
-                    }
-                    else
-                    {
-                        // Finalize the composition.
-                        _composition.SetCompositionText("");
-                        _composition.SetText(result);
-
-                        TextCompositionManager.CompleteComposition(_composition);
-
-                        // relese composition.
-                        _composition = null;
-                    }
-                }
-            }
-
-            if (rangeComposition != null)
-            {
-                string comp = StringFromITfRange(rangeComposition, ecReadOnly);
-                if (comp.Length > 0)
-                {
-                    if (_composition == null)
-                    {
-                        // Start the new composition.
-                        _composition = new DefaultTextStoreTextComposition("", TextCompositionAutoComplete.Off);
-                        _composition.SetCompositionText(comp);
-                        TextCompositionManager.StartComposition(_composition);
-                    }
-                    else
-                    {
-                        // Update the current composition.
-                        _composition.SetCompositionText(comp);
-                        _composition.SetText("");
-                        TextCompositionManager.UpdateComposition(_composition);
-                    }
-                }
-            }
-        }
-
-        #endregion ITfTransitoryExtensionSink
-
         #region ITfUIElementSink
 
         public int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow)
         {
             // Hide OS rendered Candidate list Window
-            pbShow = false;
+            pbShow = true;
             //TODO: Fetch candidate list by ITfCandidateListUIElement interface
 
             return NativeMethods.S_OK;
@@ -257,41 +194,11 @@ namespace ImeSharp
             set { _editCookie = value; }
         }
 
-        public int TransitoryExtensionSinkCookie
+        public int UIElementSinkCookie
         {
-            get { return _transitoryExtensionSinkCookie; }
-            set { _transitoryExtensionSinkCookie = value; }
+            get { return _uiElementSinkCookie; }
+            set { _uiElementSinkCookie = value; }
         }
-
-        //
-        // Get Transitory's DocumentMgr from GUID_COMPARTMENT_TRANSITORYEXTENSION_DOCUMENTMANAGER.
-        //
-        public NativeMethods.ITfDocumentMgr TransitoryDocumentManager
-        {
-            get
-            {
-
-                NativeMethods.ITfDocumentMgr doc;
-                NativeMethods.ITfCompartmentMgr compartmentMgr;
-                NativeMethods.ITfCompartment compartment;
-
-                // get compartment manager of the parent doc.
-                compartmentMgr = (NativeMethods.ITfCompartmentMgr)DocumentManager;
-
-                // get compartment.
-                Guid guid = NativeMethods.GUID_COMPARTMENT_TRANSITORYEXTENSION_DOCUMENTMANAGER;
-                compartmentMgr.GetCompartment(ref guid, out compartment);
-
-                // get value of the compartment.
-                object obj;
-                compartment.GetValue(out obj);
-                doc = obj as NativeMethods.ITfDocumentMgr;
-
-                Marshal.ReleaseComObject(compartment);
-                return doc;
-            }
-        }
-
 
         //------------------------------------------------------
         //
@@ -348,6 +255,6 @@ namespace ImeSharp
         private int _editCookie;
 
         // The transitory extension sink cookie.
-        private int _transitoryExtensionSinkCookie;
+        private int _uiElementSinkCookie;
     }
 }

@@ -7,6 +7,7 @@ namespace ImeSharp
     public static class InputMethod
     {
         private static IntPtr _windowHandle;
+        public static IntPtr WindowHandle { get { return _windowHandle; } }
 
         private static IntPtr _prevWndProc;
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
@@ -179,8 +180,8 @@ namespace ImeSharp
                 case NativeMethods.WM_KEYUP:
                     break;
                 case NativeMethods.WM_SETFOCUS:
-                    if (_enabled)
-                        EnableOrDisableInputMethod(true);
+                    //if (_enabled)
+                    //    EnableOrDisableInputMethod(true);
                     break;
                 default:
                     break;

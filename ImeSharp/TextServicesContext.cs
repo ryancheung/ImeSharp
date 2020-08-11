@@ -77,7 +77,7 @@ namespace ImeSharp
             // Unregister DefaultTextStore.
             if (_defaultTextStore != null)
             {
-                StopTransitoryExtension();
+                UnadviseUIElementSink();
                 if (_defaultTextStore.DocumentManager != null)
                 {
                     _defaultTextStore.DocumentManager.Pop(NativeMethods.PopFlags.TF_POPF_ALL);
@@ -194,7 +194,6 @@ namespace ImeSharp
             if (threadManager != null)
             {
                 NativeMethods.ITfDocumentMgr doc;
-                NativeMethods.ITfContext context;
                 int editCookie = NativeMethods.TF_INVALID_COOKIE;
 
                 // Activate TSF on this thread if this is the first TextStore.
@@ -210,18 +209,15 @@ namespace ImeSharp
 
                 // Create a TSF document.
                 threadManager.CreateDocumentMgr(out doc);
-                doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out context, out editCookie);
-                doc.Push(context);
-
-                // Release any native resources we're done with.
-                Marshal.ReleaseComObject(context);
+                doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _context, out editCookie);
+                doc.Push(_context);
 
                 // Same DocumentManager and EditCookie in _defaultTextStore.
                 _defaultTextStore.DocumentManager = doc;
                 _defaultTextStore.EditCookie = editCookie;
 
                 // Start the transitory extenstion so we can have Level 1 composition window from Cicero.
-                StartTransitoryExtension();
+                AdviseUIElementSink();
             }
         }
 
@@ -263,6 +259,14 @@ namespace ImeSharp
 
                 return _threadManager;
             }
+        }
+
+        /// <summary>
+        /// Return the created ITfContext object.
+        /// </summary>
+        public NativeMethods.ITfContext Context
+        {
+            get { return _context; }
         }
 
         //------------------------------------------------------
@@ -325,72 +329,23 @@ namespace ImeSharp
             }
         }
 
-        // Start the transitory extestion for Cicero Level1/Level2 composition window support.
-        private void StartTransitoryExtension()
+        private void AdviseUIElementSink()
         {
-            Guid guid;
-            Object var;
-            NativeMethods.ITfCompartmentMgr compmgr;
-            NativeMethods.ITfCompartment comp;
-            NativeMethods.ITfSource source;
-            int transitoryExtensionSinkCookie;
-
-            // Start TransitryExtension
-            compmgr = _defaultTextStore.DocumentManager as NativeMethods.ITfCompartmentMgr;
-
-            // Set GUID_COMPARTMENT_TRANSITORYEXTENSION
-            guid = NativeMethods.GUID_COMPARTMENT_TRANSITORYEXTENSION;
-            compmgr.GetCompartment(ref guid, out comp);
-            var = (int)1;
-            comp.SetValue(0, ref var);
-
-            // Advise TransitoryExtension Sink and store the cookie.
-            guid = NativeMethods.IID_ITfTransitoryExtensionSink;
-            source = _defaultTextStore.DocumentManager as NativeMethods.ITfSource;
-            if (source != null)
-            {
-                // DocumentManager only supports ITfSource on Longhorn, XP does not support it
-                source.AdviseSink(ref guid, _defaultTextStore, out transitoryExtensionSinkCookie);
-                _defaultTextStore.TransitoryExtensionSinkCookie = transitoryExtensionSinkCookie;
-            }
-
-            Marshal.ReleaseComObject(comp);
+            var source = ThreadManager as NativeMethods.ITfSource;
+            var guid = NativeMethods.IID_ITfUIElementSink;
+            int uiElementSinkCookie;
+            source.AdviseSink(ref guid, _defaultTextStore, out uiElementSinkCookie);
+            _defaultTextStore.UIElementSinkCookie = uiElementSinkCookie;
         }
 
-        // Stop TransitoryExtesion
-        private void StopTransitoryExtension()
+        private void UnadviseUIElementSink()
         {
-            // Unadvice the transitory extension sink.
-            if (_defaultTextStore.TransitoryExtensionSinkCookie != NativeMethods.TF_INVALID_COOKIE)
+            var source = _defaultTextStore.DocumentManager as NativeMethods.ITfSource;
+
+            if (_defaultTextStore.UIElementSinkCookie != NativeMethods.TF_INVALID_COOKIE)
             {
-                NativeMethods.ITfSource source;
-                source = _defaultTextStore.DocumentManager as NativeMethods.ITfSource;
-                if (source != null)
-                {
-                    // DocumentManager only supports ITfSource on Longhorn, XP does not support it
-                    source.UnadviseSink(_defaultTextStore.TransitoryExtensionSinkCookie);
-                }
-                _defaultTextStore.TransitoryExtensionSinkCookie = NativeMethods.TF_INVALID_COOKIE;
-            }
-
-            // Reset GUID_COMPARTMENT_TRANSITORYEXTENSION
-            NativeMethods.ITfCompartmentMgr compmgr;
-            compmgr = _defaultTextStore.DocumentManager as NativeMethods.ITfCompartmentMgr;
-
-            if (compmgr != null)
-            {
-                Guid guid;
-                Object var;
-                NativeMethods.ITfCompartment comp;
-                guid = NativeMethods.GUID_COMPARTMENT_TRANSITORYEXTENSION;
-                compmgr.GetCompartment(ref guid, out comp);
-
-                if (comp != null)
-                {
-                    var = (int)0;
-                    comp.SetValue(0, ref var);
-                    Marshal.ReleaseComObject(comp);
-                }
+                source.UnadviseSink(_defaultTextStore.UIElementSinkCookie);
+                _defaultTextStore.UIElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
             }
         }
 
@@ -399,7 +354,6 @@ namespace ImeSharp
         //  Private Properties
         //
         //------------------------------------------------------
-
 
         // Create an empty dim on demand.
         private NativeMethods.ITfDocumentMgr EmptyDocumentManager
@@ -423,6 +377,7 @@ namespace ImeSharp
             }
         }
 
+
         //------------------------------------------------------
         //
         //  Private Fields
@@ -431,11 +386,9 @@ namespace ImeSharp
 
         #region Private Fields
 
-        // Cached Dispatcher default text store.
-        // We must cache the DefaultTextStore because we sometimes need it from
-        // a worker thread if the AppDomain is torn down before the Dispatcher
-        // is shutdown.
         private DefaultTextStore _defaultTextStore;
+
+        private NativeMethods.ITfContext _context;
 
         // This is true if thread manager is activated.
         private bool _istimactivated;
