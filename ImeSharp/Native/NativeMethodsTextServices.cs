@@ -1443,6 +1443,53 @@ namespace ImeSharp.Native
             void GetCurrentPage(out uint page);
         }
 
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("ea1ea137-19df-11d7-a6d2-00065b84435c")]
+        public interface ITfUIElement
+        {
+            [PreserveSig]
+            int GetDescription([MarshalAs(UnmanagedType.BStr)] out string bstrDescription);
+            [PreserveSig]
+            int GetGUID(out Guid pguid);
+            [PreserveSig]
+            int Show([MarshalAs(UnmanagedType.Bool)] bool bShow);
+            [PreserveSig]
+            int IsShown([MarshalAs(UnmanagedType.Bool)] out bool bShow);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("887AA91E-ACBA-4931-84DA-3C5208CF543F")]
+        public interface IEnumTfUIElements
+        {
+            [PreserveSig]
+            int Clone(out IEnumTfUIElements pEnum);
+            [PreserveSig]
+            int Next(uint ulCount, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface)] ITfUIElement[] pElement, out uint cFetched);
+            [PreserveSig]
+            int Reset();
+            [PreserveSig]
+            int Skip(uint ulCount);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("EA1EA135-19DF-11D7-A6D2-00065B84435C")]
+        public interface ITfUIElementMgr
+        {
+            [PreserveSig]
+            int BeginUIElement(IntPtr pElement, [MarshalAs(UnmanagedType.Bool)] ref bool bShow, out uint dwUIElementId);
+            [PreserveSig]
+            int UpdateUIElement(uint dwUIElementId);
+            [PreserveSig]
+            int EndUIElement(uint dwUIElementId);
+            [PreserveSig]
+            int GetUIElement(uint dwUIElementId, out IntPtr pElement);
+            [PreserveSig]
+            int EnumUIElements(out IEnumTfUIElements pEnum);
+        }
+
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]

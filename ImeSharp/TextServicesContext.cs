@@ -243,7 +243,6 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-
         /// <summary>
         /// The default ITfThreadMgrEx object.
         /// </summary>
