@@ -317,14 +317,15 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        // Cal ITfThreadMgr.SetFocus() with dim
+        // Cal ITfThreadMgr.AssociateFocus() with dim
         private void SetFocusOnDim(NativeMethods.ITfDocumentMgr dim)
         {
             NativeMethods.ITfThreadMgrEx threadmgr = ThreadManager;
 
             if (threadmgr != null)
             {
-                threadmgr.SetFocus(dim);
+                NativeMethods.ITfDocumentMgr prevDocMgr;
+                threadmgr.AssociateFocus(InputMethod.WindowHandle, dim, out prevDocMgr);
             }
         }
 

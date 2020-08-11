@@ -179,10 +179,6 @@ namespace ImeSharp
                     break;
                 case NativeMethods.WM_KEYUP:
                     break;
-                case NativeMethods.WM_SETFOCUS:
-                    //if (_enabled)
-                    //    EnableOrDisableInputMethod(true);
-                    break;
                 default:
                     break;
             }
