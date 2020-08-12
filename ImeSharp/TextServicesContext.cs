@@ -202,15 +202,15 @@ namespace ImeSharp
                     //temp variable created to retrieve the value
                     // which is then stored in the critical data.
                     int clientIdTemp;
-                    threadManager.ActivateEx(out clientIdTemp, NativeMethods.TfTMAE.TF_TMAE_UIELEMENTENABLEDONLY);
+                    threadManager.ActivateEx(out clientIdTemp, NativeMethods.ThreadManagerFlags.TF_TMF_UIELEMENTENABLEDONLY);
                     _clientId = clientIdTemp;
                     _istimactivated = true;
                 }
 
                 // Create a TSF document.
                 threadManager.CreateDocumentMgr(out doc);
-                doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _context, out editCookie);
-                doc.Push(_context);
+                doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _editContext, out editCookie);
+                doc.Push(_editContext);
 
                 // Same DocumentManager and EditCookie in _defaultTextStore.
                 _defaultTextStore.DocumentManager = doc;
@@ -263,9 +263,9 @@ namespace ImeSharp
         /// <summary>
         /// Return the created ITfContext object.
         /// </summary>
-        public NativeMethods.ITfContext Context
+        public NativeMethods.ITfContext EditContext
         {
-            get { return _context; }
+            get { return _editContext; }
         }
 
         //------------------------------------------------------
@@ -388,7 +388,7 @@ namespace ImeSharp
 
         private DefaultTextStore _defaultTextStore;
 
-        private NativeMethods.ITfContext _context;
+        private NativeMethods.ITfContext _editContext;
 
         // This is true if thread manager is activated.
         private bool _istimactivated;

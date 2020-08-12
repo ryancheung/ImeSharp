@@ -51,7 +51,7 @@ namespace ImeSharp
         {
             //             VerifyAccess();
 
-            var context = TextServicesContext.Current.Context;
+            var context = TextServicesContext.Current.EditContext;
             NativeMethods.ITfContextOwnerCompositionServices compositionService = context as NativeMethods.ITfContextOwnerCompositionServices;
             NativeMethods.ITfCompositionView composition = GetComposition(context);
 
