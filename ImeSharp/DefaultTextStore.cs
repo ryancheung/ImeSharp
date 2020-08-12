@@ -134,7 +134,7 @@ namespace ImeSharp
 
         //------------------------------------------------------
         //
-        //  Public Methods - ITfTransitoryExtensionSink
+        //  Public Methods - ITfUIElementSink
         //
         //------------------------------------------------------
 
@@ -319,7 +319,6 @@ namespace ImeSharp
         // get the text from ITfRange.
         private string StringFromITfRange(NativeMethods.ITfRange range, int ecReadOnly)
         {
-            // Transitory Document uses ther TextStore, which is ACP base.
             NativeMethods.ITfRangeACP rangeacp = (NativeMethods.ITfRangeACP)range;
             int start;
             int count;
