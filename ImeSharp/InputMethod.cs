@@ -20,7 +20,7 @@ namespace ImeSharp
         {
             get
             {
-                if (_defaultImc == null)
+                if (_defaultImc == IntPtr.Zero)
                 {
                     IntPtr himc = NativeMethods.ImmCreateContext();
 
