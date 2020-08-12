@@ -169,7 +169,16 @@ namespace ImeSharp
 
             TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
 
-            NativeMethods.ITfCandidateListUIElementBehavior candList = (NativeMethods.ITfCandidateListUIElementBehavior)Marshal.GetObjectForIUnknown(uiElement);
+            NativeMethods.ITfCandidateListUIElementBehavior candList;
+
+            try
+            {
+                candList = (NativeMethods.ITfCandidateListUIElementBehavior)Marshal.GetObjectForIUnknown(uiElement);
+            }
+            catch(System.InvalidCastException)
+            {
+                return;
+            }
 
             int selection = 0;
             int currentPage = 0;
