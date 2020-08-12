@@ -121,7 +121,7 @@ namespace ImeSharp
             if (_lastCompositionView != null)
             {
                 NativeMethods.ITfRange range;
-                _lastCompositionView.GetRange(out  range);
+                _lastCompositionView.GetRange(out range);
                 var str = StringFromITfRange(range, ecReadOnly);
                 Console.WriteLine("composition string: {0}", str);
             }
@@ -143,22 +143,90 @@ namespace ImeSharp
         public int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow)
         {
             // Hide OS rendered Candidate list Window
-            pbShow = true;
-            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
+            pbShow = false;
+
+            OnUIElement(dwUIElementId, true);
 
             return NativeMethods.S_OK;
         }
 
         public int UpdateUIElement(int dwUIElementId)
         {
-            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
+            OnUIElement(dwUIElementId, false);
             return NativeMethods.S_OK;
         }
 
         public int EndUIElement(int dwUIElementId)
         {
-            //TODO: Close candidate list
             return NativeMethods.S_OK;
+        }
+
+        public const int MaxCandidateCount = 100;
+
+        private void OnUIElement(int uiElementId, bool onStart)
+        {
+            IntPtr uiElement;
+
+            TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
+
+            NativeMethods.ITfCandidateListUIElementBehavior candList = (NativeMethods.ITfCandidateListUIElementBehavior)Marshal.GetObjectForIUnknown(uiElement);
+
+            int selection = 0;
+            int currentPage = 0;
+            int count = 0;
+            int pageCount = 0;
+            int pageStart = 0;
+            int pageSize = 0;
+            int i, j;
+
+            candList.GetSelection(out selection);
+            candList.GetCurrentPage(out currentPage);
+
+            candList.GetCount(out count);
+            // Limit max candidate count to 100, or candList.GetString() would crash.
+            // Don't know why???
+            if (count > MaxCandidateCount)
+                count = MaxCandidateCount;
+
+            candList.GetPageIndex(null, 0, out pageCount);
+
+            if (pageCount > 0)
+            {
+                int[] pageStartIndexes = new int[pageCount];
+                candList.GetPageIndex(pageStartIndexes, pageCount, out pageCount);
+                pageStart = pageStartIndexes[currentPage];
+
+                if (pageStart >= count - 1)
+                {
+                    candList.Abort();
+                    return;
+                }
+
+                if (currentPage < pageCount - 1)
+                    pageSize = Math.Min(count, pageStartIndexes[currentPage + 1]) - pageStart;
+                else
+                    pageSize = count - pageStart;
+            }
+
+            selection -= pageStart;
+
+            string[] candidates = new string[pageSize];
+
+            for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
+            {
+                string candidate;
+                candList.GetString(i, out candidate);
+
+                candidates[j] = candidate;
+            }
+
+            Console.WriteLine("========");
+            Console.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
+            for (int k = 0; k < candidates.Length; k++)
+                Console.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
+            Console.WriteLine("++++++++");
+
+            Marshal.ReleaseComObject(candList);
         }
 
         #endregion ITfUIElementSink

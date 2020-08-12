@@ -1465,31 +1465,44 @@ namespace ImeSharp.Native
 
             //HRESULT GetCount(
             //    [out] UINT *puCount) = 0;
-            void GetCount(out uint count);
+            void GetCount(out int count);
 
             //HRESULT GetSelection(
             //    [out] UINT *puIndex) = 0;
-            void GetSelection(out uint index);
+            void GetSelection(out int index);
 
             //HRESULT GetString(
             //    [in] UINT uIndex,
             //    [out] BSTR *pstr) = 0;
-            void GetString(uint index, [MarshalAs(UnmanagedType.BStr)] out string str);
+            void GetString(int index, [MarshalAs(UnmanagedType.BStr)] out string str);
 
             //HRESULT GetPageIndex(
             //    [length_is][size_is][out] UINT *pIndex,
             //    [in] UINT uSize,
             //    [out] UINT *puPageCnt) = 0;
-            void GetPageIndex(IntPtr index, uint size, out uint pageCount);
+            void GetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int size, out int pageCount);
 
             //HRESULT SetPageIndex(
             //    [size_is][in] UINT *pIndex,
             //    [in] UINT uPageCnt) = 0;
-            void SetPageIndex(IntPtr index, uint pageCount);
+            void SetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int pageCount);
 
             //HRESULT GetCurrentPage(
             //    [out] UINT *puPage) = 0;
-            void GetCurrentPage(out uint page);
+            void GetCurrentPage(out int page);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("85FAD185-58CE-497A-9460-355366B64B9A")]
+        public interface ITfCandidateListUIElementBehavior : ITfCandidateListUIElement
+        {
+            [PreserveSig]
+            int SetSelection(int nIndex);
+            [PreserveSig]
+            int Finalize();
+            [PreserveSig]
+            int Abort();
         }
 
         [ComImport]
@@ -1528,13 +1541,13 @@ namespace ImeSharp.Native
         public interface ITfUIElementMgr
         {
             [PreserveSig]
-            int BeginUIElement(IntPtr pElement, [MarshalAs(UnmanagedType.Bool)] ref bool bShow, out uint dwUIElementId);
+            int BeginUIElement(IntPtr pElement, [MarshalAs(UnmanagedType.Bool)] ref bool bShow, out int dwUIElementId);
             [PreserveSig]
-            int UpdateUIElement(uint dwUIElementId);
+            int UpdateUIElement(int dwUIElementId);
             [PreserveSig]
-            int EndUIElement(uint dwUIElementId);
+            int EndUIElement(int dwUIElementId);
             [PreserveSig]
-            int GetUIElement(uint dwUIElementId, out IntPtr pElement);
+            int GetUIElement(int dwUIElementId, out IntPtr pElement);
             [PreserveSig]
             int EnumUIElements(out IEnumTfUIElements pEnum);
         }

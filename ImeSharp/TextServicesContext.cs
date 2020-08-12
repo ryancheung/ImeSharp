@@ -254,6 +254,7 @@ namespace ImeSharp
                 if (_threadManager == null)
                 {
                     _threadManager = TextServicesLoader.Load();
+                    _uiElementMgr = _threadManager as NativeMethods.ITfUIElementMgr;
                 }
 
                 return _threadManager;
@@ -266,6 +267,14 @@ namespace ImeSharp
         public NativeMethods.ITfContext EditContext
         {
             get { return _editContext; }
+        }
+
+        /// <summary>
+        /// Return the created ITfContext object.
+        /// </summary>
+        public NativeMethods.ITfUIElementMgr UIElementMgr
+        {
+            get { return _uiElementMgr; }
         }
 
         //------------------------------------------------------
@@ -395,6 +404,7 @@ namespace ImeSharp
         private DefaultTextStore _defaultTextStore;
 
         private NativeMethods.ITfContext _editContext;
+        private NativeMethods.ITfUIElementMgr _uiElementMgr;
 
         // This is true if thread manager is activated.
         private bool _istimactivated;
