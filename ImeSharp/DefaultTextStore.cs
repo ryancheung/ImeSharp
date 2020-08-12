@@ -11,7 +11,7 @@ namespace ImeSharp
     // the focus on the document manager for its own TextStore.
     public class DefaultTextStore : NativeMethods.ITfContextOwner,
                                        NativeMethods.ITfContextOwnerCompositionSink,
-                                       NativeMethods.ITfTransitoryExtensionSink,
+                                       NativeMethods.ITfTextEditSink,
                                        NativeMethods.ITfUIElementSink
     {
         //------------------------------------------------------
@@ -26,7 +26,8 @@ namespace ImeSharp
         public DefaultTextStore()
         {
             _editCookie = NativeMethods.TF_INVALID_COOKIE;
-            _transitoryExtensionSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            _uiElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            _editSinkCookie = NativeMethods.TF_INVALID_COOKIE;
         }
 
         #endregion Constructors
@@ -62,12 +63,13 @@ namespace ImeSharp
 
         public void GetStatus(out NativeMethods.TS_STATUS status)
         {
+            // Disable IME by default.
             status = new NativeMethods.TS_STATUS();
         }
 
         public void GetWnd(out IntPtr hwnd)
         {
-            hwnd = IntPtr.Zero;
+            hwnd = InputMethod.WindowHandle;
         }
 
         public void GetValue(ref Guid guidAttribute, out object varValue)
@@ -90,86 +92,51 @@ namespace ImeSharp
         {
             // Return true in ok to start the composition.
             ok = true;
+            _lastCompositionView = null;
         }
+
+        private NativeMethods.ITfCompositionView _lastCompositionView;
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
         {
+            _lastCompositionView = view;
         }
 
         public void OnEndComposition(NativeMethods.ITfCompositionView view)
         {
+            _lastCompositionView = null;
+
+            NativeMethods.ITfRange range;
+            view.GetRange(out range);
+            var str = StringFromITfRange(range, _editSinkCookie);
+            Console.WriteLine("result string: {0}", str);
         }
 
         #endregion ITfContextOwnerCompositionSink
 
-        //------------------------------------------------------
-        //
-        //  Public Methods - ITfTransitoryExtensionSink
-        //
-        //------------------------------------------------------
+        #region ITfTextEditSink
 
-        #region ITfTransitoryExtensionSink
-
-        // Transitory Document has been updated.
-        // This is the notification of the changes of the result string and the composition string.
-        public void OnTransitoryExtensionUpdated(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfRange rangeResult, NativeMethods.ITfRange rangeComposition, out bool fDeleteResultRange)
+        public void OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-
-            fDeleteResultRange = true;
-
-            if (rangeResult != null)
+            if (_lastCompositionView != null)
             {
-                string result = StringFromITfRange(rangeResult, ecReadOnly);
-                if (result.Length > 0)
-                {
-                    if (_composition == null)
-                    {
-                        // We don't have the composition now and we got the result string.
-                        // The result text is result and automatic termination is true.
-                        _composition = new DefaultTextStoreTextComposition(result, TextCompositionAutoComplete.On);
-                        TextCompositionManager.StartComposition(_composition);
-
-                        // relese composition.
-                        _composition = null;
-                    }
-                    else
-                    {
-                        // Finalize the composition.
-                        _composition.SetCompositionText("");
-                        _composition.SetText(result);
-
-                        TextCompositionManager.CompleteComposition(_composition);
-
-                        // relese composition.
-                        _composition = null;
-                    }
-                }
+                NativeMethods.ITfRange range;
+                _lastCompositionView.GetRange(out range);
+                var str = StringFromITfRange(range, ecReadOnly);
+                Console.WriteLine("composition string: {0}", str);
             }
 
-            if (rangeComposition != null)
-            {
-                string comp = StringFromITfRange(rangeComposition, ecReadOnly);
-                if (comp.Length > 0)
-                {
-                    if (_composition == null)
-                    {
-                        // Start the new composition.
-                        _composition = new DefaultTextStoreTextComposition("", TextCompositionAutoComplete.Off);
-                        _composition.SetCompositionText(comp);
-                        TextCompositionManager.StartComposition(_composition);
-                    }
-                    else
-                    {
-                        // Update the current composition.
-                        _composition.SetCompositionText(comp);
-                        _composition.SetText("");
-                        TextCompositionManager.UpdateComposition(_composition);
-                    }
-                }
-            }
+            // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
+            Marshal.ReleaseComObject(editRecord);
         }
 
-        #endregion ITfTransitoryExtensionSink
+        #endregion ITfTextEditSink
+
+        //------------------------------------------------------
+        //
+        //  Public Methods - ITfUIElementSink
+        //
+        //------------------------------------------------------
 
         #region ITfUIElementSink
 
@@ -177,21 +144,89 @@ namespace ImeSharp
         {
             // Hide OS rendered Candidate list Window
             pbShow = false;
-            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
+
+            OnUIElement(dwUIElementId, true);
 
             return NativeMethods.S_OK;
         }
 
         public int UpdateUIElement(int dwUIElementId)
         {
-            //TODO: Fetch candidate list by ITfCandidateListUIElement interface
+            OnUIElement(dwUIElementId, false);
             return NativeMethods.S_OK;
         }
 
         public int EndUIElement(int dwUIElementId)
         {
-            //TODO: Close candidate list
             return NativeMethods.S_OK;
+        }
+
+        public const int MaxCandidateCount = 100;
+
+        private void OnUIElement(int uiElementId, bool onStart)
+        {
+            IntPtr uiElement;
+
+            TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
+
+            NativeMethods.ITfCandidateListUIElementBehavior candList = (NativeMethods.ITfCandidateListUIElementBehavior)Marshal.GetObjectForIUnknown(uiElement);
+
+            int selection = 0;
+            int currentPage = 0;
+            int count = 0;
+            int pageCount = 0;
+            int pageStart = 0;
+            int pageSize = 0;
+            int i, j;
+
+            candList.GetSelection(out selection);
+            candList.GetCurrentPage(out currentPage);
+
+            candList.GetCount(out count);
+            // Limit max candidate count to 100, or candList.GetString() would crash.
+            // Don't know why???
+            if (count > MaxCandidateCount)
+                count = MaxCandidateCount;
+
+            candList.GetPageIndex(null, 0, out pageCount);
+
+            if (pageCount > 0)
+            {
+                int[] pageStartIndexes = new int[pageCount];
+                candList.GetPageIndex(pageStartIndexes, pageCount, out pageCount);
+                pageStart = pageStartIndexes[currentPage];
+
+                if (pageStart >= count - 1)
+                {
+                    candList.Abort();
+                    return;
+                }
+
+                if (currentPage < pageCount - 1)
+                    pageSize = Math.Min(count, pageStartIndexes[currentPage + 1]) - pageStart;
+                else
+                    pageSize = count - pageStart;
+            }
+
+            selection -= pageStart;
+
+            string[] candidates = new string[pageSize];
+
+            for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
+            {
+                string candidate;
+                candList.GetString(i, out candidate);
+
+                candidates[j] = candidate;
+            }
+
+            Console.WriteLine("========");
+            Console.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
+            for (int k = 0; k < candidates.Length; k++)
+                Console.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
+            Console.WriteLine("++++++++");
+
+            Marshal.ReleaseComObject(candList);
         }
 
         #endregion ITfUIElementSink
@@ -257,41 +292,17 @@ namespace ImeSharp
             set { _editCookie = value; }
         }
 
-        public int TransitoryExtensionSinkCookie
+        public int UIElementSinkCookie
         {
-            get { return _transitoryExtensionSinkCookie; }
-            set { _transitoryExtensionSinkCookie = value; }
+            get { return _uiElementSinkCookie; }
+            set { _uiElementSinkCookie = value; }
         }
 
-        //
-        // Get Transitory's DocumentMgr from GUID_COMPARTMENT_TRANSITORYEXTENSION_DOCUMENTMANAGER.
-        //
-        public NativeMethods.ITfDocumentMgr TransitoryDocumentManager
+        public int EditSinkCookie
         {
-            get
-            {
-
-                NativeMethods.ITfDocumentMgr doc;
-                NativeMethods.ITfCompartmentMgr compartmentMgr;
-                NativeMethods.ITfCompartment compartment;
-
-                // get compartment manager of the parent doc.
-                compartmentMgr = (NativeMethods.ITfCompartmentMgr)DocumentManager;
-
-                // get compartment.
-                Guid guid = NativeMethods.GUID_COMPARTMENT_TRANSITORYEXTENSION_DOCUMENTMANAGER;
-                compartmentMgr.GetCompartment(ref guid, out compartment);
-
-                // get value of the compartment.
-                object obj;
-                compartment.GetValue(out obj);
-                doc = obj as NativeMethods.ITfDocumentMgr;
-
-                Marshal.ReleaseComObject(compartment);
-                return doc;
-            }
+            get { return _editSinkCookie; }
+            set { _editSinkCookie = value; }
         }
-
 
         //------------------------------------------------------
         //
@@ -308,7 +319,6 @@ namespace ImeSharp
         // get the text from ITfRange.
         private string StringFromITfRange(NativeMethods.ITfRange range, int ecReadOnly)
         {
-            // Transitory Document uses ther TextStore, which is ACP base.
             NativeMethods.ITfRangeACP rangeacp = (NativeMethods.ITfRangeACP)range;
             int start;
             int count;
@@ -348,6 +358,8 @@ namespace ImeSharp
         private int _editCookie;
 
         // The transitory extension sink cookie.
-        private int _transitoryExtensionSinkCookie;
+        private int _uiElementSinkCookie;
+
+        private int _editSinkCookie;
     }
 }

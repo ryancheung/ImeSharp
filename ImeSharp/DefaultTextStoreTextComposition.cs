@@ -51,7 +51,7 @@ namespace ImeSharp
         {
             //             VerifyAccess();
 
-            NativeMethods.ITfContext context = GetTransitoryContext();
+            var context = TextServicesContext.Current.EditContext;
             NativeMethods.ITfContextOwnerCompositionServices compositionService = context as NativeMethods.ITfContextOwnerCompositionServices;
             NativeMethods.ITfCompositionView composition = GetComposition(context);
 
@@ -70,21 +70,6 @@ namespace ImeSharp
         //  private Methods 
         //
         //------------------------------------------------------
-
-        /// <summary>
-        ///     Get the base ITfContext of the transitory document.
-        /// </summary>
-        private NativeMethods.ITfContext GetTransitoryContext()
-        {
-            DefaultTextStore defaultTextStore = DefaultTextStore.Current;
-            NativeMethods.ITfDocumentMgr doc = defaultTextStore.TransitoryDocumentManager;
-            NativeMethods.ITfContext context;
-
-            doc.GetBase(out context);
-
-            Marshal.ReleaseComObject(doc);
-            return context;
-        }
 
         /// <summary>
         ///     Get ITfContextView of the context.

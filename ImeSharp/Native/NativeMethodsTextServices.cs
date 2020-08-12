@@ -542,6 +542,13 @@ namespace ImeSharp.Native
             GXFPF_NEAREST = 0x2,
         }
 
+        public enum TfActiveSelEnd
+        {
+            TF_AE_NONE,
+            TF_AE_START,
+            TF_AE_END
+        }
+
         /// <summary></summary>
         public enum TsActiveSelEnd
         {
@@ -731,15 +738,28 @@ namespace ImeSharp.Native
 
         /// <summary></summary>
         [Flags]
-        public enum TfTMAE : uint
+        public enum ThreadManagerFlags : uint
         {
-            TF_TMAE_NOACTIVATETIP = 0x00000001,
-            TF_TMAE_SECUREMODE = 0x00000002,
-            TF_TMAE_UIELEMENTENABLEDONLY = 0x00000004,
-            TF_TMAE_COMLESS = 0x00000008,
-            TF_TMAE_WOW16 = 0x00000010,
-            TF_TMAE_NOACTIVATEKEYBOARDLAYOUT = 0x00000020,
-            TF_TMAE_CONSOLE = 0x00000040,
+            TF_TMF_NOACTIVATETIP = 0x00000001,
+            TF_TMF_SECUREMODE = 0x00000002,
+            TF_TMF_UIELEMENTENABLEDONLY = 0x00000004,
+            TF_TMF_COMLESS = 0x00000008,
+            TF_TMF_WOW16 = 0x00000010,
+            TF_TMF_CONSOLE = 0x00000040,
+            TF_TMF_IMMERSIVEMODE = 0x40000000,
+            TF_TMF_ACTIVATED = 0x80000000
+
+        }
+
+        [Flags]
+        public enum EditSessionFlags : uint
+        {
+            TF_ES_ASYNCDONTCARE = 0x0,
+            TF_ES_SYNC = 0x1,
+            TF_ES_READ = 0x2,
+            TF_ES_WRITE = 0x4,
+            TF_ES_READWRITE = TF_ES_READ | TF_ES_WRITE,
+            TF_ES_ASYNC = 0x8
         }
 
         #endregion Enums
@@ -751,6 +771,13 @@ namespace ImeSharp.Native
         //------------------------------------------------------
 
         #region Structs
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TF_STATUS
+        {
+            public DynamicStatusFlags dwDynamicFlags;
+            public StaticStatusFlags dwStaticFlags;
+        }
 
         /// <summary></summary>
         [StructLayout(LayoutKind.Sequential)]
@@ -1069,6 +1096,21 @@ namespace ImeSharp.Native
             private int _pt_y;
         }
 
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TF_SELECTION
+        {
+            [MarshalAs(UnmanagedType.Interface)]
+            public ITfRange range;
+            public TF_SELECTIONSTYLE style;
+        }
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct TF_SELECTIONSTYLE
+        {
+            public TfActiveSelEnd ase;
+            [MarshalAs(UnmanagedType.Bool)]
+            public bool fInterimChar;
+        }
 
         #endregion Structs
 
@@ -1190,122 +1232,129 @@ namespace ImeSharp.Native
             void Clear(int editCookie, ITfRange range);
         }
 
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("D60A7B49-1B9F-4BE2-B702-47E9DC05DEC3")]
+        public interface ITfClientId
+        {
+            [PreserveSig]
+            int GetClientId(ref Guid rclsid, out int clientId);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("AA80E803-2021-11D2-93E0-0060B067B86E")]
+        public interface ITfEditSession
+        {
+            [PreserveSig]
+            int DoEditSession(int editCookie);
+        }
+
+        [ComImport]
+        [Guid("2433BF8E-0F9B-435C-BA2C-180611978C30")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface ITfContextView
+        {
+            [PreserveSig]
+            int GetRangeFromPoint(int editCookie, ref POINT pt, uint dwFlags, out ITfRange pRange);
+            [PreserveSig]
+            int GetTextExt(int editCookie, ITfRange pRange, out RECT rc, [MarshalAs(UnmanagedType.Bool)] out bool fClipped);
+            [PreserveSig]
+            int GetScreenExt(out RECT prc);
+            [PreserveSig]
+            int GetWnd(out IntPtr phwnd);
+        }
+
+        [ComImport]
+        [Guid("F0C0F8DD-CF38-44E1-BB0F-68CF0D551C78")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface IEnumTfContextViews
+        {
+            [PreserveSig]
+            int Clone(out IEnumTfContextViews pEnum);
+            [PreserveSig]
+            int Next(uint ulCount, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface)] ITfContextView[] rgViews, out uint cFetched);
+            [PreserveSig]
+            int Reset();
+            [PreserveSig]
+            int Skip(uint ulCount);
+        }
+
+        [ComImport]
+        [Guid("17D49A3D-F8B8-4B2F-B254-52319DD64C53")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface ITfReadOnlyProperty
+        {
+            [PreserveSig]
+            int GetType([Out] out Guid guid);
+            [PreserveSig]
+            int EnumRanges(int editCookie, out IEnumTfRanges ppEnum, ITfRange pTargetRange);
+            [PreserveSig]
+            int GetValue(int editCookie, ITfRange pRange, [MarshalAs(UnmanagedType.Struct)] out object varValue);
+            [PreserveSig]
+            int GetContext(out ITfContext ppContext);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("19188CB0-ACA9-11D2-AFC5-00105A2799B5")]
+        public interface IEnumTfProperties
+        {
+            [PreserveSig]
+            int Clone(out IEnumTfProperties ppEnum);
+            [PreserveSig]
+            int Next(uint ulCount, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface)] ITfProperty[] ppProp, out uint cFetched);
+            [PreserveSig]
+            int Reset();
+            [PreserveSig]
+            int Skip(uint ulCount);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("463A506D-6992-49D2-9B88-93D55E70BB16")]
+        public interface ITfRangeBackup
+        {
+            [PreserveSig]
+            int Restore(int editCookie, ITfRange pRange);
+        }
+
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         [Guid("aa80e7fd-2021-11d2-93e0-0060b067b86e")]
         public interface ITfContext
         {
-            //const DWORD TF_ES_ASYNCDONTCARE   = 0x0;
-            //const DWORD TF_ES_SYNC            = 0x1;
-            //const DWORD TF_ES_READ            = 0x2;
-            //const DWORD TF_ES_READWRITE       = 0x6;
-            //const DWORD TF_ES_ASYNC           = 0x8;
-
-            /// <summary></summary>
-            //HRESULT RequestEditSession([in] TfClientId tid,
-            //                        [in] ITfEditSession *pes,
-            //                        [in] DWORD dwFlags,
-            //                        [out] HRESULT *phrSession);
-            int stub_RequestEditSession();
-
-            /// <summary></summary>
-            //HRESULT InWriteSession([in] TfClientId tid,
-            //                    [out] BOOL *pfWriteSession);
-            void InWriteSession(int clientId, [MarshalAs(UnmanagedType.Bool)] out bool inWriteSession);
-
-            //typedef [uuid(1690be9b-d3e9-49f6-8d8b-51b905af4c43)] enum { TF_AE_NONE = 0, TF_AE_START = 1, TF_AE_END = 2 } TfActiveSelEnd;
-
-            //typedef [uuid(36ae42a4-6989-4bdc-b48a-6137b7bf2e42)] struct TF_SELECTIONSTYLE
-            //{
-            //    TfActiveSelEnd ase;
-            //    BOOL fInterimChar;
-            //} TF_SELECTIONSTYLE;
-
-            //typedef [uuid(75eb22f2-b0bf-46a8-8006-975a3b6efcf1)] struct TF_SELECTION
-            //{
-            //    ITfRange *range;
-            //    TF_SELECTIONSTYLE style;
-            //} TF_SELECTION;
-
-            //const ULONG TF_DEFAULT_SELECTION = TS_DEFAULT_SELECTION;
-
-            /// <summary></summary>
-            //HRESULT GetSelection([in] TfEditCookie ec,
-            //                    [in] ULONG ulIndex,
-            //                    [in] ULONG ulCount,
-            //                    [out, size_is(ulCount), length_is(*pcFetched)] TF_SELECTION *pSelection,
-            //                    [out] ULONG *pcFetched);
-            void stub_GetSelection();
-
-            /// <summary></summary>
-            //HRESULT SetSelection([in] TfEditCookie ec, 
-            //                    [in] ULONG ulCount,
-            //                    [in, size_is(ulCount)] const TF_SELECTION *pSelection);
-            void stub_SetSelection();
-
-            //HRESULT GetStart([in] TfEditCookie ec,
-            //                [out] ITfRange **ppStart);
-            /// <summary></summary>
-            void GetStart(int ec, out ITfRange range);
-
-            /// <summary></summary>
-            //HRESULT GetEnd([in] TfEditCookie ec,
-            //            [out] ITfRange **ppEnd);
-            void stub_GetEnd();
-
-            // bit values for TF_STATUS's dwDynamicFlags field
-            //const DWORD TF_SD_READONLY        = TS_SD_READONLY;       // if set, document is read only; writes will fail
-            //const DWORD TF_SD_LOADING         = TS_SD_LOADING;        // if set, document is loading, expect additional inserts
-            // bit values for TF_STATUS's dwStaticFlags field
-            //const DWORD TF_SS_DISJOINTSEL     = TS_SS_DISJOINTSEL;    // if set, the document supports multiple selections
-            //const DWORD TF_SS_REGIONS         = TS_SS_REGIONS;        // if clear, the document will never contain multiple regions
-            //const DWORD TF_SS_TRANSITORY      = TS_SS_TRANSITORY;     // if set, the document is expected to have a short lifespan
-
-            //typedef [uuid(bc7d979a-846a-444d-afef-0a9bfa82b961)] TS_STATUS TF_STATUS;
-
-            /// <summary></summary>
-            //HRESULT GetActiveView([out] ITfContextView **ppView);
-            void stub_GetActiveView();
-
-            /// <summary></summary>
-            //HRESULT EnumViews([out] IEnumTfContextViews **ppEnum);
-            void stub_EnumViews();
-
-            /// <summary></summary>
-            //HRESULT GetStatus([out] TF_STATUS *pdcs);
-            void stub_GetStatus();
-
-            //HRESULT GetProperty([in] REFGUID guidProp,
-            //                    [out] ITfProperty **ppProp);
-            void GetProperty(ref Guid guid, out ITfProperty property);
-
-            /// <summary></summary>
-            //HRESULT GetAppProperty([in] REFGUID guidProp,
-            //                    [out] ITfReadOnlyProperty **ppProp);
-            void stub_GetAppProperty();
-
-            /// <summary></summary>
-            //HRESULT TrackProperties([in, size_is(cProp)] const GUID **prgProp,
-            //                        [in] ULONG cProp,
-            //                        [in, size_is(cAppProp)] const GUID **prgAppProp,
-            //                        [in] ULONG cAppProp,   
-            //                        [out] ITfReadOnlyProperty **ppProperty);
-            void stub_TrackProperties();
-
-            /// <summary></summary>
-            //HRESULT EnumProperties([out] IEnumTfProperties **ppEnum);
-            void stub_EnumProperties();
-
-            /// <summary></summary>
-            //HRESULT GetDocumentMgr([out] ITfDocumentMgr **ppDm);
-            void stub_GetDocumentMgr();
-
-            /// <summary></summary>
-            //HRESULT CreateRangeBackup([in] TfEditCookie ec,
-            //                        [in] ITfRange *pRange,
-            //                        [out] ITfRangeBackup **ppBackup);
-            void stub_CreateRangeBackup();
+            [PreserveSig]
+            int RequestEditSession(int clientId, ITfEditSession editSession, EditSessionFlags flags, out int hrSession);
+            [PreserveSig]
+            int InWriteSession(int clientId, [MarshalAs(UnmanagedType.Bool)] out bool fWriteSession);
+            [PreserveSig]
+            int GetSelection(int editCookie, uint ulIndex, uint ulCount, [Out] TF_SELECTION[] pSelection, out uint pcFetched);
+            [PreserveSig]
+            int SetSelection(int editCookie, uint ulCount, ref TF_SELECTION pSelection);
+            [PreserveSig]
+            int GetStart(int editCookie, out ITfRange pStart);
+            [PreserveSig]
+            int GetEnd(int editCookie, out ITfRange pEnd);
+            [PreserveSig]
+            int GetActiveView(out ITfContextView ppView);
+            [PreserveSig]
+            int EnumViews(out IEnumTfContextViews ppEnum);
+            [PreserveSig]
+            int GetStatus(out TF_STATUS dcs);
+            [PreserveSig]
+            int GetProperty(ref Guid guidProp, out ITfProperty ppProp);
+            [PreserveSig]
+            int GetAppProperty(ref Guid guidProp, out ITfReadOnlyProperty ppProp);
+            [PreserveSig]
+            int TrackProperties(IntPtr prgProp, uint cProp, IntPtr prgAppProp, uint cAppProp, out ITfReadOnlyProperty ppProperty);
+            [PreserveSig]
+            int EnumProperties(out IEnumTfProperties ppEnum);
+            [PreserveSig]
+            int GetDocumentMgr(out ITfDocumentMgr ppDm);
+            [PreserveSig]
+            int CreateRangeBackup(int editCookie, ITfRange pRange, out ITfRangeBackup pBackup);
         }
 
         /// <summary></summary>
@@ -1416,31 +1465,91 @@ namespace ImeSharp.Native
 
             //HRESULT GetCount(
             //    [out] UINT *puCount) = 0;
-            void GetCount(out uint count);
+            void GetCount(out int count);
 
             //HRESULT GetSelection(
             //    [out] UINT *puIndex) = 0;
-            void GetSelection(out uint index);
+            void GetSelection(out int index);
 
             //HRESULT GetString(
             //    [in] UINT uIndex,
             //    [out] BSTR *pstr) = 0;
-            void GetString(uint index, [MarshalAs(UnmanagedType.BStr)] out string str);
+            void GetString(int index, [MarshalAs(UnmanagedType.BStr)] out string str);
 
             //HRESULT GetPageIndex(
             //    [length_is][size_is][out] UINT *pIndex,
             //    [in] UINT uSize,
             //    [out] UINT *puPageCnt) = 0;
-            void GetPageIndex(IntPtr index, uint size, out uint pageCount);
+            void GetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int size, out int pageCount);
 
             //HRESULT SetPageIndex(
             //    [size_is][in] UINT *pIndex,
             //    [in] UINT uPageCnt) = 0;
-            void SetPageIndex(IntPtr index, uint pageCount);
+            void SetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int pageCount);
 
             //HRESULT GetCurrentPage(
             //    [out] UINT *puPage) = 0;
-            void GetCurrentPage(out uint page);
+            void GetCurrentPage(out int page);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("85FAD185-58CE-497A-9460-355366B64B9A")]
+        public interface ITfCandidateListUIElementBehavior : ITfCandidateListUIElement
+        {
+            [PreserveSig]
+            int SetSelection(int nIndex);
+            [PreserveSig]
+            int Finalize();
+            [PreserveSig]
+            int Abort();
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("ea1ea137-19df-11d7-a6d2-00065b84435c")]
+        public interface ITfUIElement
+        {
+            [PreserveSig]
+            int GetDescription([MarshalAs(UnmanagedType.BStr)] out string bstrDescription);
+            [PreserveSig]
+            int GetGUID(out Guid pguid);
+            [PreserveSig]
+            int Show([MarshalAs(UnmanagedType.Bool)] bool bShow);
+            [PreserveSig]
+            int IsShown([MarshalAs(UnmanagedType.Bool)] out bool bShow);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("887AA91E-ACBA-4931-84DA-3C5208CF543F")]
+        public interface IEnumTfUIElements
+        {
+            [PreserveSig]
+            int Clone(out IEnumTfUIElements pEnum);
+            [PreserveSig]
+            int Next(uint ulCount, [MarshalAs(UnmanagedType.LPArray, ArraySubType = UnmanagedType.Interface)] ITfUIElement[] pElement, out uint cFetched);
+            [PreserveSig]
+            int Reset();
+            [PreserveSig]
+            int Skip(uint ulCount);
+        }
+
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("EA1EA135-19DF-11D7-A6D2-00065B84435C")]
+        public interface ITfUIElementMgr
+        {
+            [PreserveSig]
+            int BeginUIElement(IntPtr pElement, [MarshalAs(UnmanagedType.Bool)] ref bool bShow, out int dwUIElementId);
+            [PreserveSig]
+            int UpdateUIElement(int dwUIElementId);
+            [PreserveSig]
+            int EndUIElement(int dwUIElementId);
+            [PreserveSig]
+            int GetUIElement(int dwUIElementId, out IntPtr pElement);
+            [PreserveSig]
+            int EnumUIElements(out IEnumTfUIElements pEnum);
         }
 
         /// <summary></summary>
@@ -1721,10 +1830,10 @@ namespace ImeSharp.Native
         public interface ITfThreadMgrEx : ITfThreadMgr
         {
             [PreserveSig]
-            int ActivateEx(out int clientId, TfTMAE dwFlags);
+            int ActivateEx(out int clientId, ThreadManagerFlags dwFlags);
 
             [PreserveSig]
-            int GetActiveFlags(out TfTMAE lpdwFlags);
+            int GetActiveFlags(out ThreadManagerFlags lpdwFlags);
         }
 
         /// <summary></summary>
