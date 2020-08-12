@@ -11,6 +11,7 @@ namespace ImeSharp
     // the focus on the document manager for its own TextStore.
     public class DefaultTextStore : NativeMethods.ITfContextOwner,
                                        NativeMethods.ITfContextOwnerCompositionSink,
+                                       NativeMethods.ITfTextEditSink,
                                        NativeMethods.ITfUIElementSink
     {
         //------------------------------------------------------
@@ -26,6 +27,7 @@ namespace ImeSharp
         {
             _editCookie = NativeMethods.TF_INVALID_COOKIE;
             _uiElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            _editSinkCookie = NativeMethods.TF_INVALID_COOKIE;
         }
 
         #endregion Constructors
@@ -90,17 +92,45 @@ namespace ImeSharp
         {
             // Return true in ok to start the composition.
             ok = true;
+            _lastCompositionView = null;
         }
+
+        private NativeMethods.ITfCompositionView _lastCompositionView;
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
         {
+            _lastCompositionView = view;
         }
 
         public void OnEndComposition(NativeMethods.ITfCompositionView view)
         {
+            _lastCompositionView = null;
+
+            NativeMethods.ITfRange range;
+            view.GetRange(out range);
+            var str = StringFromITfRange(range, _editSinkCookie);
+            Console.WriteLine("result string: {0}", str);
         }
 
         #endregion ITfContextOwnerCompositionSink
+
+        #region ITfTextEditSink
+
+        public void OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
+        {
+            if (_lastCompositionView != null)
+            {
+                NativeMethods.ITfRange range;
+                _lastCompositionView.GetRange(out  range);
+                var str = StringFromITfRange(range, ecReadOnly);
+                Console.WriteLine("composition string: {0}", str);
+            }
+
+            // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
+            Marshal.ReleaseComObject(editRecord);
+        }
+
+        #endregion ITfTextEditSink
 
         //------------------------------------------------------
         //
@@ -200,6 +230,12 @@ namespace ImeSharp
             set { _uiElementSinkCookie = value; }
         }
 
+        public int EditSinkCookie
+        {
+            get { return _editSinkCookie; }
+            set { _editSinkCookie = value; }
+        }
+
         //------------------------------------------------------
         //
         //  public Events
@@ -256,5 +292,7 @@ namespace ImeSharp
 
         // The transitory extension sink cookie.
         private int _uiElementSinkCookie;
+
+        private int _editSinkCookie;
     }
 }

@@ -336,6 +336,12 @@ namespace ImeSharp
             int uiElementSinkCookie;
             source.AdviseSink(ref guid, _defaultTextStore, out uiElementSinkCookie);
             _defaultTextStore.UIElementSinkCookie = uiElementSinkCookie;
+
+            source = _editContext as NativeMethods.ITfSource;
+            guid = NativeMethods.IID_ITfTextEditSink;
+            int editSinkCookie;
+            source.AdviseSink(ref guid, _defaultTextStore, out editSinkCookie);
+            _defaultTextStore.EditSinkCookie = editSinkCookie;
         }
 
         private void UnadviseUIElementSink()
