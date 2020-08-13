@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 
 namespace ImeSharp
 {
@@ -12,7 +13,7 @@ namespace ImeSharp
             if (composition == null)
                 throw new ArgumentNullException("composition");
 
-            Console.WriteLine("StartComposition, composition string: {0}", composition.CompositionText);
+            Debug.WriteLine("StartComposition, composition string: {0}", new object [] { composition.CompositionText });
             //TODO: Raise composition events
         }
 
@@ -24,7 +25,7 @@ namespace ImeSharp
             if (composition == null)
                 throw new ArgumentNullException("composition");
 
-            Console.WriteLine("UpdateComposition, composition string: {0}", composition.CompositionText);
+            Debug.WriteLine("UpdateComposition, composition string: {0}", new object [] { composition.CompositionText });
             //TODO: Raise composition event
         }
 
@@ -36,7 +37,7 @@ namespace ImeSharp
             if (composition == null)
                 throw new ArgumentNullException("composition");
 
-            Console.WriteLine("CompleteComposition, composition string: {0}, result text: {1}", composition.CompositionText, composition.Text);
+            Debug.WriteLine("CompleteComposition, composition string: {0}, result text: {1}", composition.CompositionText, composition.Text);
             //TODO: Raise composition result event
         }
     }

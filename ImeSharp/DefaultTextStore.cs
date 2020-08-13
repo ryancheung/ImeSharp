@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ImeSharp.Native;
 
@@ -109,7 +110,7 @@ namespace ImeSharp
             NativeMethods.ITfRange range;
             view.GetRange(out range);
             var str = StringFromITfRange(range, _editSinkCookie);
-            Console.WriteLine("result string: {0}", str);
+            Debug.WriteLine("result string: {0}", new object[] { str });
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -123,7 +124,7 @@ namespace ImeSharp
                 NativeMethods.ITfRange range;
                 _lastCompositionView.GetRange(out range);
                 var str = StringFromITfRange(range, ecReadOnly);
-                Console.WriteLine("composition string: {0}", str);
+                Debug.WriteLine("composition string: {0}", new object[] { str });
             }
 
             // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
@@ -229,11 +230,11 @@ namespace ImeSharp
                 candidates[j] = candidate;
             }
 
-            Console.WriteLine("========");
-            Console.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
+            Debug.WriteLine("========");
+            Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
             for (int k = 0; k < candidates.Length; k++)
-                Console.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-            Console.WriteLine("++++++++");
+                Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
+            Debug.WriteLine("++++++++");
 
             Marshal.ReleaseComObject(candList);
         }
