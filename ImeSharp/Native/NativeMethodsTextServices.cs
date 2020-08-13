@@ -1495,8 +1495,60 @@ namespace ImeSharp.Native
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         [Guid("85FAD185-58CE-497A-9460-355366B64B9A")]
-        public interface ITfCandidateListUIElementBehavior : ITfCandidateListUIElement
+        public interface ITfCandidateListUIElementBehavior //: ITfCandidateListUIElement
         {
+            //HRESULT GetDescription(
+            //    [out] BSTR *pbstrDescription) = 0;
+            void GetDescription([MarshalAs(UnmanagedType.BStr)] out string description);
+
+            //HRESULT GetGUID(
+            //    [out] GUID *pguid) = 0;
+            void GetGUID(out Guid guid);
+
+            //virtual HRESULT Show(
+            //    [in] BOOL bShow) = 0;
+            void Show([MarshalAs(UnmanagedType.Bool)] bool foreground);
+
+            //HRESULT IsShown(
+            //    [out] BOOL *pbShow) = 0;
+            void IsShown([MarshalAs(UnmanagedType.Bool)] out bool foreground);
+
+            //HRESULT GetUpdatedFlags(
+            //    [out] DWORD *pdwFlags) = 0;
+            void GetUpdatedFlags(out int dwFlags);
+
+            //HRESULT GetDocumentMgr(
+            //    [out] ITfDocumentMgr **ppdim) = 0;
+            void GetDocumentMgr(out ITfDocumentMgr docMgr);
+
+            //HRESULT GetCount(
+            //    [out] UINT *puCount) = 0;
+            void GetCount(out int count);
+
+            //HRESULT GetSelection(
+            //    [out] UINT *puIndex) = 0;
+            void GetSelection(out int index);
+
+            //HRESULT GetString(
+            //    [in] UINT uIndex,
+            //    [out] BSTR *pstr) = 0;
+            void GetString(int index, [MarshalAs(UnmanagedType.BStr)] out string str);
+
+            //HRESULT GetPageIndex(
+            //    [length_is][size_is][out] UINT *pIndex,
+            //    [in] UINT uSize,
+            //    [out] UINT *puPageCnt) = 0;
+            void GetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int size, out int pageCount);
+
+            //HRESULT SetPageIndex(
+            //    [size_is][in] UINT *pIndex,
+            //    [in] UINT uPageCnt) = 0;
+            void SetPageIndex([MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] int[] pageStartIndexes, int pageCount);
+
+            //HRESULT GetCurrentPage(
+            //    [out] UINT *puPage) = 0;
+            void GetCurrentPage(out int page);
+
             [PreserveSig]
             int SetSelection(int nIndex);
             [PreserveSig]
@@ -1827,8 +1879,56 @@ namespace ImeSharp.Native
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         [Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c")]
-        public interface ITfThreadMgrEx : ITfThreadMgr
+        public interface ITfThreadMgrEx //: ITfThreadMgr  derivation isn't working
         {
+            // <summary></summary>
+            //HRESULT Activate([out] TfClientId *ptid);
+            void Activate(out int clientId);
+
+            // <summary></summary>
+            //HRESULT Deactivate();
+            void Deactivate();
+
+            // <summary></summary>
+            //HRESULT CreateDocumentMgr([out] ITfDocumentMgr **ppdim);
+            void CreateDocumentMgr(out ITfDocumentMgr docMgr);
+
+            /// <summary></summary>
+            //HRESULT EnumDocumentMgrs([out] IEnumTfDocumentMgrs **ppEnum);
+            void EnumDocumentMgrs(out IEnumTfDocumentMgrs enumDocMgrs);
+
+            /// <summary></summary>
+            //HRESULT GetFocus([out] ITfDocumentMgr **ppdimFocus);
+            void GetFocus(out ITfDocumentMgr docMgr);
+
+            // <summary></summary>
+            //HRESULT SetFocus([in] ITfDocumentMgr *pdimFocus);
+            void SetFocus(ITfDocumentMgr docMgr);
+
+            /// <summary></summary>
+            //HRESULT AssociateFocus([in] HWND hwnd,
+            //                       [in, unique] ITfDocumentMgr *pdimNew,
+            //                       [out] ITfDocumentMgr **ppdimPrev);
+            void AssociateFocus(IntPtr hwnd, ITfDocumentMgr newDocMgr, out ITfDocumentMgr prevDocMgr);
+
+            /// <summary></summary>
+            //HRESULT IsThreadFocus([out] BOOL *pfThreadFocus);
+            void IsThreadFocus([MarshalAs(UnmanagedType.Bool)] out bool isFocus);
+
+            //HRESULT GetFunctionProvider([in] REFCLSID clsid,
+            //                            [out] ITfFunctionProvider **ppFuncProv);
+            /// <summary></summary>
+            [PreserveSig]
+            int GetFunctionProvider(ref Guid classId, out ITfFunctionProvider funcProvider);
+
+            /// <summary></summary>
+            //HRESULT EnumFunctionProviders([out] IEnumTfFunctionProviders **ppEnum);
+            void EnumFunctionProviders(out IEnumTfFunctionProviders enumProviders);
+
+            //HRESULT GetGlobalCompartment([out] ITfCompartmentMgr **ppCompMgr);
+            /// <summary></summary>
+            void GetGlobalCompartment(out ITfCompartmentMgr compartmentMgr);
+
             [PreserveSig]
             int ActivateEx(out int clientId, ThreadManagerFlags dwFlags);
 
