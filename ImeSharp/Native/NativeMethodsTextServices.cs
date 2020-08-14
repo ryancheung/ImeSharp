@@ -75,6 +75,11 @@ namespace ImeSharp.Native
         /// <summary></summary>
         public const int TS_E_FORMAT = unchecked((int)0x8004020a);
 
+        public const int TS_E_NOLOCK = unchecked((int)0x80040201);
+        public const int TS_E_NOOBJECT = unchecked((int)0x80040202);
+        public const int TS_E_NOSERVICE = unchecked((int)0x80040203);
+        public const int TS_E_INVALIDPOS = unchecked((int)0x80040200);
+
         /// <summary></summary>
         public const int TF_INVALID_COOKIE = -1;
 
@@ -144,6 +149,7 @@ namespace ImeSharp.Native
 
         /// <summary></summary>
         public static readonly Guid GUID_PROP_READING = new Guid(0x5463f7c0, 0x8e31, 0x11d2, 0xbf, 0x46, 0x00, 0x10, 0x5a, 0x27, 0x99, 0xb5);
+        public static readonly Guid GUID_PROP_COMPOSING = new Guid("e12ac060-af15-11d2-afc5-00105a2799b5");
 
 
         /// <summary></summary>
@@ -842,7 +848,7 @@ namespace ImeSharp.Native
             public TsActiveSelEnd ase;
             /// <summary></summary>
             [MarshalAs(UnmanagedType.Bool)]
-            public bool interimChar;
+            public bool fInterimChar;
         }
 
         /// <summary></summary>
@@ -850,9 +856,9 @@ namespace ImeSharp.Native
         public struct TS_SELECTION_ACP
         {
             /// <summary></summary>
-            public int start;
+            public int acpStart;
             /// <summary></summary>
-            public int end;
+            public int acpEnd;
             /// <summary></summary>
             public TS_SELECTIONSTYLE style;
         }
@@ -872,11 +878,11 @@ namespace ImeSharp.Native
         public struct TS_TEXTCHANGE
         {
             /// <summary></summary>
-            public int start;
+            public int acpStart;
             /// <summary></summary>
-            public int oldEnd;
+            public int acpOldEnd;
             /// <summary></summary>
-            public int newEnd;
+            public int acpNewEnd;
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1096,11 +1102,21 @@ namespace ImeSharp.Native
             private int _pt_y;
         }
 
+        [StructLayout(LayoutKind.Sequential, Pack = 8), Guid("D678C645-EB6A-45C9-B4EE-0F3E3A991348")]
+        public struct TF_PROPERTYVAL
+        {
+            public Guid guidId;
+            [MarshalAs(UnmanagedType.Struct)]
+            public object varValue;
+        }
+
         [StructLayout(LayoutKind.Sequential)]
         public struct TF_SELECTION
         {
-            [MarshalAs(UnmanagedType.Interface)]
-            public ITfRange range;
+            // Marshal as interface isn't working.
+            //[MarshalAs(UnmanagedType.Interface)]
+            //public ITfRange range;
+            public IntPtr range;
             public TF_SELECTIONSTYLE style;
         }
 
@@ -1111,6 +1127,9 @@ namespace ImeSharp.Native
             [MarshalAs(UnmanagedType.Bool)]
             public bool fInterimChar;
         }
+
+        [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
+        internal class NullAllowedAttribute : Attribute { }
 
         #endregion Structs
 
@@ -1201,7 +1220,8 @@ namespace ImeSharp.Native
             //HRESULT GetValue([in] TfEditCookie ec,
             //                [in] ITfRange *pRange,
             //                [out] VARIANT *pvarValue);
-            void GetValue(int editCookie, ITfRange range, out object value);
+            [PreserveSig]
+            int GetValue(int editCookie, ITfRange range, out object value);
 
             /// <summary></summary>
             //HRESULT GetContext([out] ITfContext **ppContext);
@@ -1330,9 +1350,9 @@ namespace ImeSharp.Native
             [PreserveSig]
             int InWriteSession(int clientId, [MarshalAs(UnmanagedType.Bool)] out bool fWriteSession);
             [PreserveSig]
-            int GetSelection(int editCookie, uint ulIndex, uint ulCount, [Out] TF_SELECTION[] pSelection, out uint pcFetched);
+            int GetSelection(int editCookie, int ulIndex, int ulCount, ref TF_SELECTION pSelection, [NullAllowed] out int cFetched);
             [PreserveSig]
-            int SetSelection(int editCookie, uint ulCount, ref TF_SELECTION pSelection);
+            int SetSelection(int editCookie, int ulCount, ref TF_SELECTION pSelection);
             [PreserveSig]
             int GetStart(int editCookie, out ITfRange pStart);
             [PreserveSig]
@@ -1348,7 +1368,7 @@ namespace ImeSharp.Native
             [PreserveSig]
             int GetAppProperty(ref Guid guidProp, out ITfReadOnlyProperty ppProp);
             [PreserveSig]
-            int TrackProperties(IntPtr prgProp, uint cProp, IntPtr prgAppProp, uint cAppProp, out ITfReadOnlyProperty ppProperty);
+            int TrackProperties(IntPtr rgProps, int cProp, IntPtr prgAppProp, int cAppProp, out ITfReadOnlyProperty pProperty);
             [PreserveSig]
             int EnumProperties(out IEnumTfProperties ppEnum);
             [PreserveSig]
@@ -1553,8 +1573,7 @@ namespace ImeSharp.Native
             int SetSelection(int nIndex);
             [PreserveSig]
             int Finalize();
-            [PreserveSig]
-            int Abort();
+            void Abort();
         }
 
         [ComImport]
@@ -1613,14 +1632,17 @@ namespace ImeSharp.Native
             //HRESULT BeginUIElement(
             //    [in] DWORD dwUIElementId,
             //    [out][in] BOOL *pbShow) = 0;
+            [PreserveSig]
             int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow);
 
             //HRESULT UpdateUIElement(
             //    [in] DWORD dwUIElementId) = 0;
+            [PreserveSig]
             int UpdateUIElement(int dwUIElementId);
 
             //HRESULT EndUIElement(
             //    [in] DWORD dwUIElementId) = 0;
+            [PreserveSig]
             int EndUIElement(int dwUIElementId);
         };
 
@@ -1628,27 +1650,19 @@ namespace ImeSharp.Native
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
         [Guid("858f956a-972f-42a2-a2f2-0321e1abe209")]
-        public interface ITfTransitoryExtensionUIElement
+        public interface ITfTransitoryExtensionUIElement //: ITfUIElement
         {
-            //HRESULT GetDocumentMgr(
-            //    [out] ITfDocumentMgr **ppdim) = 0;
-            int GetDocumentMgr(out ITfDocumentMgr docMgr);
-
-            //HRESULT GetDescription(
-            //    [out] BSTR *pbstrDescription) = 0;
-            void GetDescription([MarshalAs(UnmanagedType.BStr)] out string description);
-
-            //HRESULT GetGUID(
-            //    [out] GUID *pguid) = 0;
-            void GetGUID(out Guid guid);
-
-            //HRESULT Show(
-            //    [in] BOOL bShow) = 0;
+            [PreserveSig]
+            int GetDescription([MarshalAs(UnmanagedType.BStr)] out string bstrDescription);
+            [PreserveSig]
+            int GetGUID(out Guid pguid);
+            [PreserveSig]
             int Show([MarshalAs(UnmanagedType.Bool)] bool bShow);
+            [PreserveSig]
+            int IsShown([MarshalAs(UnmanagedType.Bool)] out bool bShow);
 
-            //HRESULT IsShown(
-            //    [out] BOOL *pbShow) = 0;
-            void IsShown([MarshalAs(UnmanagedType.Bool)] out bool bShow);
+            [PreserveSig]
+            int GetDocumentMgr(out ITfDocumentMgr docMgr);
         };
 
         /// <summary></summary>
@@ -1946,20 +1960,24 @@ namespace ImeSharp.Native
             //HRESULT AdviseSink([in] REFIID riid,
             //                   [in, iid_is(riid)] IUnknown *punk,
             //                   [in] DWORD dwMask);
-            void AdviseSink(ref Guid riid, [MarshalAs(UnmanagedType.Interface)] object obj, AdviseFlags flags);
+            [PreserveSig]
+            int AdviseSink(ref Guid riid, [MarshalAs(UnmanagedType.Interface)] object obj, AdviseFlags flags);
 
             /// <summary></summary>
             //HRESULT UnadviseSink([in] IUnknown *punk);
-            void UnadviseSink([MarshalAs(UnmanagedType.Interface)] object obj);
+            [PreserveSig]
+            int UnadviseSink([MarshalAs(UnmanagedType.Interface)] object obj);
 
             /// <summary></summary>
             //HRESULT RequestLock([in] DWORD dwLockFlags,
             //                    [out] HRESULT *phrSession);
-            void RequestLock(LockFlags flags, out int hrSession);
+            [PreserveSig]
+            int RequestLock(LockFlags flags, out int hrSession);
 
             /// <summary></summary>
             //HRESULT GetStatus([out] TS_STATUS *pdcs);
-            void GetStatus(out TS_STATUS status);
+            [PreserveSig]
+            int GetStatus(out TS_STATUS status);
 
             /// <summary></summary>
             //HRESULT QueryInsert([in] LONG acpTestStart,
@@ -1967,19 +1985,23 @@ namespace ImeSharp.Native
             //                    [in] ULONG cch,
             //                    [out] LONG *pacpResultStart,
             //                    [out] LONG *pacpResultEnd);
-            void QueryInsert(int start, int end, int cch, out int startResult, out int endResult);
+            [PreserveSig]
+            int QueryInsert(int start, int end, int cch, out int startResult, out int endResult);
 
             /// <summary></summary>
             //HRESULT GetSelection([in] ULONG ulIndex,
             //                     [in] ULONG ulCount,
             //                     [out, size_is(ulCount), length_is(*pcFetched)] TS_SELECTION_ACP *pSelection,
             //                     [out] ULONG *pcFetched);
-            void GetSelection(int index, int count, [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] TS_SELECTION_ACP[] selection, out int fetched);
+            //int GetSelection(int index, int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] TS_SELECTION_ACP[] selections, out int fetched);
+            [PreserveSig]
+            int GetSelection(int index, int count, TS_SELECTION_ACP[] selections, out int fetched);
 
             /// <summary></summary>
             //HRESULT SetSelection([in] ULONG ulCount,
             //                     [in, size_is(ulCount)] const TS_SELECTION_ACP *pSelection);
-            void SetSelection(int count, [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_SELECTION_ACP[] selection);
+            [PreserveSig]
+            int SetSelection(int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_SELECTION_ACP[] selection);
 
             /// <summary></summary>
             //HRESULT GetText([in] LONG acpStart,
@@ -1991,7 +2013,8 @@ namespace ImeSharp.Native
             //                [in] ULONG cRunInfoReq,
             //                [out] ULONG *pcRunInfoRet,
             //                [out] LONG *pacpNext);
-            void GetText(int start, int end,
+            [PreserveSig]
+            int GetText(int start, int end,
                 [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] char[] text,
                 int cchReq, out int charsCopied,
                 [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 6)] TS_RUNINFO[] runInfo,
@@ -2005,7 +2028,8 @@ namespace ImeSharp.Native
             //                [in, size_is(cch)] const WCHAR *pchText,
             //                [in] ULONG cch,
             //                [out] TS_TEXTCHANGE *pChange);
-            void SetText(SetTextFlags flags, int start, int end,
+            [PreserveSig]
+            int SetText(SetTextFlags flags, int start, int end,
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] char[] text,
                 int cch, out TS_TEXTCHANGE change);
 
@@ -2013,20 +2037,23 @@ namespace ImeSharp.Native
             //HRESULT GetFormattedText([in] LONG acpStart,
             //                         [in] LONG acpEnd,
             //                         [out] IDataObject **ppDataObject);
-            void GetFormattedText(int start, int end, [MarshalAs(UnmanagedType.Interface)] out object obj);
+            [PreserveSig]
+            int GetFormattedText(int start, int end, [MarshalAs(UnmanagedType.Interface)] out object obj);
 
             /// <summary></summary>
             //HRESULT GetEmbedded([in] LONG acpPos,
             //                    [in] REFGUID rguidService,
             //                    [in] REFIID riid,
             //                    [out, iid_is(riid)] IUnknown **ppunk);
-            void GetEmbedded(int position, ref Guid guidService, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out object obj);
+            [PreserveSig]
+            int GetEmbedded(int position, ref Guid guidService, ref Guid riid, [MarshalAs(UnmanagedType.Interface)] out object obj);
 
             /// <summary></summary>
             //HRESULT QueryInsertEmbedded([in] const GUID *pguidService,
             //                            [in] const FORMATETC *pFormatEtc,
             //                            [out] BOOL *pfInsertable);
-            void QueryInsertEmbedded(ref Guid guidService, int /*ref Win32.FORMATETC*/ formatEtc, [MarshalAs(UnmanagedType.Bool)] out bool insertable);
+            [PreserveSig]
+            int QueryInsertEmbedded(ref Guid guidService, ref int /*ref Win32.FORMATETC*/ formatEtc, [MarshalAs(UnmanagedType.Bool)] out bool insertable);
 
             /// <summary></summary>
             //HRESULT InsertEmbedded([in] DWORD dwFlags,
@@ -2034,7 +2061,8 @@ namespace ImeSharp.Native
             //                       [in] LONG acpEnd,
             //                       [in] IDataObject *pDataObject,
             //                       [out] TS_TEXTCHANGE *pChange);
-            void InsertEmbedded(InsertEmbeddedFlags flags, int start, int end, [MarshalAs(UnmanagedType.Interface)] object obj, out TS_TEXTCHANGE change);
+            [PreserveSig]
+            int InsertEmbedded(InsertEmbeddedFlags flags, int start, int end, [MarshalAs(UnmanagedType.Interface)] object obj, out TS_TEXTCHANGE change);
 
             /// <summary></summary>
             //HRESULT InsertTextAtSelection([in] DWORD dwFlags,
@@ -2043,7 +2071,8 @@ namespace ImeSharp.Native
             //                              [out] LONG *pacpStart,
             //                              [out] LONG *pacpEnd,
             //                              [out] TS_TEXTCHANGE *pChange);
-            void InsertTextAtSelection(InsertAtSelectionFlags flags,
+            [PreserveSig]
+            int InsertTextAtSelection(InsertAtSelectionFlags flags,
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] char[] text,
                 int cch,
                 out int start, out int end, out TS_TEXTCHANGE change);
@@ -2054,13 +2083,14 @@ namespace ImeSharp.Native
             //                                  [out] LONG *pacpStart,
             //                                  [out] LONG *pacpEnd,
             //                                  [out] TS_TEXTCHANGE *pChange);
-            void InsertEmbeddedAtSelection(InsertAtSelectionFlags flags, [MarshalAs(UnmanagedType.Interface)] object obj,
+            [PreserveSig]
+            int InsertEmbeddedAtSelection(InsertAtSelectionFlags flags, [MarshalAs(UnmanagedType.Interface)] object obj,
                                         out int start, out int end, out TS_TEXTCHANGE change);
 
             /// <summary></summary>
             //HRESULT RequestSupportedAttrs([in] DWORD dwFlags,
             //                              [in] ULONG cFilterAttrs,
-            //                              [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs);
+            //                              [in, size_is(cFilterAttrs), unique] const Guid *paFilterAttrs);
             [PreserveSig]
             int RequestSupportedAttrs(AttributeFlags flags, int count,
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] Guid[] filterAttributes);
@@ -2068,7 +2098,7 @@ namespace ImeSharp.Native
             /// <summary></summary>
             //HRESULT RequestAttrsAtPosition([in] LONG acpPos,
             //                               [in] ULONG cFilterAttrs,
-            //                               [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+            //                               [in, size_is(cFilterAttrs), unique] const Guid *paFilterAttrs,
             //                               [in] DWORD dwFlags);
             [PreserveSig]
             int RequestAttrsAtPosition(int position, int count,
@@ -2078,9 +2108,10 @@ namespace ImeSharp.Native
             /// <summary></summary>
             //HRESULT RequestAttrsTransitioningAtPosition([in] LONG acpPos,
             //                                            [in] ULONG cFilterAttrs,
-            //                                            [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+            //                                            [in, size_is(cFilterAttrs), unique] const Guid *paFilterAttrs,
             //                                            [in] DWORD dwFlags);
-            void RequestAttrsTransitioningAtPosition(int position, int count,
+            [PreserveSig]
+            int RequestAttrsTransitioningAtPosition(int position, int count,
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] Guid[] filterAttributes,
                 AttributeFlags flags);
 
@@ -2088,12 +2119,13 @@ namespace ImeSharp.Native
             //HRESULT FindNextAttrTransition([in] LONG acpStart,
             //                               [in] LONG acpHalt,
             //                               [in] ULONG cFilterAttrs,
-            //                               [in, size_is(cFilterAttrs), unique] const TS_ATTRID *paFilterAttrs,
+            //                               [in, size_is(cFilterAttrs), unique] const Guid *paFilterAttrs,
             //                               [in] DWORD dwFlags,
             //                               [out] LONG *pacpNext,
             //                               [out] BOOL *pfFound,
             //                               [out] LONG *plFoundOffset);
-            void FindNextAttrTransition(int start, int halt, int count,
+            [PreserveSig]
+            int FindNextAttrTransition(int start, int halt, int count,
                 [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Guid[] filterAttributes,
                 AttributeFlags flags, out int acpNext, [MarshalAs(UnmanagedType.Bool)] out bool found, out int foundOffset);
 
@@ -2101,23 +2133,27 @@ namespace ImeSharp.Native
             //HRESULT RetrieveRequestedAttrs([in] ULONG ulCount,
             //                               [out, size_is(ulCount), length_is(*pcFetched)] TS_ATTRVAL *paAttrVals,
             //                               [out] ULONG *pcFetched);
-            void RetrieveRequestedAttrs(int count,
+            [PreserveSig]
+            int RetrieveRequestedAttrs(int count,
                 [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_ATTRVAL[] attributeVals,
                 out int countFetched);
 
             /// <summary></summary>
-            //HRESULT GetEnd([out] LONG *pacp);
-            void GetEnd(out int end);
+            //HRESULT GetEndACP([out] LONG *pacp);
+            [PreserveSig]
+            int GetEndACP(out int end);
 
             /// <summary></summary>
             //HRESULT GetActiveView([out] TsViewCookie *pvcView);
-            void GetActiveView(out int viewCookie);
+            [PreserveSig]
+            int GetActiveView(out int viewCookie);
 
             /// <summary></summary>
             //HRESULT GetACPFromPoint([in] TsViewCookie vcView,
             //                        [in] const POINT *ptScreen,
             //                        [in] DWORD dwFlags, [out] LONG *pacp);
-            void GetACPFromPoint(int viewCookie, ref POINT point, GetPositionFromPointFlags flags, out int position);
+            [PreserveSig]
+            int GetACPFromPoint(int viewCookie, ref POINT point, GetPositionFromPointFlags flags, out int position);
 
             /// <summary></summary>
             //HRESULT GetTextExt([in] TsViewCookie vcView,
@@ -2125,18 +2161,78 @@ namespace ImeSharp.Native
             //                   [in] LONG acpEnd,
             //                   [out] RECT *prc,
             //                   [out] BOOL *pfClipped);
-            void GetTextExt(int viewCookie, int start, int end, out RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool clipped);
+            [PreserveSig]
+            int GetTextExt(int viewCookie, int start, int end, out RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool clipped);
 
             /// <summary></summary>
             //HRESULT GetScreenExt([in] TsViewCookie vcView,
             //                     [out] RECT *prc);
-            void GetScreenExt(int viewCookie, out RECT rect);
+            [PreserveSig]
+            int GetScreenExt(int viewCookie, out RECT rect);
 
             /// <summary></summary>
             //HRESULT GetWnd([in] TsViewCookie vcView,
             //               [out] HWND *phwnd);
-            void GetWnd(int viewCookie, out IntPtr hwnd);
-        };
+            [PreserveSig]
+            int GetWnd(int viewCookie, out IntPtr hwnd);
+        }
+
+        [ComImport]
+        [Guid("f86ad89f-5fe4-4b8d-bb9f-ef3797a84f1f")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface ITextStoreACP2
+        {
+            [PreserveSig]
+            int AdviseSink(ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] object punk, AdviseFlags dwMask);
+            [PreserveSig]
+            int UnadviseSink([MarshalAs(UnmanagedType.IUnknown)] object punk);
+            [PreserveSig]
+            int RequestLock(LockFlags dwLockFlags, [MarshalAs(UnmanagedType.Error)] out int hrSession);
+            [PreserveSig]
+            int GetStatus(out TS_STATUS pdcs);
+            [PreserveSig]
+            int QueryInsert(int acpTestStart, int acpTestEnd, int cch, out int acpResultStart, out int acpResultEnd);
+            [PreserveSig]
+            int GetSelection(int index, int count, TS_SELECTION_ACP[] pSelection, [NullAllowed] out int cFetched);
+            [PreserveSig]
+            int SetSelection(int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_SELECTION_ACP[] selections);
+            [PreserveSig]
+            int GetText(int acpStart, int acpEnd, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] char[] pchPlain, int cchPlainReq, out int pcchPlainRet, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 6)] TS_RUNINFO[] prgRunInfo, int cRunInfoReq, out int cRunInfoRet, out int acpNext);
+            [PreserveSig]
+            int SetText(SetTextFlags dwFlags, int acpStart, int acpEnd, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 4)] char[] pchText, int cch, out TS_TEXTCHANGE pChange);
+            [PreserveSig]
+            int GetFormattedText(int acpStart, int acpEnd, [MarshalAs(UnmanagedType.Interface)] out object dataObject);
+            [PreserveSig]
+            int GetEmbedded(int acpPos, ref Guid rguidService, ref Guid riid, [MarshalAs(UnmanagedType.IUnknown)] out object punk);
+            [PreserveSig]
+            int QueryInsertEmbedded(ref Guid guidService, ref int formatEtc, [MarshalAs(UnmanagedType.Bool)] out bool fInsertable);
+            [PreserveSig]
+            int InsertEmbedded(InsertEmbeddedFlags dwFlags, int acpStart, int acpEnd, [MarshalAs(UnmanagedType.Interface)] object dataObject, out TS_TEXTCHANGE pChange);
+            [PreserveSig]
+            int InsertTextAtSelection(InsertAtSelectionFlags dwFlags, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] char[] pchText, int cch, out int acpStart, out int acpEnd, out TS_TEXTCHANGE pChange);
+            [PreserveSig]
+            int InsertEmbeddedAtSelection(InsertAtSelectionFlags dwFlags, [MarshalAs(UnmanagedType.Interface)] object dataObject, out int acpStart, out int pacpEnd, out TS_TEXTCHANGE pChange);
+            [PreserveSig]
+            int RequestSupportedAttrs(AttributeFlags dwFlags, int cFilterAttrs, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] Guid[] aFilterAttrs);
+            [PreserveSig]
+            int RequestAttrsAtPosition(int acpPos, int cFilterAttrs, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] Guid[] aFilterAttrs, AttributeFlags dwFlags);
+            [PreserveSig]
+            int RequestAttrsTransitioningAtPosition(int acpPos, int cFilterAttrs, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] Guid[] aFilterAttrs, AttributeFlags dwFlags);
+            [PreserveSig]
+            int FindNextAttrTransition(int acpStart, int acpHalt, int cFilterAttrs, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Guid[] aFilterAttrs, AttributeFlags dwFlags, out int acpNext, [MarshalAs(UnmanagedType.Bool)] out bool fFound, out int lFoundOffset);
+            [PreserveSig]
+            int RetrieveRequestedAttrs(int count, [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_ATTRVAL[] aAttrVals, [NullAllowed] out int cFetched);
+            [PreserveSig]
+            int GetEndACP(out int acp);
+            [PreserveSig]
+            int GetActiveView(out int viewCookie);
+            [PreserveSig]
+            int GetACPFromPoint(int viewCookie, ref POINT tScreen, GetPositionFromPointFlags dwFlags, out int acp);
+            [PreserveSig]
+            int GetTextExt(int viewCookie, int acpStart, int acpEnd, out RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool fClipped);
+            [PreserveSig]
+            int GetScreenExt(int viewCookie, out RECT rect);
+        }
 
         /// <summary></summary>
         [ComImport]
@@ -2147,26 +2243,31 @@ namespace ImeSharp.Native
             /// <summary></summary>
             //HRESULT OnTextChange([in] DWORD dwFlags,
             //                     [in] const TS_TEXTCHANGE *pChange);
-            void OnTextChange(OnTextChangeFlags flags, ref TS_TEXTCHANGE change);
+            [PreserveSig]
+            int OnTextChange(OnTextChangeFlags flags, ref TS_TEXTCHANGE change);
 
             /// <summary></summary>
             //HRESULT OnSelectionChange();
-            void OnSelectionChange();
+            [PreserveSig]
+            int OnSelectionChange();
 
             /// <summary></summary>
             //HRESULT OnLayoutChange([in] TsLayoutCode lcode, [in] TsViewCookie vcView);
-            void OnLayoutChange(TsLayoutCode lcode, int viewCookie);
+            [PreserveSig]
+            int OnLayoutChange(TsLayoutCode lcode, int viewCookie);
 
             /// <summary></summary>
             //HRESULT OnStatusChange([in] DWORD dwFlags);
-            void OnStatusChange(DynamicStatusFlags flags);
+            [PreserveSig]
+            int OnStatusChange(DynamicStatusFlags flags);
 
             /// <summary></summary>
             //HRESULT OnAttrsChange([in] LONG acpStart,
             //                      [in] LONG acpEnd,
             //                      [in] ULONG cAttrs,
-            //                      [in, size_is(cAttrs)] const TS_ATTRID *paAttrs);
-            void OnAttrsChange(int start, int end, int count, Guid[] attributes);
+            //                      [in, size_is(cAttrs)] const Guid *paAttrs);
+            [PreserveSig]
+            int OnAttrsChange(int start, int end, int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 2)] Guid[] attributes);
 
             /// <summary></summary>
             //HRESULT OnLockGranted([in] DWORD dwLockFlags);
@@ -2175,11 +2276,13 @@ namespace ImeSharp.Native
 
             /// <summary></summary>
             //HRESULT OnStartEditTransaction();
-            void OnStartEditTransaction();
+            [PreserveSig]
+            int OnStartEditTransaction();
 
             /// <summary></summary>
             //HRESULT OnEndEditTransaction();
-            void OnEndEditTransaction();
+            [PreserveSig]
+            int OnEndEditTransaction();
         }
 
         /// <summary></summary>
@@ -2332,7 +2435,8 @@ namespace ImeSharp.Native
             //                [in] ULONG cchMax,
             //                [out] ULONG *pcch);
             /// <summary></summary>
-            void GetText(int ec, /*GetTextFlags*/int flags,
+            [PreserveSig]
+            int GetText(int ec, /*GetTextFlags*/int flags,
                         [Out, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] char[] text,
                         int countMax, out int count);
 
@@ -2341,128 +2445,149 @@ namespace ImeSharp.Native
             //                [in, size_is(cch), unique] const WCHAR *pchText,
             //                [in] LONG cch);
             /// <summary></summary>
-            void SetText(int ec, /*SetTextFlags*/ int flags,
+            [PreserveSig]
+            int SetText(int ec, /*SetTextFlags*/ int flags,
                         [In, MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 3)] char[] text,
                         int count);
 
             //HRESULT GetFormattedText([in] TfEditCookie ec,
             //                         [out] IDataObject **ppDataObject);
             /// <summary></summary>
-            void GetFormattedText(int ec, [MarshalAs(UnmanagedType.Interface)] out object data);
+            [PreserveSig]
+            int GetFormattedText(int ec, [MarshalAs(UnmanagedType.Interface)] out object data);
 
             //HRESULT GetEmbedded([in] TfEditCookie ec,
             //                    [in] REFGUID rguidService,
             //                    [in] REFIID riid,
             //                    [out, iid_is(riid)] IUnknown **ppunk);
             /// <summary></summary>
-            void GetEmbedded(int ec, ref Guid guidService, ref Guid iid, [MarshalAs(UnmanagedType.Interface)] out object obj);
+            [PreserveSig]
+            int GetEmbedded(int ec, ref Guid guidService, ref Guid iid, [MarshalAs(UnmanagedType.Interface)] out object obj);
 
             //HRESULT InsertEmbedded([in] TfEditCookie ec,
             //                       [in] DWORD dwFlags,
             //                       [in] IDataObject *pDataObject);
             /// <summary></summary>
-            void InsertEmbedded(int ec, int flags, [MarshalAs(UnmanagedType.Interface)] object data);
+            [PreserveSig]
+            int InsertEmbedded(int ec, int flags, [MarshalAs(UnmanagedType.Interface)] object data);
 
             //HRESULT ShiftStart([in] TfEditCookie ec,
             //                   [in] LONG cchReq,
             //                   [out] LONG *pcch,
             //                   [in, unique] const TF_HALTCOND *pHalt);
             /// <summary></summary>
-            void ShiftStart(int ec, int count, out int result, int ZeroForNow); // "ZeroForNow" should be a struct ptr if we ever use this
+            [PreserveSig]
+            int ShiftStart(int ec, int count, out int result, int ZeroForNow); // "ZeroForNow" should be a struct ptr if we ever use this
 
             //HRESULT ShiftEnd([in] TfEditCookie ec,
             //                 [in] LONG cchReq,
             //                 [out] LONG *pcch,
             //                 [in, unique] const TF_HALTCOND *pHalt);
             /// <summary></summary>
-            void ShiftEnd(int ec, int count, out int result, int ZeroForNow); // "ZeroForNow" should be a struct ptr if we ever use this
+            [PreserveSig]
+            int ShiftEnd(int ec, int count, out int result, int ZeroForNow); // "ZeroForNow" should be a struct ptr if we ever use this
 
             //HRESULT ShiftStartToRange([in] TfEditCookie ec,
             //                          [in] ITfRange *pRange,
             //                          [in] TfAnchor aPos);
             /// <summary></summary>
-            void ShiftStartToRange(int ec, ITfRange range, TfAnchor position);
+            [PreserveSig]
+            int ShiftStartToRange(int ec, ITfRange range, TfAnchor position);
 
             //HRESULT ShiftEndToRange([in] TfEditCookie ec,
             //                        [in] ITfRange *pRange,
             //                        [in] TfAnchor aPos);
             /// <summary></summary>
-            void ShiftEndToRange(int ec, ITfRange range, TfAnchor position);
+            [PreserveSig]
+            int ShiftEndToRange(int ec, ITfRange range, TfAnchor position);
 
             //HRESULT ShiftStartRegion([in] TfEditCookie ec,
             //                         [in] TfShiftDir dir,
             //                         [out] BOOL *pfNoRegion);
             /// <summary></summary>
-            void ShiftStartRegion(int ec, TfShiftDir dir, [MarshalAs(UnmanagedType.Bool)] out bool noRegion);
+            [PreserveSig]
+            int ShiftStartRegion(int ec, TfShiftDir dir, [MarshalAs(UnmanagedType.Bool)] out bool noRegion);
 
             //HRESULT ShiftEndRegion([in] TfEditCookie ec,
             //                       [in] TfShiftDir dir,
             //                       [out] BOOL *pfNoRegion);
             /// <summary></summary>
-            void ShiftEndRegion(int ec, TfShiftDir dir, [MarshalAs(UnmanagedType.Bool)] out bool noRegion);
+            [PreserveSig]
+            int ShiftEndRegion(int ec, TfShiftDir dir, [MarshalAs(UnmanagedType.Bool)] out bool noRegion);
 
             //HRESULT IsEmpty([in] TfEditCookie ec,
             //                [out] BOOL *pfEmpty);
             /// <summary></summary>
-            void IsEmpty(int ec, [MarshalAs(UnmanagedType.Bool)] out bool empty);
+            [PreserveSig]
+            int IsEmpty(int ec, [MarshalAs(UnmanagedType.Bool)] out bool empty);
 
             //HRESULT Collapse([in] TfEditCookie ec,
             //                 [in] TfAnchor aPos);
             /// <summary></summary>
-            void Collapse(int ec, TfAnchor position);
+            [PreserveSig]
+            int Collapse(int ec, TfAnchor position);
 
             //HRESULT IsEqualStart([in] TfEditCookie ec,
             //                     [in] ITfRange *pWith,
             //                     [in] TfAnchor aPos,
             //                     [out] BOOL *pfEqual);
             /// <summary></summary>
-            void IsEqualStart(int ec, ITfRange with, TfAnchor position, [MarshalAs(UnmanagedType.Bool)] out bool equal);
+            [PreserveSig]
+            int IsEqualStart(int ec, ITfRange with, TfAnchor position, [MarshalAs(UnmanagedType.Bool)] out bool equal);
 
             //HRESULT IsEqualEnd([in] TfEditCookie ec,
             //                   [in] ITfRange *pWith,
             //                   [in] TfAnchor aPos,
             //                   [out] BOOL *pfEqual);
             /// <summary></summary>
-            void IsEqualEnd(int ec, ITfRange with, TfAnchor position, [MarshalAs(UnmanagedType.Bool)] out bool equal);
+            [PreserveSig]
+            int IsEqualEnd(int ec, ITfRange with, TfAnchor position, [MarshalAs(UnmanagedType.Bool)] out bool equal);
 
             //HRESULT CompareStart([in] TfEditCookie ec,
             //                     [in] ITfRange *pWith,
             //                     [in] TfAnchor aPos,
             //                     [out] LONG *plResult);
             /// <summary></summary>
-            void CompareStart(int ec, ITfRange with, TfAnchor position, out int result);
+            [PreserveSig]
+            int CompareStart(int ec, ITfRange with, TfAnchor position, out int result);
 
             //HRESULT CompareEnd([in] TfEditCookie ec,
             //                   [in] ITfRange *pWith,
             //                   [in] TfAnchor aPos,
             //                   [out] LONG *plResult);
             /// <summary></summary>
-            void CompareEnd(int ec, ITfRange with, TfAnchor position, out int result);
+            [PreserveSig]
+            int CompareEnd(int ec, ITfRange with, TfAnchor position, out int result);
 
             //HRESULT AdjustForInsert([in] TfEditCookie ec,
             //                        [in] ULONG cchInsert,
             //                        [out] BOOL *pfInsertOk);
             /// <summary></summary>
-            void AdjustForInsert(int ec, int count, [MarshalAs(UnmanagedType.Bool)] out bool insertOk);
+            [PreserveSig]
+            int AdjustForInsert(int ec, int count, [MarshalAs(UnmanagedType.Bool)] out bool insertOk);
 
             //HRESULT GetGravity([out] TfGravity *pgStart,
             //                   [out] TfGravity *pgEnd);
             /// <summary></summary>
-            void GetGravity(out TfGravity start, out TfGravity end);
+            [PreserveSig]
+            int GetGravity(out TfGravity start, out TfGravity end);
 
             //HRESULT SetGravity([in] TfEditCookie ec,
             //                   [in] TfGravity gStart,
             //                   [in] TfGravity gEnd);
             /// <summary></summary>
-            void SetGravity(int ec, TfGravity start, TfGravity end);
+            [PreserveSig]
+            int SetGravity(int ec, TfGravity start, TfGravity end);
 
             //HRESULT Clone([out] ITfRange **ppClone);
             /// <summary></summary>
-            void Clone(out ITfRange clone);
+            [PreserveSig]
+            int Clone(out ITfRange clone);
 
             //HRESULT GetContext([out] ITfContext **ppContext);
             /// <summary></summary>
-            void GetContext(out ITfContext context);
+            [PreserveSig]
+            int GetContext(out ITfContext context);
         };
 
         /// <summary></summary>
@@ -2752,6 +2877,21 @@ namespace ImeSharp.Native
             int Skip(int count);
         }
 
+        [ComImport]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        [Guid("8ED8981B-7C10-4D7D-9FB3-AB72E9C75F72")]
+        public interface IEnumTfPropertyValue
+        {
+            [PreserveSig]
+            int Clone([MarshalAs(UnmanagedType.Interface)] out IEnumTfPropertyValue ppEnum);
+            [PreserveSig]
+            int Next(int count, TF_PROPERTYVAL[] rgValues, [NullAllowed] out int pcFetched);
+            [PreserveSig]
+            int Reset();
+            [PreserveSig]
+            int Skip(int count);
+        }
+
         /// <summary></summary>
         /// <summary></summary>
         [ComImport]
@@ -2816,7 +2956,8 @@ namespace ImeSharp.Native
         {
             /// <summary></summary>
             //HRESULT OnEndEdit([in] ITfContext *pic, [in] TfEditCookie ecReadOnly, [in] ITfEditRecord *pEditRecord);
-            void OnEndEdit(ITfContext context, int ecReadOnly, ITfEditRecord editRecord);
+            [PreserveSig]
+            int OnEndEdit(ITfContext context, int ecReadOnly, ITfEditRecord editRecord);
         }
 
         /// <summary></summary>

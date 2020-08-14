@@ -38,8 +38,8 @@ namespace ImeSharp
             set { _textServicesContext = value; }
         }
 
-        private static DefaultTextStore _defaultTextStore;
-        public static DefaultTextStore DefaultTextStore
+        private static TextStore _defaultTextStore;
+        public static TextStore DefaultTextStore
         {
             get { return _defaultTextStore; }
             set { _defaultTextStore = value; }
@@ -68,8 +68,8 @@ namespace ImeSharp
                 throw new InvalidOperationException("InputMethod can only be initialized once!");
 
             _windowHandle = windowHandle;
-            _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
 
+            _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }

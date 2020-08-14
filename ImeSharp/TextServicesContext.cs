@@ -77,7 +77,7 @@ namespace ImeSharp
             // Unregister DefaultTextStore.
             if (_defaultTextStore != null)
             {
-                UnadviseUIElementSink();
+                UnadviseSinks();
                 if (_defaultTextStore.DocumentManager != null)
                 {
                     _defaultTextStore.DocumentManager.Pop(NativeMethods.PopFlags.TF_POPF_ALL);
@@ -182,7 +182,7 @@ namespace ImeSharp
         // Called by framework's TextStore class.  This method registers a
         // document with TSF.  The TextServicesContext must maintain this list
         // to ensure all native resources are released after gc or uninitialization.
-        public void RegisterTextStore(DefaultTextStore defaultTextStore)
+        public void RegisterTextStore(TextStore defaultTextStore)
         {
             // We must cache the DefaultTextStore because we'll need it from
             // a worker thread if the AppDomain is torn down before the Dispatcher
@@ -209,15 +209,13 @@ namespace ImeSharp
 
                 // Create a TSF document.
                 threadManager.CreateDocumentMgr(out doc);
+                _defaultTextStore.DocumentManager = doc;
+
                 doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _editContext, out editCookie);
+                _defaultTextStore.EditCookie = editCookie;
                 doc.Push(_editContext);
 
-                // Same DocumentManager and EditCookie in _defaultTextStore.
-                _defaultTextStore.DocumentManager = doc;
-                _defaultTextStore.EditCookie = editCookie;
-
-                // Start the transitory extenstion so we can have Level 1 composition window from Cicero.
-                AdviseUIElementSink();
+                AdviseSinks();
             }
         }
 
@@ -225,7 +223,7 @@ namespace ImeSharp
         // Cal ITfThreadMgr.SetFocus() with the dim for the default text store
         public void SetFocusOnDefaultTextStore()
         {
-            SetFocusOnDim(DefaultTextStore.Current.DocumentManager);
+            SetFocusOnDim(TextStore.Current.DocumentManager);
         }
 
         // Cal ITfThreadMgr.SetFocus() with the empty dim.
@@ -338,29 +336,35 @@ namespace ImeSharp
             }
         }
 
-        private void AdviseUIElementSink()
+        private void AdviseSinks()
         {
-            var source = ThreadManager as NativeMethods.ITfSource;
+            var source = _uiElementMgr as NativeMethods.ITfSource;
             var guid = NativeMethods.IID_ITfUIElementSink;
-            int uiElementSinkCookie;
-            source.AdviseSink(ref guid, _defaultTextStore, out uiElementSinkCookie);
-            _defaultTextStore.UIElementSinkCookie = uiElementSinkCookie;
+            int sinkCookie;
+            source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
+            _defaultTextStore.UIElementSinkCookie = sinkCookie;
 
             source = _editContext as NativeMethods.ITfSource;
             guid = NativeMethods.IID_ITfTextEditSink;
-            int editSinkCookie;
-            source.AdviseSink(ref guid, _defaultTextStore, out editSinkCookie);
-            _defaultTextStore.EditSinkCookie = editSinkCookie;
+            source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
+            _defaultTextStore.TextEditSinkCookie = sinkCookie;
         }
 
-        private void UnadviseUIElementSink()
+        private void UnadviseSinks()
         {
-            var source = _defaultTextStore.DocumentManager as NativeMethods.ITfSource;
+            var source = _uiElementMgr as NativeMethods.ITfSource;
 
             if (_defaultTextStore.UIElementSinkCookie != NativeMethods.TF_INVALID_COOKIE)
             {
                 source.UnadviseSink(_defaultTextStore.UIElementSinkCookie);
                 _defaultTextStore.UIElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            }
+
+            source = _editContext as NativeMethods.ITfSource;
+            if (_defaultTextStore.TextEditSinkCookie != NativeMethods.TF_INVALID_COOKIE)
+            {
+                source.UnadviseSink(_defaultTextStore.TextEditSinkCookie);
+                _defaultTextStore.TextEditSinkCookie = NativeMethods.TF_INVALID_COOKIE;
             }
         }
 
@@ -401,7 +405,7 @@ namespace ImeSharp
 
         #region Private Fields
 
-        private DefaultTextStore _defaultTextStore;
+        private TextStore _defaultTextStore;
 
         private NativeMethods.ITfContext _editContext;
         private NativeMethods.ITfUIElementMgr _uiElementMgr;

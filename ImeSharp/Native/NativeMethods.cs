@@ -10,6 +10,9 @@ namespace ImeSharp.Native
 
         public const int S_OK = 0x00000000;
         public const int S_FALSE = 0x00000001;
+        public const int E_FAIL = unchecked((int)0x80004005);
+        public const int E_INVALIDARG = unchecked((int)0x80070057);
+        public const int E_NOTIMPL = unchecked((int)0x80004001);
 
         public const int WM_KEYFIRST = 0x0100;
         public const int WM_KEYDOWN = 0x0100;
@@ -79,6 +82,15 @@ namespace ImeSharp.Native
 
         [DllImport("user32.dll", EntryPoint = "SetWindowLongPtr")]
         private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
+
+        [DllImport("user32", ExactSpelling = true, SetLastError = true)]
+        public static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, ref NativeMethods.RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
+
+        [DllImport("user32", ExactSpelling = true, SetLastError = true)]
+        public static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, ref System.Drawing.Point pt, [MarshalAs(UnmanagedType.U4)] int cPoints);
 
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
