@@ -359,6 +359,9 @@ namespace ImeSharp
             guid = NativeMethods.IID_ITfTextEditSink;
             source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
             _defaultTextStore.TextEditSinkCookie = sinkCookie;
+
+            guid = NativeMethods.IID_ITfContextOwner;
+            source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
         }
 
         private void UnadviseSinks()

@@ -105,6 +105,7 @@ namespace ImeSharp.Native
         public static readonly Guid IID_ITfThreadMgrEx = new Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c");
         /// <summary></summary>
         public static readonly Guid IID_ITfThreadMgr2 = new Guid("0AB198EF-6477-4EE8-8812-6780EDB82D5E");
+        public static readonly Guid IID_ITfContextOwner = new Guid("aa80e80c-2021-11d2-93e0-0060b067b86e");
 
         /// <summary></summary>
         public static readonly Guid IID_ITextStoreACPSink = new Guid(0x22d44c94, 0xa419, 0x4542, 0xa2, 0x72, 0xae, 0x26, 0x09, 0x3e, 0xce, 0xcf);
@@ -3322,30 +3323,36 @@ namespace ImeSharp.Native
             // HRESULT GetACPFromPoint([in] const POINT *ptScreen,
             //                         [in] DWORD dwFlags,
             //                         [out] LONG *pacp);
-            void GetACPFromPoint(ref POINT point, GetPositionFromPointFlags flags, out int position);
+            [PreserveSig]
+            int GetACPFromPoint(ref POINT point, GetPositionFromPointFlags flags, out int position);
 
             /// <summary></summary>
             // HRESULT GetTextExt([in] LONG acpStart,
             //                    [in] LONG acpEnd,
             //                    [out] RECT *prc,
             //                    [out] BOOL *pfClipped);
-            void GetTextExt(int start, int end, out RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool clipped);
+            [PreserveSig]
+            int GetTextExt(int start, int end, out RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool clipped);
 
             /// <summary></summary>
             // HRESULT GetScreenExt([out] RECT *prc);
-            void GetScreenExt(out RECT rect);
+            [PreserveSig]
+            int GetScreenExt(out RECT rect);
 
             /// <summary></summary>
             // HRESULT GetStatus([out] TF_STATUS *pdcs);
-            void GetStatus(out TS_STATUS status);
+            [PreserveSig]
+            int GetStatus(out TS_STATUS status);
 
             /// <summary></summary>
             // HRESULT GetWnd([out] HWND *phwnd);
-            void GetWnd(out IntPtr hwnd);
+            [PreserveSig]
+            int GetWnd(out IntPtr hwnd);
 
             /// <summary></summary>
             // HRESULT GetAttribute([in] REFGUID rguidAttribute, [out] VARIANT *pvarValue);
-            void GetValue(ref Guid guidAttribute, out object varValue);
+            [PreserveSig]
+            int GetAttribute(ref Guid guidAttribute, out object varValue);
         }
 
 

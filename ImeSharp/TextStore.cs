@@ -6,7 +6,8 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
-    public class TextStore : NativeMethods.ITextStoreACP,
+    public class TextStore : //NativeMethods.ITextStoreACP,
+                             NativeMethods.ITfContextOwner,
                              NativeMethods.ITfContextOwnerCompositionSink,
                              NativeMethods.ITfTextEditSink,
                              NativeMethods.ITfUIElementSink
@@ -666,85 +667,75 @@ namespace ImeSharp
         {
             // Return true in ok to start the composition.
             ok = true;
+            _lastCompositionView = null;
         }
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
         {
+            _lastCompositionView = view;
         }
 
         public void OnEndComposition(NativeMethods.ITfCompositionView view)
         {
+            _lastCompositionView = null;
+
+            NativeMethods.ITfRange range;
+            view.GetRange(out range);
+            var str = StringFromITfRange(range, _textEditSinkCookie);
+            Debug.WriteLine("result string: {0}", new object[] { str });
         }
 
         #endregion ITfContextOwnerCompositionSink
 
         #region ITfTextEditSink
 
+        private NativeMethods.ITfRangeACP GetSelectionRange(NativeMethods.ITfContext context, int ecReadOnly)
+        {
+            NativeMethods.TF_SELECTION selection = new NativeMethods.TF_SELECTION();
+            context.GetSelection(ecReadOnly, 0, 1, ref selection, out var fetched);
+
+            if (fetched <= 0)
+                return null;
+
+            return Marshal.GetObjectForIUnknown(selection.range) as NativeMethods.ITfRangeACP;
+        }
+
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-            m_fhasEdited = true;
-            m_Composing = false;
-            m_Commit = false;
-            m_CompStart = m_CompEnd = 0;
+            var rangeSelection = GetSelectionRange(context, ecReadOnly);
 
-            var guid = NativeMethods.GUID_PROP_COMPOSING;
-
-            NativeMethods.ITfProperty TrackProperty;
-            NativeMethods.ITfRange Start2EndRange;
-            NativeMethods.ITfRange EndRange;
-
-            if (context.GetProperty(ref guid, out TrackProperty) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (context.GetStart(ecReadOnly, out Start2EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (context.GetEnd(ecReadOnly, out EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (Start2EndRange.ShiftEndToRange(ecReadOnly, EndRange, NativeMethods.TfAnchor.TF_ANCHOR_END) < 0)
-                return NativeMethods.E_FAIL;
-
-            NativeMethods.IEnumTfRanges Ranges;
-            if (TrackProperty.EnumRanges(ecReadOnly, out Ranges, Start2EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            while (true)
+            if (_lastCompositionView != null)
             {
-                NativeMethods.ITfRange[] Range = new NativeMethods.ITfRange[1];
-                int cFetched;
+                NativeMethods.ITfRange range;
+                _lastCompositionView.GetRange(out range);
+                var str = StringFromITfRange(range, ecReadOnly);
 
-                if (Ranges.Next(1, Range, out cFetched) != NativeMethods.S_OK)
-                    break;
-
-                object val;
-                if (TrackProperty.GetValue(ecReadOnly, Range[0], out val) < 0)
-                    return NativeMethods.E_FAIL;
-
-                if (val == null)
-                    continue;
-
-                bool IsComposing = (int)val != 0;
-
-                NativeMethods.ITfRangeACP RangeACP = Range[0] as NativeMethods.ITfRangeACP;
-                int AcpStart, Len;
-                RangeACP.GetExtent(out AcpStart, out Len);
-
-                if (IsComposing)
+                int start = 0;
+                if (rangeSelection != null)
                 {
-                    if (!m_Composing)
-                    {
-                        m_Composing = true;
-                        m_CompStart = m_CompEnd = AcpStart;
-                    }
-                    m_CompEnd += Len;
+                    int count;
+                    rangeSelection.GetExtent(out start, out count);
+
+                    str = str.Insert(start, "|");
                 }
-                else
+
+                Debug.WriteLine("composition string: {0}, cursor: {1}", new object[] { str, start });
+            }
+            else
+            {
+                var contextOwnerService = context as NativeMethods.ITfContextOwnerServices;
+                NativeMethods.ITfRangeACP rangeACP;
+                contextOwnerService.CreateRange(0, 0, out rangeACP);
+
+                var ptr = Marshal.GetIUnknownForObject(rangeACP);
+
+                var selection = new NativeMethods.TF_SELECTION()
                 {
-                    m_CommitStart = AcpStart;
-                    m_CommitEnd = AcpStart + Len;
-                }
-                m_Commit = m_CommitEnd - m_CommitStart > 0;
+                    range = ptr
+                };
+                //FIXME: This only works in MS PinYIn none compatible-mode.
+                var ret = context.SetSelection(ecReadOnly, 1, ref selection);
+                Debug.WriteLine("Reset Selection !!!");
             }
 
             // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
@@ -862,6 +853,53 @@ namespace ImeSharp
         }
 
         #endregion ITfUIElementSink
+
+        #region ITfContextOwner
+
+        public int GetACPFromPoint(ref NativeMethods.POINT point, NativeMethods.GetPositionFromPointFlags flags, out int position)
+        {
+            position = 0;
+            return NativeMethods.E_NOTIMPL;
+        }
+
+        public int GetTextExt(int start, int end, out NativeMethods.RECT rect, [MarshalAs(UnmanagedType.Bool)] out bool clipped)
+        {
+            rect = new NativeMethods.RECT();
+            rect.left = 140;
+            rect.top = 160;
+
+            NativeMethods.MapWindowPoints(m_hWnd, IntPtr.Zero, ref rect, 2);
+
+            rect.right = 0;
+            rect.bottom = 0;
+
+            clipped = false;
+
+            return NativeMethods.S_OK;
+        }
+
+        public int GetScreenExt(out NativeMethods.RECT rect)
+        {
+            rect = new NativeMethods.RECT();
+            NativeMethods.GetWindowRect(m_hWnd, out rect);
+
+            return NativeMethods.S_OK;
+        }
+
+        public int GetWnd(out IntPtr hwnd)
+        {
+            hwnd = m_hWnd;
+            return NativeMethods.S_OK;
+        }
+
+        public int GetAttribute(ref Guid guidAttribute, out object varValue)
+        {
+            varValue = null;
+            return NativeMethods.E_NOTIMPL;
+        }
+
+        #endregion ITfContextOwner
+
 
         //------------------------------------------------------
         //
@@ -1018,5 +1056,7 @@ namespace ImeSharp
         private int m_CommitEnd;
         private int m_CompStart;
         private int m_CompEnd;
+
+        NativeMethods.ITfCompositionView _lastCompositionView;
     }
 }
