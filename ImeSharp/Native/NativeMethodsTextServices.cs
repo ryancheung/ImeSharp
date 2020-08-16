@@ -1998,7 +1998,7 @@ namespace ImeSharp.Native
             //                     [out] ULONG *pcFetched);
             //int GetSelection(int index, int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 1)] TS_SELECTION_ACP[] selections, out int fetched);
             [PreserveSig]
-            int GetSelection(int index, int count, TS_SELECTION_ACP[] selections, out int fetched);
+            int GetSelection(int index, int count, ref TS_SELECTION_ACP selection, out int fetched);
 
             /// <summary></summary>
             //HRESULT SetSelection([in] ULONG ulCount,
@@ -2196,7 +2196,7 @@ namespace ImeSharp.Native
             [PreserveSig]
             int QueryInsert(int acpTestStart, int acpTestEnd, int cch, out int acpResultStart, out int acpResultEnd);
             [PreserveSig]
-            int GetSelection(int index, int count, TS_SELECTION_ACP[] pSelection, [NullAllowed] out int cFetched);
+            int GetSelection(int index, int count, ref TS_SELECTION_ACP selection, [NullAllowed] out int cFetched);
             [PreserveSig]
             int SetSelection(int count, [MarshalAs(UnmanagedType.LPArray, SizeParamIndex = 0)] TS_SELECTION_ACP[] selections);
             [PreserveSig]

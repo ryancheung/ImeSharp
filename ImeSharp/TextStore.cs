@@ -209,12 +209,9 @@ namespace ImeSharp
             return NativeMethods.S_OK;
         }
 
-        public int GetSelection(int index, int count, NativeMethods.TS_SELECTION_ACP[] selections, out int cFetched)
+        public int GetSelection(int index, int count, ref NativeMethods.TS_SELECTION_ACP selection, out int cFetched)
         {
             cFetched = 0;
-
-            if (selections == null)
-                return NativeMethods.E_INVALIDARG;
 
             //does the caller have a lock
             if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READ))
@@ -236,9 +233,9 @@ namespace ImeSharp
                 return NativeMethods.E_INVALIDARG;
             }
 
-            selections[0].acpStart = m_acpStart;
-            selections[0].acpEnd = m_acpEnd;
-            selections[0].style.fInterimChar = m_fInterimChar;
+            selection.acpStart = m_acpStart;
+            selection.acpEnd = m_acpEnd;
+            selection.style.fInterimChar = m_fInterimChar;
 
             if (m_fInterimChar)
             {
@@ -248,11 +245,11 @@ namespace ImeSharp
                 used to enter characters and a character has been set, but the IME
                 is still active.
                 */
-                selections[0].style.ase = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
+                selection.style.ase = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
             }
             else
             {
-                selections[0].style.ase = m_ActiveSelEnd;
+                selection.style.ase = m_ActiveSelEnd;
             }
 
             cFetched = 1;
