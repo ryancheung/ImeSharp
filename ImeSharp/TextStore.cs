@@ -721,7 +721,10 @@ namespace ImeSharp
                 if (TrackProperty.GetValue(ecReadOnly, Range[0], out val) < 0)
                     return NativeMethods.E_FAIL;
 
-                bool IsComposing = val != null && (int)val > 0;
+                if (val == null)
+                    continue;
+
+                bool IsComposing = (int)val != 0;
 
                 NativeMethods.ITfRangeACP RangeACP = Range[0] as NativeMethods.ITfRangeACP;
                 int AcpStart, Len;
