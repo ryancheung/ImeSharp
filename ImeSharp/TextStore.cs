@@ -476,7 +476,8 @@ namespace ImeSharp
 
         public int InsertEmbedded(NativeMethods.InsertEmbeddedFlags flags, int startIndex, int endIndex, object obj, out NativeMethods.TS_TEXTCHANGE change)
         {
-            throw new COMException("TextStore_TS_E_FORMAT");
+            change = new NativeMethods.TS_TEXTCHANGE();
+            return NativeMethods.E_NOTIMPL;
         }
 
         public int InsertTextAtSelection(NativeMethods.InsertAtSelectionFlags dwFlags, char[] pchText, int cch, out int pacpStart, out int pacpEnd, out NativeMethods.TS_TEXTCHANGE pChange)
@@ -537,23 +538,25 @@ namespace ImeSharp
 
         public int InsertEmbeddedAtSelection(NativeMethods.InsertAtSelectionFlags flags, object obj, out int startIndex, out int endIndex, out NativeMethods.TS_TEXTCHANGE change)
         {
-            throw new COMException("TextStore_TS_E_FORMAT");
+            startIndex = endIndex = 0;
+            change = new NativeMethods.TS_TEXTCHANGE();
+            return NativeMethods.E_NOTIMPL;
         }
 
         public int RequestSupportedAttrs(NativeMethods.AttributeFlags flags, int count, Guid[] filterAttributes)
         {
-            return NativeMethods.S_OK;
+            return NativeMethods.E_NOTIMPL;
         }
 
         public int RequestAttrsAtPosition(int index, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags)
         {
-            return NativeMethods.S_OK;
+            return NativeMethods.E_NOTIMPL;
         }
 
 
         public int RequestAttrsTransitioningAtPosition(int position, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags)
         {
-            throw new COMException("TextStore_E_NOTIMPL");
+            return NativeMethods.E_NOTIMPL;
         }
 
         public int FindNextAttrTransition(int startIndex, int haltIndex, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags, out int acpNext, out bool found, out int foundOffset)
