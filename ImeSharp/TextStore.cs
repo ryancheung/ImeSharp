@@ -28,7 +28,7 @@ namespace ImeSharp
 
             _editCookie = NativeMethods.TF_INVALID_COOKIE;
             _uiElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
-            _textEditSink = NativeMethods.TF_INVALID_COOKIE;
+            _textEditSinkCookie = NativeMethods.TF_INVALID_COOKIE;
         }
 
         #endregion Constructors
@@ -929,8 +929,8 @@ namespace ImeSharp
 
         public int TextEditSinkCookie
         {
-            get { return _textEditSink; }
-            set { _textEditSink = value; }
+            get { return _textEditSinkCookie; }
+            set { _textEditSinkCookie = value; }
         }
 
         //------------------------------------------------------
@@ -985,7 +985,7 @@ namespace ImeSharp
         // The edit cookie TSF returns from CreateContext.
         private int _editCookie;
         private int _uiElementSinkCookie;
-        private int _textEditSink;
+        private int _textEditSinkCookie;
 
 
         //TextStore
