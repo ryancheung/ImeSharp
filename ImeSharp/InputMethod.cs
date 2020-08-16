@@ -59,15 +59,19 @@ namespace ImeSharp
             }
         }
 
+        private static bool _showOSImeWindow;
+        public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
+
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
         /// </summary>
-        public static void Initialize(IntPtr windowHandle)
+        public static void Initialize(IntPtr windowHandle, bool showOSImeWindow = true)
         {
             if (_windowHandle != IntPtr.Zero)
                 throw new InvalidOperationException("InputMethod can only be initialized once!");
 
             _windowHandle = windowHandle;
+            _showOSImeWindow = showOSImeWindow;
 
             _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
