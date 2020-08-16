@@ -766,7 +766,7 @@ namespace ImeSharp
         public int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow)
         {
             // Hide OS rendered Candidate list Window
-            pbShow = false;
+            pbShow = InputMethod.ShowOSImeWindow;
 
             OnUIElement(dwUIElementId, true);
 
