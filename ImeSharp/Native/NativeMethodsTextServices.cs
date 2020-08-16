@@ -16,6 +16,9 @@ namespace ImeSharp.Native
         [DllImport("msctf.dll")]
         public static extern int TF_CreateThreadMgr(out ITfThreadMgr threadManager);
 
+        [DllImport("msctf.dll")]
+        public static extern int TF_GetThreadMgr(out ITfThreadMgr threadManager);
+
         /// <summary></summary>
         [DllImport("msctf.dll")]
         public static extern int TF_CreateInputProcessorProfiles(out ITfInputProcessorProfiles profiles);

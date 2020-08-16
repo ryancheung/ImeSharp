@@ -251,7 +251,16 @@ namespace ImeSharp
             {
                 if (_threadManager == null)
                 {
-                    _threadManager = TextServicesLoader.Load();
+                    NativeMethods.TF_GetThreadMgr(out var threadMgr);
+
+                    if (threadMgr != null)
+                    {
+                        threadMgr.Deactivate();
+                        _threadManager = threadMgr as NativeMethods.ITfThreadMgrEx;
+                    }
+                    else
+                        _threadManager = TextServicesLoader.Load();
+
                     _uiElementMgr = _threadManager as NativeMethods.ITfUIElementMgr;
                 }
 
