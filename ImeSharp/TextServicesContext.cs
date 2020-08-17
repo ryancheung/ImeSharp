@@ -1,9 +1,3 @@
-//
-//
-// Description: Manages Text Services Framework state.
-//
-//
-
 using System;
 using System.Runtime.InteropServices;
 using System.Threading;
@@ -184,9 +178,6 @@ namespace ImeSharp
         // to ensure all native resources are released after gc or uninitialization.
         public void RegisterTextStore(TextStore defaultTextStore)
         {
-            // We must cache the DefaultTextStore because we'll need it from
-            // a worker thread if the AppDomain is torn down before the Dispatcher
-            // is shutdown.
             _defaultTextStore = defaultTextStore;
 
             NativeMethods.ITfThreadMgrEx threadManager = ThreadManager;
@@ -222,13 +213,11 @@ namespace ImeSharp
         }
 
 
-        // Cal ITfThreadMgr.SetFocus() with the dim for the default text store
         public void SetFocusOnDefaultTextStore()
         {
             SetFocusOnDim(TextStore.Current.DocumentManager);
         }
 
-        // Cal ITfThreadMgr.SetFocus() with the empty dim.
         public void SetFocusOnEmptyDim()
         {
             SetFocusOnDim(EmptyDocumentManager);

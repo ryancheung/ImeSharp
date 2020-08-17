@@ -122,22 +122,15 @@ namespace ImeSharp
             if (TextServicesLoader.ServicesInstalled)
             {
                 if (bEnabled)
-                {
-                    // Enabled. SetFocus to the default text store.
                     TextServicesContext.Current.SetFocusOnDefaultTextStore();
-                }
                 else
-                {
-                    // Disabled. SetFocus to the empty dim.
                     TextServicesContext.Current.SetFocusOnEmptyDim();
-                }
             }
         }
 
         private static void EnableOrDisableInputMethodIMM32(bool bEnabled)
         {
             // Under IMM32 enabled system, we associate default hIMC or null hIMC.
-            //
             if (Imm32Manager.ImmEnabled)
             {
                 if (bEnabled)
