@@ -788,6 +788,8 @@ namespace ImeSharp
 
         private void OnUIElement(int uiElementId, bool onStart)
         {
+            if (InputMethod.ShowOSImeWindow) return;
+
             IntPtr uiElement;
 
             TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
