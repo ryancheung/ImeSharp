@@ -39,7 +39,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region ITextStoreACP2
+        #region ITextStoreACP
 
         public int AdviseSink(ref Guid riid, object obj, NativeMethods.AdviseFlags flags)
         {
@@ -83,42 +83,34 @@ namespace ImeSharp
             return true;
         }
 
+
+        private void ResetIfRequired()
+        {
+            if (!m_Commit)
+                return;
+
+            m_Commit = false;
+            m_StoredStr = string.Empty;
+
+            NativeMethods.TS_TEXTCHANGE textChange;
+            textChange.acpStart = 0;
+            textChange.acpOldEnd = 0;
+            textChange.acpNewEnd = 0;
+            _sink.OnTextChange(0, ref textChange);
+
+            m_acpStart = m_acpEnd = 0;
+            _sink.OnSelectionChange();
+
+            Debug.WriteLine("TextStore reset!!!");
+        }
+
         private void _UnlockDocument()
         {
             int hr;
             m_fLocked = false;
             m_dwLockType = 0;
-            if (m_fhasEdited)
-            {
-                m_fhasEdited = false;
-                if (m_Commit)
-                {
-                    m_Commit = false;
-                    int commitLen = m_CommitEnd - m_CommitStart;
-                    //TODO:
-                    //m_sigCommitStr(this, m_StoredStr.Substring(m_CommitStart, commitLen));
-                    m_StoredStr = m_StoredStr.Remove(m_CommitStart, commitLen);
-                    NativeMethods.TS_TEXTCHANGE textChange;
-                    textChange.acpStart = m_CommitStart;
-                    textChange.acpOldEnd = m_CommitEnd;
-                    textChange.acpNewEnd = m_CommitStart;
-                    _sink.OnTextChange(0, ref textChange);
-                    m_acpStart = m_acpEnd = m_StoredStr.Length;
-                    _sink.OnSelectionChange();
-                    m_CommitStart = m_CommitEnd = 0;
-                }
 
-                if (m_Composing)
-                {
-                    //m_sigUpdateCompStr(this, m_StoredStr.substr(m_CompStart, m_CompEnd - m_CompStart));
-                    //m_sigUpdateCompSel(this, m_acpStart, m_acpEnd);
-                }
-                else
-                {
-                    //m_sigUpdateCompStr(this, L"");
-                    //m_sigUpdateCompSel(this, 0, 0);
-                }
-            }
+            ResetIfRequired();
 
             //if there is a queued lock, grant it
             if (m_queuedLockReq.Count > 0)
@@ -666,14 +658,32 @@ namespace ImeSharp
         {
             // Return true in ok to start the composition.
             ok = true;
+            _compositionStart = _compositionLength = 0;
         }
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
         {
+            NativeMethods.ITfRange range;
+            view.GetRange(out range);
+            var rangeacp = (NativeMethods.ITfRangeACP)range;
+
+            rangeacp.GetExtent(out _compositionStart, out _compositionLength);
         }
 
         public void OnEndComposition(NativeMethods.ITfCompositionView view)
         {
+            NativeMethods.ITfRange range;
+            view.GetRange(out range);
+            var rangeacp = (NativeMethods.ITfRangeACP)range;
+
+            int start;
+            int count;
+            rangeacp.GetExtent(out start, out count);
+            m_CommitStart = start;
+            m_CommitLength = count;
+            m_Commit = true;
+
+            Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -682,70 +692,17 @@ namespace ImeSharp
 
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-            m_fhasEdited = true;
-            m_Composing = false;
-            m_Commit = false;
-            m_CompStart = m_CompEnd = 0;
+            if (m_Commit) return NativeMethods.S_OK;
 
-            var guid = NativeMethods.GUID_PROP_COMPOSING;
-
-            NativeMethods.ITfProperty TrackProperty;
-            NativeMethods.ITfRange Start2EndRange;
-            NativeMethods.ITfRange EndRange;
-
-            if (context.GetProperty(ref guid, out TrackProperty) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (context.GetStart(ecReadOnly, out Start2EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (context.GetEnd(ecReadOnly, out EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            if (Start2EndRange.ShiftEndToRange(ecReadOnly, EndRange, NativeMethods.TfAnchor.TF_ANCHOR_END) < 0)
-                return NativeMethods.E_FAIL;
-
-            NativeMethods.IEnumTfRanges Ranges;
-            if (TrackProperty.EnumRanges(ecReadOnly, out Ranges, Start2EndRange) < 0)
-                return NativeMethods.E_FAIL;
-
-            while (true)
+            if (m_StoredStr == string.Empty && _compositionLength > 0) // Composition just ended
             {
-                NativeMethods.ITfRange[] Range = new NativeMethods.ITfRange[1];
-                int cFetched;
-
-                if (Ranges.Next(1, Range, out cFetched) != NativeMethods.S_OK)
-                    break;
-
-                object val;
-                if (TrackProperty.GetValue(ecReadOnly, Range[0], out val) < 0)
-                    return NativeMethods.E_FAIL;
-
-                if (val == null)
-                    continue;
-
-                bool IsComposing = (int)val != 0;
-
-                NativeMethods.ITfRangeACP RangeACP = Range[0] as NativeMethods.ITfRangeACP;
-                int AcpStart, Len;
-                RangeACP.GetExtent(out AcpStart, out Len);
-
-                if (IsComposing)
-                {
-                    if (!m_Composing)
-                    {
-                        m_Composing = true;
-                        m_CompStart = m_CompEnd = AcpStart;
-                    }
-                    m_CompEnd += Len;
-                }
-                else
-                {
-                    m_CommitStart = AcpStart;
-                    m_CommitEnd = AcpStart + Len;
-                }
-                m_Commit = m_CommitEnd - m_CommitStart > 0;
+                Marshal.ReleaseComObject(editRecord);
+                return NativeMethods.S_OK;
             }
+
+            var compStr = m_StoredStr.Substring(_compositionStart, _compositionLength);
+            compStr = compStr.Insert(m_acpEnd, "|");
+            Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, m_acpEnd);
 
             // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
             Marshal.ReleaseComObject(editRecord);
@@ -953,19 +910,6 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        // get the text from ITfRange.
-        private string StringFromITfRange(NativeMethods.ITfRange range, int ecReadOnly)
-        {
-            NativeMethods.ITfRangeACP rangeacp = (NativeMethods.ITfRangeACP)range;
-            int start;
-            int count;
-            int countRet;
-            rangeacp.GetExtent(out start, out count);
-            char[] text = new char[count];
-            rangeacp.GetText(ecReadOnly, 0, text, count, out countRet);
-            return new string(text);
-        }
-
         // This function calls TextServicesContext to create TSF document and start transitory extension.
         private void Register()
         {
@@ -995,34 +939,24 @@ namespace ImeSharp
         private int _uiElementSinkCookie;
         private int _textEditSinkCookie;
 
-
-        //TextStore
         private NativeMethods.ITextStoreACPSink _sink;
         private IntPtr m_hWnd;
         private int m_acpStart;
         private int m_acpEnd;
-        private int m_cchOldLength;
         private bool m_fInterimChar;
         private NativeMethods.TsActiveSelEnd m_ActiveSelEnd;
         private string m_StoredStr = string.Empty;
-        //TextStoreSink
-        private bool m_fNotify;
-        //DocLock
+
         private bool m_fLocked;
         private NativeMethods.LockFlags m_dwLockType;
         private Queue<NativeMethods.LockFlags> m_queuedLockReq = new Queue<NativeMethods.LockFlags>();
-        //TextBox
         private bool m_fLayoutChanged;
 
-        //Composition
-        private string m_CompStr;
-        private bool m_fhasEdited;
-        private bool m_Commit;
-        private bool m_Composing;
+        private int _compositionStart;
+        private int _compositionLength;
         private int m_CommitStart;
-        private int m_CommitEnd;
-        private int m_CompStart;
-        private int m_CompEnd;
+        private int m_CommitLength;
+        private bool m_Commit;
 
         private bool _supportUIElement = true;
     }
