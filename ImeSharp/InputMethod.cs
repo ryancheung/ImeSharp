@@ -57,6 +57,14 @@ namespace ImeSharp
         internal static int CandidateSelection;
         internal static string[] CandidateList;
 
+        internal static void ClearCandidates()
+        {
+            CandidateList = null;
+            CandidatePageStart = 0;
+            CandidatePageSize = 0;
+            CandidateSelection = 0;
+        }
+
         public static event EventHandler<TextCompositionEventArgs> TextComposition;
         public static event EventHandler<TextInputEventArgs> TextInput;
 

@@ -689,6 +689,7 @@ namespace ImeSharp
 
             Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
 
+            InputMethod.ClearCandidates();
             InputMethod.OnTextComposition(string.Empty, 0);
             InputMethod.OnTextInput(m_StoredStr.Substring(start, count));
         }
