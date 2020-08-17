@@ -169,13 +169,19 @@ namespace ImeSharp
 
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            //TODO:
             switch (msg)
             {
                 case NativeMethods.WM_IME_SETCONTEXT:
-                    // Must re-associate ime context or things won't work.
                     if (wParam.ToInt32() == 1 && _enabled)
+                    {
+                        // Must re-associate ime context or things won't work.
                         NativeMethods.ImmAssociateContext(_windowHandle, DefaultImc);
+
+                        if (!NativeMethods.ImmGetOpenStatus(DefaultImc))
+                            NativeMethods.ImmSetOpenStatus(DefaultImc, true);
+                    }
+                    else
+                        NativeMethods.ImmSetOpenStatus(DefaultImc, false);
                     break;
                 case NativeMethods.WM_IME_NOTIFY:
                     IMENotify(wParam.ToInt32());
