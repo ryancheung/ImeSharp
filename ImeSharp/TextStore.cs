@@ -90,16 +90,19 @@ namespace ImeSharp
                 return;
 
             m_Commit = false;
-            m_StoredStr = string.Empty;
+            int commitEnd = m_CommitStart + m_CommitLength;
+            m_StoredStr = m_StoredStr.Remove(m_CommitStart, m_CommitLength);
 
             NativeMethods.TS_TEXTCHANGE textChange;
-            textChange.acpStart = 0;
-            textChange.acpOldEnd = 0;
-            textChange.acpNewEnd = 0;
+            textChange.acpStart = m_CommitStart;
+            textChange.acpOldEnd = commitEnd;
+            textChange.acpNewEnd = m_CommitStart;
+
             _sink.OnTextChange(0, ref textChange);
 
-            m_acpStart = m_acpEnd = 0;
+            m_acpStart = m_acpEnd = m_StoredStr.Length;
             _sink.OnSelectionChange();
+            m_CommitStart = commitEnd = 0;
 
             Debug.WriteLine("TextStore reset!!!");
         }
