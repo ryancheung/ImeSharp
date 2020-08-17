@@ -788,7 +788,7 @@ namespace ImeSharp
 
         private void OnUIElement(int uiElementId, bool onStart)
         {
-            if (InputMethod.ShowOSImeWindow) return;
+            if (InputMethod.ShowOSImeWindow || _noUIElement) return;
 
             IntPtr uiElement;
 
@@ -802,6 +802,8 @@ namespace ImeSharp
             }
             catch (System.InvalidCastException)
             {
+                Debug.WriteLine("No UI Element!!!");
+                _noUIElement = true;
                 return;
             }
 
@@ -1020,5 +1022,7 @@ namespace ImeSharp
         private int m_CommitEnd;
         private int m_CompStart;
         private int m_CompEnd;
+
+        private bool _noUIElement;
     }
 }
