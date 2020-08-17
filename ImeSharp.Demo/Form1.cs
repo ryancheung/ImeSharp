@@ -21,7 +21,7 @@ namespace ImeSharp.Demo
             Application.Idle += Application_Idle;
             KeyDown += Form1_KeyDown;
 
-            InputMethod.Initialize(this.Handle);
+            InputMethod.Initialize(this.Handle, false);
         }
 
         private void Application_Idle(object sender, EventArgs e)

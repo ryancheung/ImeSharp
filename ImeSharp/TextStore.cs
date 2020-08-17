@@ -788,7 +788,7 @@ namespace ImeSharp
 
         private void OnUIElement(int uiElementId, bool onStart)
         {
-            if (InputMethod.ShowOSImeWindow || _noUIElement) return;
+            if (InputMethod.ShowOSImeWindow || !_supportUIElement) return;
 
             IntPtr uiElement;
 
@@ -802,8 +802,7 @@ namespace ImeSharp
             }
             catch (System.InvalidCastException)
             {
-                Debug.WriteLine("No UI Element!!!");
-                _noUIElement = true;
+                _supportUIElement = false;
                 return;
             }
 
@@ -856,11 +855,11 @@ namespace ImeSharp
                 candidates[j] = candidate;
             }
 
-            Debug.WriteLine("========");
+            Debug.WriteLine("TSF========TSF");
             Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
             for (int k = 0; k < candidates.Length; k++)
                 Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-            Debug.WriteLine("++++++++");
+            Debug.WriteLine("TSF++++++++TSF");
 
             Marshal.ReleaseComObject(candList);
         }
@@ -939,6 +938,8 @@ namespace ImeSharp
             get { return _textEditSinkCookie; }
             set { _textEditSinkCookie = value; }
         }
+
+        public bool SupportUIElement { get { return _supportUIElement; } }
 
         //------------------------------------------------------
         //
@@ -1023,6 +1024,6 @@ namespace ImeSharp
         private int m_CompStart;
         private int m_CompEnd;
 
-        private bool _noUIElement;
+        private bool _supportUIElement = true;
     }
 }

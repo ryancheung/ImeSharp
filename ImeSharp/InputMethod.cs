@@ -229,7 +229,8 @@ namespace ImeSharp
 
         private static void IMEChangeCandidate()
         {
-            UpdateCandidates();
+            if (!TextStore.Current.SupportUIElement)
+                UpdateCandidates();
         }
 
         private static void UpdateCandidates()
@@ -254,11 +255,11 @@ namespace ImeSharp
                     candidates[j] = Marshal.PtrToStringUni(pointer + sOffset);
                 }
 
-                Debug.WriteLine("========");
+                Debug.WriteLine("IMM========IMM");
                 Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, candidates:", pageStart, pageSize, selection);
                 for (int k = 0; k < candidates.Length; k++)
                     Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-                Debug.WriteLine("++++++++");
+                Debug.WriteLine("IMM++++++++IMM");
 
                 Marshal.FreeHGlobal(pointer);
             }
