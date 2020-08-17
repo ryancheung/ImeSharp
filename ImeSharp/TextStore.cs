@@ -662,6 +662,7 @@ namespace ImeSharp
             // Return true in ok to start the composition.
             ok = true;
             _compositionStart = _compositionLength = 0;
+            _currentComposition = null;
         }
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
@@ -687,6 +688,9 @@ namespace ImeSharp
             m_Commit = true;
 
             Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
+
+            InputMethod.OnTextComposition(string.Empty, 0);
+            InputMethod.OnTextInput(m_StoredStr.Substring(start, count));
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -704,6 +708,10 @@ namespace ImeSharp
             }
 
             var compStr = m_StoredStr.Substring(_compositionStart, _compositionLength);
+            _currentComposition = compStr;
+
+            InputMethod.OnTextComposition(compStr, m_acpEnd);
+
             compStr = compStr.Insert(m_acpEnd, "|");
             Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, m_acpEnd);
 
@@ -825,6 +833,9 @@ namespace ImeSharp
             InputMethod.CandidatePageSize = pageSize;
             InputMethod.CandidateSelection = selection;
             InputMethod.CandidateList = candidates;
+
+            if (_currentComposition != null)
+                InputMethod.OnTextComposition(_currentComposition, m_acpEnd);
 
             Marshal.ReleaseComObject(candList);
         }
@@ -960,6 +971,7 @@ namespace ImeSharp
         private Queue<NativeMethods.LockFlags> m_queuedLockReq = new Queue<NativeMethods.LockFlags>();
         private bool m_fLayoutChanged;
 
+        private string _currentComposition;
         private int _compositionStart;
         private int _compositionLength;
         private int m_CommitStart;

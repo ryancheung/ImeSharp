@@ -57,6 +57,8 @@ namespace ImeSharp
         internal static int CandidateSelection;
         internal static string[] CandidateList;
 
+        public static event EventHandler<TextCompositionEventArgs> TextComposition;
+        public static event EventHandler<TextInputEventArgs> TextInput;
 
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
@@ -72,6 +74,24 @@ namespace ImeSharp
             _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+        }
+
+        public static void OnTextInput(string resultText)
+        {
+            if (TextInput != null)
+            {
+                foreach (var c in resultText)
+                    TextInput.Invoke(TextStore.Current, new TextInputEventArgs(c));
+            }
+        }
+
+        public static void OnTextComposition(string compositionText, int cursorPos)
+        {
+            if (TextComposition != null)
+            {
+                TextComposition.Invoke(TextStore.Current,
+                    new TextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
+            }
         }
 
         /// <summary>
@@ -130,6 +150,17 @@ namespace ImeSharp
             var current = Imm32Manager.Current;
             if (current.ProcessMessage(hWnd, msg, wParam, lParam))
                 return IntPtr.Zero;
+
+            switch (msg)
+            {
+                case NativeMethods.WM_CHAR:
+                {
+                    if (_enabled)
+                        TextInput.Invoke(TextStore.Current, new TextInputEventArgs((char)wParam.ToInt32()));
+
+                    break;
+                }
+            }
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }

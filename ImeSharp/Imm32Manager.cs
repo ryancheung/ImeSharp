@@ -121,12 +121,6 @@ namespace ImeSharp
                 case NativeMethods.WM_IME_ENDCOMPOSITION:
                     Debug.WriteLine("NativeMethods.WM_IME_ENDCOMPOSITION");
                     break;
-                case NativeMethods.WM_CHAR:
-                    if (InputMethod.Enabled)
-                    {
-                        Debug.WriteLine("WM_CHAR: {0}", (char)wParam.ToInt32());
-                    }
-                    break;
                 default:
                     break;
             }
