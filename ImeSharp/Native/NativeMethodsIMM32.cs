@@ -65,6 +65,8 @@ namespace ImeSharp.Native
         public const int GCS_RESULT = (GCS_RESULTSTR | GCS_RESULTCLAUSE);
         public const int GCS_RESULTREAD = (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE);
 
+        public const int CFS_CANDIDATEPOS = 64;
+
         #endregion Constants
 
         [StructLayout(LayoutKind.Sequential)]
@@ -78,6 +80,24 @@ namespace ImeSharp.Native
             public uint dwPageSize;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1, ArraySubType = UnmanagedType.U4)]
             public uint[] dwOffset;
+        }
+
+        [StructLayoutAttribute(LayoutKind.Sequential)]
+        public struct CandidateForm
+        {
+            public uint dwIndex;
+            public uint dwStyle;
+            public POINT ptCurrentPos;
+            public RECT rcArea;
+
+
+            public CandidateForm(POINT pos)
+            {
+                this.dwIndex = 0;
+                this.dwStyle = CFS_CANDIDATEPOS;
+                this.ptCurrentPos = pos;
+                this.rcArea = new RECT();
+            }
         }
 
         [DllImport("imm32.dll", SetLastError = true)]
@@ -101,7 +121,13 @@ namespace ImeSharp.Native
         [DllImport("imm32.dll", SetLastError = true)]
         public static extern IntPtr ImmGetContext(IntPtr hWnd);
 
-        [DllImport("user32.dll", CallingConvention = CallingConvention.StdCall, CharSet = CharSet.Auto)]
-        public static extern bool TranslateMessage(IntPtr message);
+        [DllImport("Imm32.dll", SetLastError = true)]
+        public static extern bool ImmGetOpenStatus(IntPtr hIMC);
+
+        [DllImport("Imm32.dll", SetLastError = true)]
+        public static extern bool ImmSetOpenStatus(IntPtr hIMC, bool open);
+
+        [DllImport("imm32.dll", SetLastError = true)]
+        public static extern bool ImmSetCandidateWindow(IntPtr hIMC, ref CandidateForm candidateForm);
     }
 }
