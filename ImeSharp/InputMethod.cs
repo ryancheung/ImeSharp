@@ -1,4 +1,5 @@
 using System;
+using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ImeSharp.Native;
 
@@ -162,12 +163,8 @@ namespace ImeSharp
 
         private static void EnableOrDisableInputMethod(bool bEnabled)
         {
-            if (IsWindows7OrBelow())
-                EnableOrDisableInputMethodIMM32(bEnabled);
-            else if (IsImm32ImeCurrent())
-                EnableOrDisableInputMethodIMM32(bEnabled);
-            else
-                EnableOrDisableInputMethodTSF(bEnabled);
+            EnableOrDisableInputMethodTSF(bEnabled);
+            EnableOrDisableInputMethodIMM32(bEnabled);
         }
 
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
@@ -177,6 +174,9 @@ namespace ImeSharp
             //TODO:
             switch (msg)
             {
+                case NativeMethods.WM_IME_SETCONTEXT:
+                    Debug.WriteLine("NativeMethods.WM_IME_SETCONTEXT");
+                    break;
                 case NativeMethods.WM_CHAR:
                     break;
                 case NativeMethods.WM_KEYDOWN:
