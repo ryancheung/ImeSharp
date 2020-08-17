@@ -821,6 +821,11 @@ namespace ImeSharp
                 Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
             Debug.WriteLine("TSF++++++++TSF");
 
+            InputMethod.CandidatePageStart = pageStart;
+            InputMethod.CandidatePageSize = pageSize;
+            InputMethod.CandidateSelection = selection;
+            InputMethod.CandidateList = candidates;
+
             Marshal.ReleaseComObject(candList);
         }
 

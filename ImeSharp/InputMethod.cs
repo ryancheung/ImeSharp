@@ -13,25 +13,6 @@ namespace ImeSharp
         private static IntPtr _prevWndProc;
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
 
-        // If the system is IMM enabled, this is true.
-        private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
-
-        private static IntPtr _defaultImc;
-        private static IntPtr DefaultImc
-        {
-            get
-            {
-                if (_defaultImc == IntPtr.Zero)
-                {
-                    IntPtr himc = NativeMethods.ImmCreateContext();
-
-                    // Store the default imc to _defaultImc.
-                    _defaultImc = himc;
-                }
-                return _defaultImc;
-            }
-        }
-
         private static TextServicesContext _textServicesContext;
         public static TextServicesContext TextServicesContext
         {
@@ -44,6 +25,13 @@ namespace ImeSharp
         {
             get { return _defaultTextStore; }
             set { _defaultTextStore = value; }
+        }
+
+        private static Imm32Manager _defaultImm32Manager;
+        public static Imm32Manager DefaultImm32Manager
+        {
+            get { return _defaultImm32Manager; }
+            set { _defaultImm32Manager = value; }
         }
 
         private static bool _enabled;
@@ -60,8 +48,15 @@ namespace ImeSharp
             }
         }
 
+
         private static bool _showOSImeWindow;
         public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
+
+        internal static int CandidatePageStart;
+        internal static int CandidatePageSize;
+        internal static int CandidateSelection;
+        internal static string[] CandidateList;
+
 
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
@@ -77,30 +72,6 @@ namespace ImeSharp
             _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
-        }
-
-        /// <summary>
-        /// return true if the current keyboard layout is a real IMM32-IME.
-        /// </summary>
-        public static bool IsImm32ImeCurrent()
-        {
-            if (!_immEnabled)
-                return false;
-
-            IntPtr hkl = NativeMethods.GetKeyboardLayout(0);
-
-            return IsImm32Ime(hkl);
-        }
-
-        /// <summary>
-        /// return true if the keyboard layout is a real IMM32-IME.
-        /// </summary>
-        public static bool IsImm32Ime(IntPtr hkl)
-        {
-            if (hkl == IntPtr.Zero)
-                return false;
-
-            return ((NativeMethods.IntPtrToInt32(hkl) & 0xf0000000) == 0xe0000000);
         }
 
         /// <summary>
@@ -139,25 +110,12 @@ namespace ImeSharp
         {
             // Under IMM32 enabled system, we associate default hIMC or null hIMC.
             //
-            if (_immEnabled)
+            if (Imm32Manager.ImmEnabled)
             {
                 if (bEnabled)
-                {
-                    //
-                    // Enabled. Use the default hIMC.
-                    //
-                    if (DefaultImc != IntPtr.Zero)
-                    {
-                        NativeMethods.ImmAssociateContext(_windowHandle, _defaultImc);
-                    }
-                }
+                    Imm32Manager.Current.Enable();
                 else
-                {
-                    //
-                    // Disable. Use null hIMC.
-                    //
-                    NativeMethods.ImmAssociateContext(_windowHandle, IntPtr.Zero);
-                }
+                    Imm32Manager.Current.Disable();
             }
         }
 
@@ -169,107 +127,11 @@ namespace ImeSharp
 
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            switch (msg)
-            {
-                case NativeMethods.WM_IME_SETCONTEXT:
-                    if (wParam.ToInt32() == 1 && _enabled)
-                    {
-                        // Must re-associate ime context or things won't work.
-                        NativeMethods.ImmAssociateContext(_windowHandle, DefaultImc);
-
-                        if (!NativeMethods.ImmGetOpenStatus(DefaultImc))
-                            NativeMethods.ImmSetOpenStatus(DefaultImc, true);
-                    }
-                    else
-                        NativeMethods.ImmSetOpenStatus(DefaultImc, false);
-                    break;
-                case NativeMethods.WM_IME_NOTIFY:
-                    IMENotify(wParam.ToInt32());
-                    if (!ShowOSImeWindow)
-                        return IntPtr.Zero;
-                    Debug.WriteLine("NativeMethods.WM_IME_NOTIFY");
-                    break;
-                case NativeMethods.WM_IME_STARTCOMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_STARTCOMPOSITION");
-                    break;
-                case NativeMethods.WM_IME_COMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_COMPOSITION");
-                    break;
-                case NativeMethods.WM_IME_ENDCOMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_ENDCOMPOSITION");
-                    break;
-                case NativeMethods.WM_CHAR:
-                    if (_enabled)
-                    {
-                        Debug.WriteLine("WM_CHAR: {0}", (char)wParam.ToInt32());
-                    }
-                    break;
-                case NativeMethods.WM_KEYDOWN:
-                    break;
-                case NativeMethods.WM_KEYUP:
-                    break;
-                default:
-                    break;
-            }
+            var current = Imm32Manager.Current;
+            if (current.ProcessMessage(hWnd, msg, wParam, lParam))
+                return IntPtr.Zero;
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
-
-        private static void IMENotify(int WParam)
-        {
-            switch (WParam)
-            {
-                case NativeMethods.IMN_OPENCANDIDATE:
-                case NativeMethods.IMN_CHANGECANDIDATE:
-                    Debug.WriteLine("NativeMethods.IMN_CHANGECANDIDATE");
-                    IMEChangeCandidate();
-                    break;
-                case NativeMethods.IMN_CLOSECANDIDATE:
-                    Debug.WriteLine("NativeMethods.IMN_CLOSECANDIDATE");
-                    //IMECloseCandidate();
-                    break;
-                default:
-                    break;
-            }
-        }
-
-        private static void IMEChangeCandidate()
-        {
-            if (!TextStore.Current.SupportUIElement)
-                UpdateCandidates();
-        }
-
-        private static void UpdateCandidates()
-        {
-            uint length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, IntPtr.Zero, 0);
-            if (length > 0)
-            {
-                IntPtr pointer = Marshal.AllocHGlobal((int)length);
-                length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, pointer, length);
-                NativeMethods.CandidateList cList = (NativeMethods.CandidateList)Marshal.PtrToStructure(pointer, typeof(NativeMethods.CandidateList));
-
-                var selection = cList.dwSelection;
-                var pageStart = (int)cList.dwPageStart;
-                var pageSize = cList.dwPageSize;
-
-                string[] candidates = new string[pageSize];
-
-                int i, j;
-                for (i = pageStart, j = 0; i < cList.dwCount && j < pageSize; i++, j++)
-                {
-                    int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
-                    candidates[j] = Marshal.PtrToStringUni(pointer + sOffset);
-                }
-
-                Debug.WriteLine("IMM========IMM");
-                Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, candidates:", pageStart, pageSize, selection);
-                for (int k = 0; k < candidates.Length; k++)
-                    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-                Debug.WriteLine("IMM++++++++IMM");
-
-                Marshal.FreeHGlobal(pointer);
-            }
-        }
-
     }
 }
