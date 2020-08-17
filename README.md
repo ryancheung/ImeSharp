@@ -2,18 +2,11 @@
 
 A C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
 
-Most of the code were extracted from the WPF core repo.
+TSF Implementation is based on WPF core.
 
 ## Discord for Dev
 
 https://discord.gg/BC4GKKr
-
-## TODO
-
-1. Implemented UI-less mode for TSF, namely render IME candidate list manually instead of using the OS renderer one.
-2. Raise events for text compositions and results. 
-3. Unify event API for both implementation of IMM32 and TSF.
-4. Refactor code.
 
 ## MS Docs
 
