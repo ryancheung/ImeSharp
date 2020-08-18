@@ -105,7 +105,7 @@ namespace ImeSharp
             _sink.OnSelectionChange();
             _commitStart = commitEnd = 0;
 
-            Debug.WriteLine("TextStore reset!!!");
+            //Debug.WriteLine("TextStore reset!!!");
         }
 
         private void _UnlockDocument()
@@ -688,7 +688,7 @@ namespace ImeSharp
             _commitLength = count;
             _commited = true;
 
-            Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
+            //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextComposition(this, ImeCompositionString.Empty, 0);
@@ -721,9 +721,9 @@ namespace ImeSharp
 
             InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
 
-            var compStr = new string(_currentComposition.ToArray());
-            compStr = compStr.Insert(_acpEnd, "|");
-            Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, _acpEnd);
+            //var compStr = new string(_currentComposition.ToArray());
+            //compStr = compStr.Insert(_acpEnd, "|");
+            //Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, _acpEnd);
 
             // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
             Marshal.ReleaseComObject(editRecord);
@@ -832,11 +832,11 @@ namespace ImeSharp
                 candidates[j] = new ImeCompositionString(bStrPtr);
             }
 
-            Debug.WriteLine("TSF========TSF");
-            Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
-            for (int k = 0; k < candidates.Length; k++)
-                Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-            Debug.WriteLine("TSF++++++++TSF");
+            //Debug.WriteLine("TSF========TSF");
+            //Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, currentPage: {3} candidates:", pageStart, pageSize, selection, currentPage);
+            //for (int k = 0; k < candidates.Length; k++)
+            //    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
+            //Debug.WriteLine("TSF++++++++TSF");
 
             InputMethod.CandidatePageStart = pageStart;
             InputMethod.CandidatePageSize = pageSize;

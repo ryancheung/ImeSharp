@@ -118,20 +118,19 @@ namespace ImeSharp
                     IMENotify(wParam.ToInt32());
                     if (!InputMethod.ShowOSImeWindow)
                         return true;
-                    Debug.WriteLine("NativeMethods.WM_IME_NOTIFY");
                     break;
                 case NativeMethods.WM_IME_STARTCOMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_STARTCOMPOSITION");
+                    //Debug.WriteLine("NativeMethods.WM_IME_STARTCOMPOSITION");
                     IMEStartComposion(lParam.ToInt32());
                     if (!InputMethod.ShowOSImeWindow)
                         return true;
                     break;
                 case NativeMethods.WM_IME_COMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_COMPOSITION");
+                    //Debug.WriteLine("NativeMethods.WM_IME_COMPOSITION");
                     IMEComposition(lParam.ToInt32());
                     break;
                 case NativeMethods.WM_IME_ENDCOMPOSITION:
-                    Debug.WriteLine("NativeMethods.WM_IME_ENDCOMPOSITION");
+                    //Debug.WriteLine("NativeMethods.WM_IME_ENDCOMPOSITION");
                     IMEEndComposition(lParam.ToInt32());
                     if (!InputMethod.ShowOSImeWindow)
                         return true;
@@ -154,11 +153,9 @@ namespace ImeSharp
             {
                 case NativeMethods.IMN_OPENCANDIDATE:
                 case NativeMethods.IMN_CHANGECANDIDATE:
-                    Debug.WriteLine("NativeMethods.IMN_CHANGECANDIDATE");
                     IMEChangeCandidate();
                     break;
                 case NativeMethods.IMN_CLOSECANDIDATE:
-                    Debug.WriteLine("NativeMethods.IMN_CLOSECANDIDATE");
                     InputMethod.ClearCandidates();
                     break;
                 default:
@@ -204,11 +201,11 @@ namespace ImeSharp
                     candidates[j] = new ImeCompositionString(pointer + sOffset);
                 }
 
-                Debug.WriteLine("IMM========IMM");
-                Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, candidates:", pageStart, pageSize, selection);
-                for (int k = 0; k < candidates.Length; k++)
-                    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
-                Debug.WriteLine("IMM++++++++IMM");
+                //Debug.WriteLine("IMM========IMM");
+                //Debug.WriteLine("pageStart: {0}, pageSize: {1}, selection: {2}, candidates:", pageStart, pageSize, selection);
+                //for (int k = 0; k < candidates.Length; k++)
+                //    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
+                //Debug.WriteLine("IMM++++++++IMM");
 
                 InputMethod.CandidatePageStart = pageStart;
                 InputMethod.CandidatePageSize = pageSize;
