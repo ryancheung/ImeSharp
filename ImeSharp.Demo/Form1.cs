@@ -55,6 +55,8 @@ namespace ImeSharp.Demo
                     candidateList += string.Format("  {2}{0}.{1}\r\n", i + 1, e.CandidateList[i], i == e.CandidateSelection ? "*" : "");
 
                 textBoxCandidates.Text = candidateList;
+
+                InputMethod.SetTextInputRect(labelComp.Location.X + labelComp.Size.Width, labelComp.Location.Y, 0, labelComp.Size.Height);
             };
         }
 
