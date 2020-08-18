@@ -4,6 +4,33 @@ A C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
 
 TSF Implementation is based on WPF core.
 
+## Usage
+
+### Initialization
+
+Call `InputMethod.Initialize` to initialize the input method with a window handle, e.g. `InputMethod.Initialize(someWindowHandle)`
+
+### Hook events
+
+```c#
+InputMethod.TextComposition += (o, e) =>
+{
+    // get composition or candidate infos
+};
+```
+
+```c#
+InputMethod.TextInput += (o, e) =>
+{
+    // get composition result.
+};
+```
+
+## Test IMM32 implementation only
+
+IMM32 would be only enabled if TSF service is not available.
+You can `return false` manually in `TextServicesLoader.ServicesInstalled` to mimic TSF unavailable case.
+
 ## Discord for Dev
 
 https://discord.gg/BC4GKKr
