@@ -12,7 +12,7 @@ namespace ImeSharp
         /// </summary>
         public TextCompositionEventArgs(ImeCompositionString compositionString,
                                         int cursorPosition,
-                                        string[] candidateList = null,
+                                        ImeCompositionString[] candidateList = null,
                                         int candidatePageStart = 0,
                                         int candidatePageSize = 0,
                                         int candidateSelection = 0)
@@ -41,7 +41,7 @@ namespace ImeSharp
         /// This property is only supported on WindowsDX and WindowsUniversal.
         /// If the composition string does not generate candidates this array is empty.
         /// </summary>    
-        public readonly string[] CandidateList;
+        public readonly ImeCompositionString[] CandidateList;
 
         /// <summary>
         /// First candidate index of current page.

@@ -124,6 +124,26 @@ namespace ImeSharp
                 buffer[i] = characters[i];
         }
 
+        public ImeCompositionString(IntPtr bStrPtr)
+        {
+            if (bStrPtr == IntPtr.Zero)
+            {
+                _size = 0;
+                return;
+            }
+
+            var ptr = (char*)bStrPtr;
+
+            int i = 0;
+            while (ptr[i] != '\0')
+            {
+                buffer[i] = ptr[i];
+                i++;
+            }
+
+            _size = i;
+        }
+
         public override string ToString()
         {
             fixed (char* ptr = buffer)

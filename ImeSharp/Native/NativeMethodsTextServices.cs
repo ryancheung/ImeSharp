@@ -1555,7 +1555,7 @@ namespace ImeSharp.Native
             //HRESULT GetString(
             //    [in] UINT uIndex,
             //    [out] BSTR *pstr) = 0;
-            void GetString(int index, [MarshalAs(UnmanagedType.BStr)] out string str);
+            void GetString(int index,  out IntPtr str);
 
             //HRESULT GetPageIndex(
             //    [length_is][size_is][out] UINT *pIndex,

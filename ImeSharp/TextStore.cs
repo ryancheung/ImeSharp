@@ -819,14 +819,13 @@ namespace ImeSharp
 
             selection -= pageStart;
 
-            string[] candidates = new string[pageSize];
+            ImeCompositionString[] candidates = new ImeCompositionString[pageSize];
 
+            IntPtr bStrPtr;
             for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
             {
-                string candidate;
-                candList.GetString(i, out candidate);
-
-                candidates[j] = candidate;
+                candList.GetString(i, out bStrPtr);
+                candidates[j] = new ImeCompositionString(bStrPtr);
             }
 
             Debug.WriteLine("TSF========TSF");

@@ -195,13 +195,13 @@ namespace ImeSharp
                 var pageStart = (int)cList.dwPageStart;
                 var pageSize = (int)cList.dwPageSize;
 
-                string[] candidates = new string[pageSize];
+                ImeCompositionString[] candidates = new ImeCompositionString[pageSize];
 
                 int i, j;
                 for (i = pageStart, j = 0; i < cList.dwCount && j < pageSize; i++, j++)
                 {
                     int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
-                    candidates[j] = Marshal.PtrToStringUni(pointer + sOffset);
+                    candidates[j] = new ImeCompositionString(pointer + sOffset);
                 }
 
                 Debug.WriteLine("IMM========IMM");

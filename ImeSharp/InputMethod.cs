@@ -56,7 +56,7 @@ namespace ImeSharp
         internal static int CandidatePageStart;
         internal static int CandidatePageSize;
         internal static int CandidateSelection;
-        internal static string[] CandidateList;
+        internal static ImeCompositionString[] CandidateList;
 
         internal static void ClearCandidates()
         {
