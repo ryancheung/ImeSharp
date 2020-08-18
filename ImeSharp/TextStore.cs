@@ -6,7 +6,7 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
-    public class TextStore : NativeMethods.ITextStoreACP,
+    internal class TextStore : NativeMethods.ITextStoreACP,
                              NativeMethods.ITfContextOwnerCompositionSink,
                              NativeMethods.ITfTextEditSink,
                              NativeMethods.ITfUIElementSink
@@ -597,7 +597,7 @@ namespace ImeSharp
         public int GetTextExt(int viewCookie, int acpStart, int acpEnd, out NativeMethods.RECT rect, out bool clipped)
         {
             clipped = false;
-            rect = new NativeMethods.RECT();
+            rect = InputMethod.TextInputRect;
 
             if (_viewCookie != viewCookie)
                 return NativeMethods.E_INVALIDARG;
@@ -616,8 +616,6 @@ namespace ImeSharp
             //	return E_INVALIDARG;
             //}
 
-            //TODO:
-            //m_sigGetCompExt(this, prc);
             NativeMethods.MapWindowPoints(_windowHandle, IntPtr.Zero, ref rect, 2);
 
             return NativeMethods.S_OK;

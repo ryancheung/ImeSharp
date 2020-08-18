@@ -18,7 +18,7 @@ namespace ImeSharp
     /// </summary>
     /// <remarks>
     /// </remarks>
-    public class TextServicesContext
+    internal class TextServicesContext
     {
         public static TextServicesContext Current
         {

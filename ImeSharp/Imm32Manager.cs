@@ -5,7 +5,7 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
-    public class Imm32Manager
+    internal class Imm32Manager
     {
 
         // If the system is IMM enabled, this is true.

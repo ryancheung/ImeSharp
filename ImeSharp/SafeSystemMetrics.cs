@@ -6,7 +6,7 @@ namespace ImeSharp
     /// <summary>
     ///     Contains properties that are queries into the system's various settings.
     /// </summary>
-    public sealed class SafeSystemMetrics
+    internal sealed class SafeSystemMetrics
     {
 
         private SafeSystemMetrics()

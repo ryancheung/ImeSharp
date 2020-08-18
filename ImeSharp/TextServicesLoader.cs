@@ -9,7 +9,7 @@ namespace ImeSharp
 {
     // Creates ITfThreadMgr instances, the root object of the Text Services
     // Framework.
-    public class TextServicesLoader
+    internal class TextServicesLoader
     {
         //------------------------------------------------------
         //

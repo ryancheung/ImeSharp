@@ -15,21 +15,21 @@ namespace ImeSharp
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
 
         private static TextServicesContext _textServicesContext;
-        public static TextServicesContext TextServicesContext
+        internal static TextServicesContext TextServicesContext
         {
             get { return _textServicesContext; }
             set { _textServicesContext = value; }
         }
 
         private static TextStore _defaultTextStore;
-        public static TextStore DefaultTextStore
+        internal static TextStore DefaultTextStore
         {
             get { return _defaultTextStore; }
             set { _defaultTextStore = value; }
         }
 
         private static Imm32Manager _defaultImm32Manager;
-        public static Imm32Manager DefaultImm32Manager
+        internal static Imm32Manager DefaultImm32Manager
         {
             get { return _defaultImm32Manager; }
             set { _defaultImm32Manager = value; }
@@ -49,6 +49,19 @@ namespace ImeSharp
             }
         }
 
+        internal static NativeMethods.RECT TextInputRect;
+
+        /// <summary>
+        /// Set the position of the candidate window rendered by the OS.
+        /// Let the OS render the candidate window by set param "showOSImeWindow" to <c>true</c> on <see cref="Initialize"/>.
+        /// </summary>
+        public static void SetTextInputRect(int x, int y, int width, int height)
+        {
+            TextInputRect.left = x;
+            TextInputRect.top = y;
+            TextInputRect.right = x + width;
+            TextInputRect.bottom = y + height;
+        }
 
         private static bool _showOSImeWindow;
         public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
@@ -71,6 +84,7 @@ namespace ImeSharp
 
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
+        /// Let the OS render the candidate window by set <see paramref="showOSImeWindow"/> to <c>true</c>.
         /// </summary>
         public static void Initialize(IntPtr windowHandle, bool showOSImeWindow = true)
         {
@@ -85,13 +99,13 @@ namespace ImeSharp
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 
-        public static void OnTextInput(object sender, char character)
+        internal static void OnTextInput(object sender, char character)
         {
             if (TextInput != null)
                 TextInput.Invoke(sender, new TextInputEventArgs(character));
         }
 
-        public static void OnTextComposition(object sender, ImeCompositionString compositionText, int cursorPos)
+        internal static void OnTextComposition(object sender, ImeCompositionString compositionText, int cursorPos)
         {
             if (TextComposition != null)
             {
