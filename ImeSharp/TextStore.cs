@@ -24,6 +24,7 @@ namespace ImeSharp
         {
             m_hWnd = windowHandle;
 
+
             _viewCookie = Environment.TickCount;
 
             _editCookie = NativeMethods.TF_INVALID_COOKIE;
@@ -690,8 +691,8 @@ namespace ImeSharp
             Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
 
             InputMethod.ClearCandidates();
-            InputMethod.OnTextComposition(string.Empty, 0);
-            InputMethod.OnTextInput(m_StoredStr.Substring(start, count));
+            InputMethod.OnTextComposition(this, string.Empty, 0);
+            InputMethod.OnTextInput(this, m_StoredStr.Substring(start, count));
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -711,7 +712,7 @@ namespace ImeSharp
             var compStr = m_StoredStr.Substring(_compositionStart, _compositionLength);
             _currentComposition = compStr;
 
-            InputMethod.OnTextComposition(compStr, m_acpEnd);
+            InputMethod.OnTextComposition(this, compStr, m_acpEnd);
 
             compStr = compStr.Insert(m_acpEnd, "|");
             Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, m_acpEnd);
@@ -836,7 +837,7 @@ namespace ImeSharp
             InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
-                InputMethod.OnTextComposition(_currentComposition, m_acpEnd);
+                InputMethod.OnTextComposition(this, _currentComposition, m_acpEnd);
 
             Marshal.ReleaseComObject(candList);
         }

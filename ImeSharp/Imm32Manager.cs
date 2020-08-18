@@ -55,10 +55,15 @@ namespace ImeSharp
             }
         }
 
+        private static ImmCompositionString _immCompositionString;
+        private static ImmCompositionInt _immCursorPosition;
 
         public Imm32Manager(IntPtr windowHandle)
         {
             _windowHandle = windowHandle;
+
+            _immCompositionString = new ImmCompositionString(DefaultImc, NativeMethods.GCS_COMPSTR);
+            _immCursorPosition = new ImmCompositionInt(DefaultImc, NativeMethods.GCS_CURSORPOS);
         }
 
         public static Imm32Manager Current
@@ -90,7 +95,7 @@ namespace ImeSharp
             NativeMethods.ImmAssociateContext(_windowHandle, IntPtr.Zero);
         }
 
-        internal bool ProcessMessage(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
+        internal bool ProcessMessage(IntPtr hWnd, uint msg, ref IntPtr wParam, ref IntPtr lParam)
         {
             switch (msg)
             {
@@ -102,6 +107,9 @@ namespace ImeSharp
 
                         if (!NativeMethods.ImmGetOpenStatus(DefaultImc))
                             NativeMethods.ImmSetOpenStatus(DefaultImc, true);
+
+                        if (!InputMethod.ShowOSImeWindow)
+                            lParam = IntPtr.Zero;
                     }
                     else
                         NativeMethods.ImmSetOpenStatus(DefaultImc, false);
@@ -114,15 +122,27 @@ namespace ImeSharp
                     break;
                 case NativeMethods.WM_IME_STARTCOMPOSITION:
                     Debug.WriteLine("NativeMethods.WM_IME_STARTCOMPOSITION");
+                    IMEStartComposion(lParam.ToInt32());
+                    if (!InputMethod.ShowOSImeWindow)
+                        return true;
                     break;
                 case NativeMethods.WM_IME_COMPOSITION:
                     Debug.WriteLine("NativeMethods.WM_IME_COMPOSITION");
+                    IMEComposition(lParam.ToInt32());
                     break;
                 case NativeMethods.WM_IME_ENDCOMPOSITION:
                     Debug.WriteLine("NativeMethods.WM_IME_ENDCOMPOSITION");
+                    IMEEndComposition(lParam.ToInt32());
+                    if (!InputMethod.ShowOSImeWindow)
+                        return true;
                     break;
-                default:
-                    break;
+                case NativeMethods.WM_CHAR:
+                    {
+                        if (InputMethod.Enabled)
+                            InputMethod.OnTextInput(this, (char)wParam.ToInt32());
+
+                        break;
+                    }
             }
 
             return false;
@@ -139,7 +159,7 @@ namespace ImeSharp
                     break;
                 case NativeMethods.IMN_CLOSECANDIDATE:
                     Debug.WriteLine("NativeMethods.IMN_CLOSECANDIDATE");
-                    //IMECloseCandidate();
+                    InputMethod.ClearCandidates();
                     break;
                 default:
                     break;
@@ -148,8 +168,18 @@ namespace ImeSharp
 
         private void IMEChangeCandidate()
         {
-            if (!TextStore.Current.SupportUIElement)
-                UpdateCandidates();
+            if (TextServicesLoader.ServicesInstalled) // TSF is enabled
+            {
+                if (!TextStore.Current.SupportUIElement) // But active IME not support UIElement
+                    UpdateCandidates(); // We have to fetch candidate list here.
+
+                return;
+            }
+
+            // Normal candidate list fetch in IMM32
+            UpdateCandidates();
+            // Send event on candidate updates
+            InputMethod.OnTextComposition(this, _immCompositionString.ToString(), _immCursorPosition.Value);
         }
 
         private void UpdateCandidates()
@@ -187,6 +217,34 @@ namespace ImeSharp
 
                 Marshal.FreeHGlobal(pointer);
             }
+        }
+
+        private void ClearComposition()
+        {
+            _immCompositionString.Clear();
+        }
+
+        private void IMEStartComposion(int lParam)
+        {
+            ClearComposition();
+        }
+
+        private void IMEComposition(int lParam)
+        {
+            if (_immCompositionString.Update(lParam))
+            {
+                _immCursorPosition.Update();
+
+                InputMethod.OnTextComposition(this, _immCompositionString.ToString(), _immCursorPosition.Value);
+            }
+        }
+
+        private void IMEEndComposition(int lParam)
+        {
+            InputMethod.ClearCandidates();
+            ClearComposition();
+
+            InputMethod.OnTextComposition(this, string.Empty, 0);
         }
     }
 }

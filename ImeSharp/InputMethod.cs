@@ -84,20 +84,29 @@ namespace ImeSharp
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 
-        public static void OnTextInput(string resultText)
+        public static void OnTextInput(object sender, char character)
+        {
+            if (TextInput != null)
+                TextInput.Invoke(sender, new TextInputEventArgs(character));
+        }
+
+        public static void OnTextInput(object sender, string resultText)
         {
             if (TextInput != null)
             {
                 foreach (var c in resultText)
-                    TextInput.Invoke(TextStore.Current, new TextInputEventArgs(c));
+                    TextInput.Invoke(sender, new TextInputEventArgs(c));
             }
         }
 
-        public static void OnTextComposition(string compositionText, int cursorPos)
+        public static void OnTextComposition(object sender, string compositionText, int cursorPos)
         {
             if (TextComposition != null)
             {
-                TextComposition.Invoke(TextStore.Current,
+                if (string.IsNullOrEmpty(compositionText)) // Crash guard
+                    cursorPos = 0;
+
+                TextComposition.Invoke(sender,
                     new TextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
             }
         }
@@ -116,7 +125,7 @@ namespace ImeSharp
             return false;
         }
 
-        private static void EnableOrDisableInputMethodTSF(bool bEnabled)
+        private static void EnableOrDisableInputMethod(bool bEnabled)
         {
             // InputMethod enable/disabled status was changed on the current focus Element.
             if (TextServicesLoader.ServicesInstalled)
@@ -126,10 +135,7 @@ namespace ImeSharp
                 else
                     TextServicesContext.Current.SetFocusOnEmptyDim();
             }
-        }
 
-        private static void EnableOrDisableInputMethodIMM32(bool bEnabled)
-        {
             // Under IMM32 enabled system, we associate default hIMC or null hIMC.
             if (Imm32Manager.ImmEnabled)
             {
@@ -140,28 +146,11 @@ namespace ImeSharp
             }
         }
 
-        private static void EnableOrDisableInputMethod(bool bEnabled)
-        {
-            EnableOrDisableInputMethodTSF(bEnabled);
-            EnableOrDisableInputMethodIMM32(bEnabled);
-        }
-
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             var current = Imm32Manager.Current;
-            if (current.ProcessMessage(hWnd, msg, wParam, lParam))
+            if (current.ProcessMessage(hWnd, msg, ref wParam, ref lParam))
                 return IntPtr.Zero;
-
-            switch (msg)
-            {
-                case NativeMethods.WM_CHAR:
-                {
-                    if (_enabled)
-                        TextInput.Invoke(TextStore.Current, new TextInputEventArgs((char)wParam.ToInt32()));
-
-                    break;
-                }
-            }
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
