@@ -22,7 +22,7 @@ namespace ImeSharp
         // Creates a TextStore instance.
         public TextStore(IntPtr windowHandle)
         {
-            m_hWnd = windowHandle;
+            _windowHandle = windowHandle;
 
 
             _viewCookie = Environment.TickCount;
@@ -75,11 +75,11 @@ namespace ImeSharp
 
         private bool _LockDocument(NativeMethods.LockFlags dwLockFlags)
         {
-            if (m_fLocked)
+            if (_locked)
                 return false;
 
-            m_fLocked = true;
-            m_dwLockType = dwLockFlags;
+            _locked = true;
+            _lockFlags = dwLockFlags;
 
             return true;
         }
@@ -87,23 +87,23 @@ namespace ImeSharp
 
         private void ResetIfRequired()
         {
-            if (!m_Commit)
+            if (!_commited)
                 return;
 
-            m_Commit = false;
-            int commitEnd = m_CommitStart + m_CommitLength;
-            m_StoredStr = m_StoredStr.Remove(m_CommitStart, m_CommitLength);
+            _commited = false;
+            int commitEnd = _commitStart + _commitLength;
+            m_StoredStr = m_StoredStr.Remove(_commitStart, _commitLength);
 
             NativeMethods.TS_TEXTCHANGE textChange;
-            textChange.acpStart = m_CommitStart;
+            textChange.acpStart = _commitStart;
             textChange.acpOldEnd = commitEnd;
-            textChange.acpNewEnd = m_CommitStart;
+            textChange.acpNewEnd = _commitStart;
 
             _sink.OnTextChange(0, ref textChange);
 
-            m_acpStart = m_acpEnd = m_StoredStr.Length;
+            _acpStart = _acpEnd = m_StoredStr.Length;
             _sink.OnSelectionChange();
-            m_CommitStart = commitEnd = 0;
+            _commitStart = commitEnd = 0;
 
             Debug.WriteLine("TextStore reset!!!");
         }
@@ -111,28 +111,28 @@ namespace ImeSharp
         private void _UnlockDocument()
         {
             int hr;
-            m_fLocked = false;
-            m_dwLockType = 0;
+            _locked = false;
+            _lockFlags = 0;
 
             ResetIfRequired();
 
             //if there is a queued lock, grant it
-            if (m_queuedLockReq.Count > 0)
+            if (_lockRequestQueue.Count > 0)
             {
-                RequestLock(m_queuedLockReq.Dequeue(), out hr);
+                RequestLock(_lockRequestQueue.Dequeue(), out hr);
             }
 
             //if any layout changes occurred during the lock, notify the manager
-            if (m_fLayoutChanged)
+            if (_layoutChanged)
             {
-                m_fLayoutChanged = false;
+                _layoutChanged = false;
                 _sink.OnLayoutChange(NativeMethods.TsLayoutCode.TS_LC_CHANGE, _viewCookie);
             }
         }
 
         private bool _IsLocked(NativeMethods.LockFlags dwLockType)
         {
-            return m_fLocked && (m_dwLockType & dwLockType) != 0;
+            return _locked && (_lockFlags & dwLockType) != 0;
         }
 
         public int RequestLock(NativeMethods.LockFlags dwLockFlags, out int hrSession)
@@ -145,7 +145,7 @@ namespace ImeSharp
 
             hrSession = NativeMethods.E_FAIL;
 
-            if (m_fLocked)
+            if (_locked)
             {
                 //the document is locked
 
@@ -162,7 +162,7 @@ namespace ImeSharp
                     //the request is asynchronous
 
                     //Queue the lock request
-                    m_queuedLockReq.Enqueue(dwLockFlags);
+                    _lockRequestQueue.Enqueue(dwLockFlags);
                     hrSession = NativeMethods.TS_S_ASYNC;
                 }
 
@@ -229,11 +229,11 @@ namespace ImeSharp
                 return NativeMethods.E_INVALIDARG;
             }
 
-            selection.acpStart = m_acpStart;
-            selection.acpEnd = m_acpEnd;
-            selection.style.fInterimChar = m_fInterimChar;
+            selection.acpStart = _acpStart;
+            selection.acpEnd = _acpEnd;
+            selection.style.fInterimChar = _interimChar;
 
-            if (m_fInterimChar)
+            if (_interimChar)
             {
                 /*
                 fInterimChar will be set when an intermediate character has been
@@ -245,7 +245,7 @@ namespace ImeSharp
             }
             else
             {
-                selection.style.ase = m_ActiveSelEnd;
+                selection.style.ase = _activeSelectionEnd;
             }
 
             cFetched = 1;
@@ -265,10 +265,10 @@ namespace ImeSharp
                 return NativeMethods.TS_E_NOLOCK;
             }
 
-            m_acpStart = selections[0].acpStart;
-            m_acpEnd = selections[0].acpEnd;
-            m_fInterimChar = selections[0].style.fInterimChar;
-            if (m_fInterimChar)
+            _acpStart = selections[0].acpStart;
+            _acpEnd = selections[0].acpEnd;
+            _interimChar = selections[0].style.fInterimChar;
+            if (_interimChar)
             {
                 /*
                 fInterimChar will be set when an intermediate character has been
@@ -276,21 +276,21 @@ namespace ImeSharp
                 used to enter characters and a character has been set, but the IME
                 is still active.
                 */
-                m_ActiveSelEnd = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
+                _activeSelectionEnd = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
             }
             else
             {
-                m_ActiveSelEnd = selections[0].style.ase;
+                _activeSelectionEnd = selections[0].style.ase;
             }
 
             //if the selection end is at the start of the selection, reverse the parameters
-            int lStart = m_acpStart;
-            int lEnd = m_acpEnd;
+            int lStart = _acpStart;
+            int lEnd = _acpEnd;
 
-            if (NativeMethods.TsActiveSelEnd.TS_AE_START == m_ActiveSelEnd)
+            if (NativeMethods.TsActiveSelEnd.TS_AE_START == _activeSelectionEnd)
             {
-                lStart = m_acpEnd;
-                lEnd = m_acpStart;
+                lStart = _acpEnd;
+                lEnd = _acpStart;
             }
 
             return NativeMethods.S_OK;
@@ -489,13 +489,13 @@ namespace ImeSharp
             int acpOldEnd;
             int acpNewEnd;
 
-            acpOldEnd = m_acpEnd;
+            acpOldEnd = _acpEnd;
 
             //set the start point after the insertion
-            acpStart = m_acpStart;
+            acpStart = _acpStart;
 
             //set the end point after the insertion
-            acpNewEnd = m_acpStart + cch;
+            acpNewEnd = _acpStart + cch;
 
             if ((dwFlags & NativeMethods.InsertAtSelectionFlags.TS_IAS_QUERYONLY) == NativeMethods.InsertAtSelectionFlags.TS_IAS_QUERYONLY)
             {
@@ -509,8 +509,8 @@ namespace ImeSharp
             m_StoredStr = m_StoredStr.Insert(acpStart, new string(pchText, 0, acpNewEnd - acpStart));
 
             //set the selection
-            m_acpStart = acpStart;
-            m_acpEnd = acpNewEnd;
+            _acpStart = acpStart;
+            _acpEnd = acpNewEnd;
 
             if ((dwFlags & NativeMethods.InsertAtSelectionFlags.TS_IAS_NOQUERY) != NativeMethods.InsertAtSelectionFlags.TS_IAS_NOQUERY)
             {
@@ -524,7 +524,7 @@ namespace ImeSharp
             pChange.acpNewEnd = acpNewEnd;
 
             //defer the layout change notification until the document is unlocked
-            m_fLayoutChanged = true;
+            _layoutChanged = true;
 
             return NativeMethods.S_OK;
         }
@@ -618,7 +618,7 @@ namespace ImeSharp
 
             //TODO:
             //m_sigGetCompExt(this, prc);
-            NativeMethods.MapWindowPoints(m_hWnd, IntPtr.Zero, ref rect, 2);
+            NativeMethods.MapWindowPoints(_windowHandle, IntPtr.Zero, ref rect, 2);
 
             return NativeMethods.S_OK;
         }
@@ -630,7 +630,7 @@ namespace ImeSharp
             if (_viewCookie != viewCookie)
                 return NativeMethods.E_INVALIDARG;
 
-            NativeMethods.GetWindowRect(m_hWnd, out rect);
+            NativeMethods.GetWindowRect(_windowHandle, out rect);
             return NativeMethods.S_OK;
         }
 
@@ -642,7 +642,7 @@ namespace ImeSharp
                 return NativeMethods.S_FALSE;
             }
 
-            hwnd = m_hWnd;
+            hwnd = _windowHandle;
 
             return NativeMethods.S_OK;
         }
@@ -684,9 +684,9 @@ namespace ImeSharp
             int start;
             int count;
             rangeacp.GetExtent(out start, out count);
-            m_CommitStart = start;
-            m_CommitLength = count;
-            m_Commit = true;
+            _commitStart = start;
+            _commitLength = count;
+            _commited = true;
 
             Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
 
@@ -701,7 +701,7 @@ namespace ImeSharp
 
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-            if (m_Commit) return NativeMethods.S_OK;
+            if (_commited) return NativeMethods.S_OK;
 
             if (m_StoredStr == string.Empty && _compositionLength > 0) // Composition just ended
             {
@@ -712,10 +712,10 @@ namespace ImeSharp
             var compStr = m_StoredStr.Substring(_compositionStart, _compositionLength);
             _currentComposition = compStr;
 
-            InputMethod.OnTextComposition(this, compStr, m_acpEnd);
+            InputMethod.OnTextComposition(this, compStr, _acpEnd);
 
-            compStr = compStr.Insert(m_acpEnd, "|");
-            Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, m_acpEnd);
+            compStr = compStr.Insert(_acpEnd, "|");
+            Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, _acpEnd);
 
             // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
             Marshal.ReleaseComObject(editRecord);
@@ -837,7 +837,7 @@ namespace ImeSharp
             InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
-                InputMethod.OnTextComposition(this, _currentComposition, m_acpEnd);
+                InputMethod.OnTextComposition(this, _currentComposition, _acpEnd);
 
             Marshal.ReleaseComObject(candList);
         }
@@ -868,8 +868,8 @@ namespace ImeSharp
 
         public NativeMethods.ITfDocumentMgr DocumentManager
         {
-            get { return _doc; }
-            set { _doc = value; }
+            get { return _documentMgr; }
+            set { _documentMgr = value; }
         }
 
         // EditCookie for ITfContext.
@@ -914,7 +914,7 @@ namespace ImeSharp
         //------------------------------------------------------
 
         // The TSF document object.  This is a native resource.
-        private NativeMethods.ITfDocumentMgr _doc;
+        private NativeMethods.ITfDocumentMgr _documentMgr;
 
         private int _viewCookie;
 
@@ -924,24 +924,24 @@ namespace ImeSharp
         private int _textEditSinkCookie;
 
         private NativeMethods.ITextStoreACPSink _sink;
-        private IntPtr m_hWnd;
-        private int m_acpStart;
-        private int m_acpEnd;
-        private bool m_fInterimChar;
-        private NativeMethods.TsActiveSelEnd m_ActiveSelEnd;
+        private IntPtr _windowHandle;
+        private int _acpStart;
+        private int _acpEnd;
+        private bool _interimChar;
+        private NativeMethods.TsActiveSelEnd _activeSelectionEnd;
         private string m_StoredStr = string.Empty;
 
-        private bool m_fLocked;
-        private NativeMethods.LockFlags m_dwLockType;
-        private Queue<NativeMethods.LockFlags> m_queuedLockReq = new Queue<NativeMethods.LockFlags>();
-        private bool m_fLayoutChanged;
+        private bool _locked;
+        private NativeMethods.LockFlags _lockFlags;
+        private Queue<NativeMethods.LockFlags> _lockRequestQueue = new Queue<NativeMethods.LockFlags>();
+        private bool _layoutChanged;
 
         private string _currentComposition;
         private int _compositionStart;
         private int _compositionLength;
-        private int m_CommitStart;
-        private int m_CommitLength;
-        private bool m_Commit;
+        private int _commitStart;
+        private int _commitLength;
+        private bool _commited;
 
         private bool _supportUIElement = true;
     }
