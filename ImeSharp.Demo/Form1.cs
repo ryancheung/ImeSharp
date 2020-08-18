@@ -45,7 +45,7 @@ namespace ImeSharp.Demo
 
             InputMethod.TextComposition += (s, e) =>
             {
-                var str = e.CompositionString;
+                var str = e.CompositionString.ToString();
                 str = str.Insert(e.CursorPosition, "|");
                 labelComp.Text = str;
 

@@ -10,7 +10,7 @@ namespace ImeSharp
         /// <summary>
         // Construct a TextCompositionEventArgs with composition infos.
         /// </summary>
-        public TextCompositionEventArgs(string compositionString,
+        public TextCompositionEventArgs(ImeCompositionString compositionString,
                                         int cursorPosition,
                                         string[] candidateList = null,
                                         int candidatePageStart = 0,
@@ -29,7 +29,7 @@ namespace ImeSharp
         /// <summary>
         /// The full string as it's composed by the IMM.
         /// </summary>    
-        public readonly string CompositionString;
+        public readonly ImeCompositionString CompositionString;
 
         /// <summary>
         /// The position of the cursor inside the composed string.

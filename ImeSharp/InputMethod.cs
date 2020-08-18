@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ImeSharp.Native;
@@ -90,20 +91,11 @@ namespace ImeSharp
                 TextInput.Invoke(sender, new TextInputEventArgs(character));
         }
 
-        public static void OnTextInput(object sender, string resultText)
-        {
-            if (TextInput != null)
-            {
-                foreach (var c in resultText)
-                    TextInput.Invoke(sender, new TextInputEventArgs(c));
-            }
-        }
-
-        public static void OnTextComposition(object sender, string compositionText, int cursorPos)
+        public static void OnTextComposition(object sender, ImeCompositionString compositionText, int cursorPos)
         {
             if (TextComposition != null)
             {
-                if (string.IsNullOrEmpty(compositionText)) // Crash guard
+                if (compositionText.Count == 0) // Crash guard
                     cursorPos = 0;
 
                 TextComposition.Invoke(sender,

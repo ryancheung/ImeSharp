@@ -92,7 +92,7 @@ namespace ImeSharp
 
             _commited = false;
             int commitEnd = _commitStart + _commitLength;
-            _inputBuffer = _inputBuffer.Remove(_commitStart, _commitLength);
+            _inputBuffer.RemoveRange(_commitStart, _commitLength);
 
             NativeMethods.TS_TEXTCHANGE textChange;
             textChange.acpStart = _commitStart;
@@ -101,7 +101,7 @@ namespace ImeSharp
 
             _sink.OnTextChange(0, ref textChange);
 
-            _acpStart = _acpEnd = _inputBuffer.Length;
+            _acpStart = _acpEnd = _inputBuffer.Count;
             _sink.OnSelectionChange();
             _commitStart = commitEnd = 0;
 
@@ -195,7 +195,7 @@ namespace ImeSharp
             acpResultStart = acpResultEnd = 0;
 
             //Queryins
-            if (acpTestStart > _inputBuffer.Length || acpTestEnd > _inputBuffer.Length)
+            if (acpTestStart > _inputBuffer.Count || acpTestEnd > _inputBuffer.Count)
                 return NativeMethods.E_INVALIDARG;
 
             //Microsoft Pinyin seems does not init the result value, so we set the test value here, in case crash
@@ -318,7 +318,7 @@ namespace ImeSharp
             cchPlainRet = 0;
             acpNext = acpStart;
 
-            cchTotal = _inputBuffer.Length;
+            cchTotal = _inputBuffer.Count;
 
             //validate the start pos
             if ((acpStart < 0) || (acpStart > cchTotal))
@@ -505,8 +505,8 @@ namespace ImeSharp
             }
 
             //insert the text
-            _inputBuffer = _inputBuffer.Remove(acpStart, acpOldEnd - acpStart);
-            _inputBuffer = _inputBuffer.Insert(acpStart, new string(pchText, 0, acpNewEnd - acpStart));
+            _inputBuffer.RemoveRange(acpStart, acpOldEnd - acpStart);
+            _inputBuffer.InsertRange(acpStart, pchText);
 
             //set the selection
             _acpStart = acpStart;
@@ -577,7 +577,7 @@ namespace ImeSharp
                 return NativeMethods.TS_E_NOLOCK;
             }
 
-            acp = _inputBuffer.Length;
+            acp = _inputBuffer.Count;
 
             return NativeMethods.S_OK;
         }
@@ -663,7 +663,7 @@ namespace ImeSharp
             // Return true in ok to start the composition.
             ok = true;
             _compositionStart = _compositionLength = 0;
-            _currentComposition = null;
+            _currentComposition.Clear();
         }
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
@@ -688,11 +688,13 @@ namespace ImeSharp
             _commitLength = count;
             _commited = true;
 
-            Debug.WriteLine("Composition result: {0}", new object[] { _inputBuffer.Substring(start, count) });
+            Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
 
             InputMethod.ClearCandidates();
-            InputMethod.OnTextComposition(this, string.Empty, 0);
-            InputMethod.OnTextInput(this, _inputBuffer.Substring(start, count));
+            InputMethod.OnTextComposition(this, ImeCompositionString.Empty, 0);
+
+            for (int i = start; i < count; i++)
+                InputMethod.OnTextInput(this, _inputBuffer[i]);
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -703,17 +705,19 @@ namespace ImeSharp
         {
             if (_commited) return NativeMethods.S_OK;
 
-            if (_inputBuffer == string.Empty && _compositionLength > 0) // Composition just ended
+            if (_inputBuffer.Count == 0 && _compositionLength > 0) // Composition just ended
             {
                 Marshal.ReleaseComObject(editRecord);
                 return NativeMethods.S_OK;
             }
 
-            var compStr = _inputBuffer.Substring(_compositionStart, _compositionLength);
-            _currentComposition = compStr;
+            _currentComposition.Clear();
+            for(int i = _compositionStart; i < _compositionLength; i++)
+                _currentComposition.Add(_inputBuffer[i]);
 
-            InputMethod.OnTextComposition(this, compStr, _acpEnd);
+            InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
 
+            var compStr = new string(_currentComposition.ToArray());
             compStr = compStr.Insert(_acpEnd, "|");
             Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, _acpEnd);
 
@@ -837,7 +841,7 @@ namespace ImeSharp
             InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
-                InputMethod.OnTextComposition(this, _currentComposition, _acpEnd);
+                InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
 
             Marshal.ReleaseComObject(candList);
         }
@@ -929,14 +933,14 @@ namespace ImeSharp
         private int _acpEnd;
         private bool _interimChar;
         private NativeMethods.TsActiveSelEnd _activeSelectionEnd;
-        private string _inputBuffer = string.Empty;
+        private List<char> _inputBuffer = new List<char>();
 
         private bool _locked;
         private NativeMethods.LockFlags _lockFlags;
         private Queue<NativeMethods.LockFlags> _lockRequestQueue = new Queue<NativeMethods.LockFlags>();
         private bool _layoutChanged;
 
-        private string _currentComposition;
+        private List<char> _currentComposition = new List<char>();
         private int _compositionStart;
         private int _compositionLength;
         private int _commitStart;

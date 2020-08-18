@@ -55,15 +55,15 @@ namespace ImeSharp
             }
         }
 
-        private static ImmCompositionString _immCompositionString;
-        private static ImmCompositionInt _immCursorPosition;
+        private static ImmCompositionStringHandler _compositionStringHandler;
+        private static ImmCompositionIntHandler _compositionCursorHandler;
 
         public Imm32Manager(IntPtr windowHandle)
         {
             _windowHandle = windowHandle;
 
-            _immCompositionString = new ImmCompositionString(DefaultImc, NativeMethods.GCS_COMPSTR);
-            _immCursorPosition = new ImmCompositionInt(DefaultImc, NativeMethods.GCS_CURSORPOS);
+            _compositionStringHandler = new ImmCompositionStringHandler(DefaultImc, NativeMethods.GCS_COMPSTR);
+            _compositionCursorHandler = new ImmCompositionIntHandler(DefaultImc, NativeMethods.GCS_CURSORPOS);
         }
 
         public static Imm32Manager Current
@@ -179,7 +179,7 @@ namespace ImeSharp
             // Normal candidate list fetch in IMM32
             UpdateCandidates();
             // Send event on candidate updates
-            InputMethod.OnTextComposition(this, _immCompositionString.ToString(), _immCursorPosition.Value);
+            InputMethod.OnTextComposition(this, new ImeCompositionString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
         }
 
         private void UpdateCandidates()
@@ -221,7 +221,7 @@ namespace ImeSharp
 
         private void ClearComposition()
         {
-            _immCompositionString.Clear();
+            _compositionStringHandler.Clear();
         }
 
         private void IMEStartComposion(int lParam)
@@ -231,11 +231,11 @@ namespace ImeSharp
 
         private void IMEComposition(int lParam)
         {
-            if (_immCompositionString.Update(lParam))
+            if (_compositionStringHandler.Update(lParam))
             {
-                _immCursorPosition.Update();
+                _compositionCursorHandler.Update();
 
-                InputMethod.OnTextComposition(this, _immCompositionString.ToString(), _immCursorPosition.Value);
+                InputMethod.OnTextComposition(this, new ImeCompositionString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
             }
         }
 
@@ -244,7 +244,7 @@ namespace ImeSharp
             InputMethod.ClearCandidates();
             ClearComposition();
 
-            InputMethod.OnTextComposition(this, string.Empty, 0);
+            InputMethod.OnTextComposition(this, ImeCompositionString.Empty, 0);
         }
     }
 }

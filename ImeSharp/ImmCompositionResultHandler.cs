@@ -1,8 +1,6 @@
 using System;
 using System.Text;
 using System.Runtime.InteropServices;
-using System.Collections;
-using System.Collections.Generic;
 using ImeSharp.Native;
 
 namespace ImeSharp
@@ -32,55 +30,68 @@ namespace ImeSharp
         }
     }
 
-    internal class ImmCompositionString : ImmCompositionResultHandler, IEnumerable<byte>
+    internal class ImmCompositionStringHandler : ImmCompositionResultHandler
     {
-        private byte[] _values;
+        internal const int BufferSize = 1024;
+        private byte[] _byteBuffer = new byte[BufferSize];
+        private int _byteCount;
 
-        public int Length { get; private set; }
+        private char[] _charBuffer = new char[BufferSize / 2];
+        private int _charCount;
 
-        public byte[] Values { get { return _values; } }
+        public char[] Values { get { return _charBuffer; } }
+        public int Count { get { return _charCount; } }
 
-        public byte this[int index] { get { return _values[index]; } }
-
-        internal ImmCompositionString(IntPtr imeContext, int flag) : base(imeContext, flag)
+        public char this[int index]
         {
-            Clear();
+            get
+            {
+                if (index >= _charCount || index < 0)
+                    throw new ArgumentOutOfRangeException(nameof(index));
+
+                return _charBuffer[index];
+            }
         }
 
-        public IEnumerator<byte> GetEnumerator()
+        internal ImmCompositionStringHandler(IntPtr imeContext, int flag) : base(imeContext, flag)
         {
-            foreach (byte b in _values)
-                yield return b;
-        }
-
-        IEnumerator IEnumerable.GetEnumerator()
-        {
-            return this.GetEnumerator();
         }
 
         public override string ToString()
         {
-            if (Length <= 0)
+            if (_charCount <= 0)
                 return string.Empty;
 
-            return Encoding.Unicode.GetString(_values, 0, Length);
+            return new string(_charBuffer, 0, _charCount);
         }
 
         internal void Clear()
         {
-            _values = new byte[0];
-            Length = 0;
+            Array.Clear(_byteBuffer, 0, _byteCount);
+            _byteCount = 0;
+
+            Array.Clear(_charBuffer, 0, _charCount);
+            _charCount = 0;
         }
 
         internal override void Update()
         {
-            Length = NativeMethods.ImmGetCompositionString(_imeContext, Flag, IntPtr.Zero, 0);
-            IntPtr pointer = Marshal.AllocHGlobal(Length);
+            _byteCount = NativeMethods.ImmGetCompositionString(_imeContext, Flag, IntPtr.Zero, 0);
+            IntPtr pointer = Marshal.AllocHGlobal(_byteCount);
+
             try
             {
-                NativeMethods.ImmGetCompositionString(_imeContext, Flag, pointer, Length);
-                _values = new byte[Length];
-                Marshal.Copy(pointer, _values, 0, Length);
+                Array.Clear(_byteBuffer, 0, _byteCount);
+
+                if (_byteCount > 0)
+                {
+                    NativeMethods.ImmGetCompositionString(_imeContext, Flag, pointer, _byteCount);
+
+                    Marshal.Copy(pointer, _byteBuffer, 0, _byteCount);
+
+                    Array.Clear(_charBuffer, 0, _charCount);
+                    _charCount = Encoding.Unicode.GetChars(_byteBuffer, 0, _byteCount, _charBuffer, 0);
+                }
             }
             finally
             {
@@ -89,11 +100,11 @@ namespace ImeSharp
         }
     }
 
-    internal class ImmCompositionInt : ImmCompositionResultHandler
+    internal class ImmCompositionIntHandler : ImmCompositionResultHandler
     {
         public int Value { get; private set; }
 
-        internal ImmCompositionInt(IntPtr imeContext, int flag) : base(imeContext, flag) { }
+        internal ImmCompositionIntHandler(IntPtr imeContext, int flag) : base(imeContext, flag) { }
 
         public override string ToString()
         {
