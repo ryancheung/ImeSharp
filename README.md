@@ -8,7 +8,9 @@ TSF Implementation is based on WPF core.
 
 ### Initialization
 
-Call `InputMethod.Initialize` to initialize the input method with a window handle, e.g. `InputMethod.Initialize(someWindowHandle)`
+Call `InputMethod.Initialize` to initialize the input method with a window handle, e.g. `InputMethod.Initialize(someWindowHandle)`.
+
+If you don't want the OS Candidate Window, do `InputMethod.Initialize(someWindowHandle, false)`.
 
 ### Hook events
 
