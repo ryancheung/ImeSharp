@@ -92,7 +92,7 @@ namespace ImeSharp
 
             _commited = false;
             int commitEnd = _commitStart + _commitLength;
-            m_StoredStr = m_StoredStr.Remove(_commitStart, _commitLength);
+            _inputBuffer = _inputBuffer.Remove(_commitStart, _commitLength);
 
             NativeMethods.TS_TEXTCHANGE textChange;
             textChange.acpStart = _commitStart;
@@ -101,7 +101,7 @@ namespace ImeSharp
 
             _sink.OnTextChange(0, ref textChange);
 
-            _acpStart = _acpEnd = m_StoredStr.Length;
+            _acpStart = _acpEnd = _inputBuffer.Length;
             _sink.OnSelectionChange();
             _commitStart = commitEnd = 0;
 
@@ -195,7 +195,7 @@ namespace ImeSharp
             acpResultStart = acpResultEnd = 0;
 
             //Queryins
-            if (acpTestStart > m_StoredStr.Length || acpTestEnd > m_StoredStr.Length)
+            if (acpTestStart > _inputBuffer.Length || acpTestEnd > _inputBuffer.Length)
                 return NativeMethods.E_INVALIDARG;
 
             //Microsoft Pinyin seems does not init the result value, so we set the test value here, in case crash
@@ -318,7 +318,7 @@ namespace ImeSharp
             cchPlainRet = 0;
             acpNext = acpStart;
 
-            cchTotal = m_StoredStr.Length;
+            cchTotal = _inputBuffer.Length;
 
             //validate the start pos
             if ((acpStart < 0) || (acpStart > cchTotal))
@@ -359,7 +359,7 @@ namespace ImeSharp
                         //extract the specified text range
                         if (pchPlain != null && cchPlainReq > 0)
                         {
-                            m_StoredStr.CopyTo(acpStart, pchPlain, 0, cchReq);
+                            _inputBuffer.CopyTo(acpStart, pchPlain, 0, cchReq);
                         }
                     }
 
@@ -505,8 +505,8 @@ namespace ImeSharp
             }
 
             //insert the text
-            m_StoredStr = m_StoredStr.Remove(acpStart, acpOldEnd - acpStart);
-            m_StoredStr = m_StoredStr.Insert(acpStart, new string(pchText, 0, acpNewEnd - acpStart));
+            _inputBuffer = _inputBuffer.Remove(acpStart, acpOldEnd - acpStart);
+            _inputBuffer = _inputBuffer.Insert(acpStart, new string(pchText, 0, acpNewEnd - acpStart));
 
             //set the selection
             _acpStart = acpStart;
@@ -577,7 +577,7 @@ namespace ImeSharp
                 return NativeMethods.TS_E_NOLOCK;
             }
 
-            acp = m_StoredStr.Length;
+            acp = _inputBuffer.Length;
 
             return NativeMethods.S_OK;
         }
@@ -688,11 +688,11 @@ namespace ImeSharp
             _commitLength = count;
             _commited = true;
 
-            Debug.WriteLine("Composition result: {0}", new object[] { m_StoredStr.Substring(start, count) });
+            Debug.WriteLine("Composition result: {0}", new object[] { _inputBuffer.Substring(start, count) });
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextComposition(this, string.Empty, 0);
-            InputMethod.OnTextInput(this, m_StoredStr.Substring(start, count));
+            InputMethod.OnTextInput(this, _inputBuffer.Substring(start, count));
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -703,13 +703,13 @@ namespace ImeSharp
         {
             if (_commited) return NativeMethods.S_OK;
 
-            if (m_StoredStr == string.Empty && _compositionLength > 0) // Composition just ended
+            if (_inputBuffer == string.Empty && _compositionLength > 0) // Composition just ended
             {
                 Marshal.ReleaseComObject(editRecord);
                 return NativeMethods.S_OK;
             }
 
-            var compStr = m_StoredStr.Substring(_compositionStart, _compositionLength);
+            var compStr = _inputBuffer.Substring(_compositionStart, _compositionLength);
             _currentComposition = compStr;
 
             InputMethod.OnTextComposition(this, compStr, _acpEnd);
@@ -929,7 +929,7 @@ namespace ImeSharp
         private int _acpEnd;
         private bool _interimChar;
         private NativeMethods.TsActiveSelEnd _activeSelectionEnd;
-        private string m_StoredStr = string.Empty;
+        private string _inputBuffer = string.Empty;
 
         private bool _locked;
         private NativeMethods.LockFlags _lockFlags;
