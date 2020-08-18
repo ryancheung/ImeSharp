@@ -98,6 +98,9 @@ namespace ImeSharp
                 if (compositionText.Count == 0) // Crash guard
                     cursorPos = 0;
 
+                if (cursorPos > compositionText.Count)  // Another crash guard
+                    cursorPos = compositionText.Count;
+
                 TextComposition.Invoke(sender,
                     new TextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
             }
