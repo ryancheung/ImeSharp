@@ -689,7 +689,7 @@ namespace ImeSharp
             //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
 
             InputMethod.ClearCandidates();
-            InputMethod.OnTextComposition(this, ImeCompositionString.Empty, 0);
+            InputMethod.OnTextComposition(this, IMEString.Empty, 0);
 
             for (int i = start; i < count; i++)
                 InputMethod.OnTextInput(this, _inputBuffer[i]);
@@ -717,7 +717,7 @@ namespace ImeSharp
             for (int i = _compositionStart; i < _compositionLength; i++)
                 _currentComposition.Add(_inputBuffer[i]);
 
-            InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
+            InputMethod.OnTextComposition(this, new IMEString(_currentComposition), _acpEnd);
 
             //var compStr = new string(_currentComposition.ToArray());
             //compStr = compStr.Insert(_acpEnd, "|");
@@ -821,13 +821,13 @@ namespace ImeSharp
 
             selection -= pageStart;
 
-            ImeCompositionString[] candidates = new ImeCompositionString[pageSize];
+            IMEString[] candidates = new IMEString[pageSize];
 
             IntPtr bStrPtr;
             for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
             {
                 candList.GetString(i, out bStrPtr);
-                candidates[j] = new ImeCompositionString(bStrPtr);
+                candidates[j] = new IMEString(bStrPtr);
             }
 
             //Debug.WriteLine("TSF========TSF");
@@ -842,7 +842,7 @@ namespace ImeSharp
             InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
-                InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
+                InputMethod.OnTextComposition(this, new IMEString(_currentComposition), _acpEnd);
 
             Marshal.ReleaseComObject(candList);
         }

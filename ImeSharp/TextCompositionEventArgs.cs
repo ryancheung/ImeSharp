@@ -10,9 +10,9 @@ namespace ImeSharp
         /// <summary>
         // Construct a TextCompositionEventArgs with composition infos.
         /// </summary>
-        public TextCompositionEventArgs(ImeCompositionString compositionString,
+        public TextCompositionEventArgs(IMEString compositionString,
                                         int cursorPosition,
-                                        ImeCompositionString[] candidateList = null,
+                                        IMEString[] candidateList = null,
                                         int candidatePageStart = 0,
                                         int candidatePageSize = 0,
                                         int candidateSelection = 0)
@@ -29,7 +29,7 @@ namespace ImeSharp
         /// <summary>
         /// The full string as it's composed by the IMM.
         /// </summary>    
-        public readonly ImeCompositionString CompositionString;
+        public readonly IMEString CompositionString;
 
         /// <summary>
         /// The position of the cursor inside the composed string.
@@ -41,7 +41,7 @@ namespace ImeSharp
         /// This property is only supported on WindowsDX and WindowsUniversal.
         /// If the composition string does not generate candidates this array is empty.
         /// </summary>    
-        public readonly ImeCompositionString[] CandidateList;
+        public readonly IMEString[] CandidateList;
 
         /// <summary>
         /// First candidate index of current page.

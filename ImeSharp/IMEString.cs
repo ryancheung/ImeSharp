@@ -4,19 +4,19 @@ using System.Collections.Generic;
 
 namespace ImeSharp
 {
-    public unsafe struct ImeCompositionString : IEnumerable<char>
+    public unsafe struct IMEString : IEnumerable<char>
     {
-        internal const int ImeCharBufferSize = 64;
+        internal const int IMECharBufferSize = 64;
 
-        public static readonly ImeCompositionString Empty = new ImeCompositionString((List<char>)null);
+        public static readonly IMEString Empty = new IMEString((List<char>)null);
 
         internal struct Enumerator : IEnumerator<char>
         {
-            private ImeCompositionString _imeString;
+            private IMEString _imeString;
             private char _currentCharacter;
             private int _currentIndex;
 
-            public Enumerator(ImeCompositionString imeString)
+            public Enumerator(IMEString imeString)
             {
                 _imeString = imeString;
                 _currentCharacter = '\0';
@@ -71,9 +71,9 @@ namespace ImeSharp
 
         private int _size;
 
-        fixed char buffer[ImeCharBufferSize];
+        fixed char buffer[IMECharBufferSize];
 
-        public ImeCompositionString(string characters)
+        public IMEString(string characters)
         {
             if (string.IsNullOrEmpty(characters))
             {
@@ -82,14 +82,14 @@ namespace ImeSharp
             }
 
             _size = characters.Length;
-            if (_size > ImeCharBufferSize)
-                _size = ImeCharBufferSize - 1;
+            if (_size > IMECharBufferSize)
+                _size = IMECharBufferSize - 1;
 
             for (var i = 0; i < _size; i++)
                 buffer[i] = characters[i];
         }
 
-        public ImeCompositionString(List<char> characters)
+        public IMEString(List<char> characters)
         {
             if (characters == null || characters.Count == 0)
             {
@@ -98,14 +98,14 @@ namespace ImeSharp
             }
 
             _size = characters.Count;
-            if (_size > ImeCharBufferSize)
-                _size = ImeCharBufferSize - 1;
+            if (_size > IMECharBufferSize)
+                _size = IMECharBufferSize - 1;
 
             for (var i = 0; i < _size; i++)
                 buffer[i] = characters[i];
         }
 
-        public ImeCompositionString(char[] characters, int count)
+        public IMEString(char[] characters, int count)
         {
             if (characters == null || count <= 0)
             {
@@ -114,8 +114,8 @@ namespace ImeSharp
             }
 
             _size = count;
-            if (_size > ImeCharBufferSize)
-                _size = ImeCharBufferSize - 1;
+            if (_size > IMECharBufferSize)
+                _size = IMECharBufferSize - 1;
 
             if (_size > characters.Length)
                 _size = characters.Length;
@@ -124,7 +124,7 @@ namespace ImeSharp
                 buffer[i] = characters[i];
         }
 
-        public ImeCompositionString(IntPtr bStrPtr)
+        public IMEString(IntPtr bStrPtr)
         {
             if (bStrPtr == IntPtr.Zero)
             {

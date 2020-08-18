@@ -69,7 +69,7 @@ namespace ImeSharp
         internal static int CandidatePageStart;
         internal static int CandidatePageSize;
         internal static int CandidateSelection;
-        internal static ImeCompositionString[] CandidateList;
+        internal static IMEString[] CandidateList;
 
         internal static void ClearCandidates()
         {
@@ -105,7 +105,7 @@ namespace ImeSharp
                 TextInput.Invoke(sender, new TextInputEventArgs(character));
         }
 
-        internal static void OnTextComposition(object sender, ImeCompositionString compositionText, int cursorPos)
+        internal static void OnTextComposition(object sender, IMEString compositionText, int cursorPos)
         {
             if (TextComposition != null)
             {

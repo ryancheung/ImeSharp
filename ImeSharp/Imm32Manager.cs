@@ -176,7 +176,7 @@ namespace ImeSharp
             // Normal candidate list fetch in IMM32
             UpdateCandidates();
             // Send event on candidate updates
-            InputMethod.OnTextComposition(this, new ImeCompositionString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
+            InputMethod.OnTextComposition(this, new IMEString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
         }
 
         private void UpdateCandidates()
@@ -192,13 +192,13 @@ namespace ImeSharp
                 var pageStart = (int)cList.dwPageStart;
                 var pageSize = (int)cList.dwPageSize;
 
-                ImeCompositionString[] candidates = new ImeCompositionString[pageSize];
+                IMEString[] candidates = new IMEString[pageSize];
 
                 int i, j;
                 for (i = pageStart, j = 0; i < cList.dwCount && j < pageSize; i++, j++)
                 {
                     int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
-                    candidates[j] = new ImeCompositionString(pointer + sOffset);
+                    candidates[j] = new IMEString(pointer + sOffset);
                 }
 
                 //Debug.WriteLine("IMM========IMM");
@@ -232,7 +232,7 @@ namespace ImeSharp
             {
                 _compositionCursorHandler.Update();
 
-                InputMethod.OnTextComposition(this, new ImeCompositionString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
+                InputMethod.OnTextComposition(this, new IMEString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
             }
         }
 
@@ -241,7 +241,7 @@ namespace ImeSharp
             InputMethod.ClearCandidates();
             ClearComposition();
 
-            InputMethod.OnTextComposition(this, ImeCompositionString.Empty, 0);
+            InputMethod.OnTextComposition(this, IMEString.Empty, 0);
         }
     }
 }
