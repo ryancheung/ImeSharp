@@ -703,7 +703,11 @@ namespace ImeSharp
 
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-            if (_commited) return NativeMethods.S_OK;
+            if (_commited)
+            {
+                Marshal.ReleaseComObject(editRecord);
+                return NativeMethods.S_OK;
+            }
 
             if (_inputBuffer.Count == 0 && _compositionLength > 0) // Composition just ended
             {
@@ -712,7 +716,7 @@ namespace ImeSharp
             }
 
             _currentComposition.Clear();
-            for(int i = _compositionStart; i < _compositionLength; i++)
+            for (int i = _compositionStart; i < _compositionLength; i++)
                 _currentComposition.Add(_inputBuffer[i]);
 
             InputMethod.OnTextComposition(this, new ImeCompositionString(_currentComposition), _acpEnd);
