@@ -242,7 +242,8 @@ namespace ImeSharp
             {
                 if (_threadManager == null)
                 {
-                    NativeMethods.TF_GetThreadMgr(out var threadMgr);
+                    NativeMethods.ITfThreadMgr threadMgr;
+                    NativeMethods.TF_GetThreadMgr(out threadMgr);
 
                     if (threadMgr != null)
                     {

@@ -47,7 +47,7 @@ namespace ImeSharp
             get
             {
                 if (index >= _charCount || index < 0)
-                    throw new ArgumentOutOfRangeException(nameof(index));
+                    throw new ArgumentOutOfRangeException("index");
 
                 return _charBuffer[index];
             }

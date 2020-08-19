@@ -6,4 +6,19 @@
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
+  <PropertyGroup>
+    <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
+    <Authors>ryancheung</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <BaseOutputPath>..\Artifacts</BaseOutputPath>
+    <AssemblyName>ImeSharp</AssemblyName>
+    <RootNamespace>ImeSharp</RootNamespace>
+
+    <LangVersion>5</LangVersion>
+  </PropertyGroup>
+
 </Project>

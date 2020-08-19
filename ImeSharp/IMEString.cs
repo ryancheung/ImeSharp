@@ -53,14 +53,14 @@ namespace ImeSharp
             object IEnumerator.Current { get { return Current; } }
         }
 
-        public int Count => _size;
+        public int Count { get { return _size; } }
 
         public char this[int index]
         {
             get
             {
                 if (index >= Count || index < 0)
-                    throw new ArgumentOutOfRangeException(nameof(index));
+                    throw new ArgumentOutOfRangeException("index");
 
                 fixed (char* ptr = buffer)
                 {
@@ -85,8 +85,15 @@ namespace ImeSharp
             if (_size > IMECharBufferSize)
                 _size = IMECharBufferSize - 1;
 
-            for (var i = 0; i < _size; i++)
-                buffer[i] = characters[i];
+            fixed (char* _ptr = buffer)
+            {
+                char* ptr = _ptr;
+                for (var i = 0; i < _size; i++)
+                {
+                    *ptr = characters[i];
+                    ptr++;
+                }
+            }
         }
 
         public IMEString(List<char> characters)
@@ -101,8 +108,15 @@ namespace ImeSharp
             if (_size > IMECharBufferSize)
                 _size = IMECharBufferSize - 1;
 
-            for (var i = 0; i < _size; i++)
-                buffer[i] = characters[i];
+            fixed (char* _ptr = buffer)
+            {
+                char* ptr = _ptr;
+                for (var i = 0; i < _size; i++)
+                {
+                    *ptr = characters[i];
+                    ptr++;
+                }
+            }
         }
 
         public IMEString(char[] characters, int count)
@@ -120,8 +134,15 @@ namespace ImeSharp
             if (_size > characters.Length)
                 _size = characters.Length;
 
-            for (var i = 0; i < _size; i++)
-                buffer[i] = characters[i];
+            fixed (char* _ptr = buffer)
+            {
+                char* ptr = _ptr;
+                for (var i = 0; i < _size; i++)
+                {
+                    *ptr = characters[i];
+                    ptr++;
+                }
+            }
         }
 
         public IMEString(IntPtr bStrPtr)
@@ -132,13 +153,20 @@ namespace ImeSharp
                 return;
             }
 
-            var ptr = (char*)bStrPtr;
+            var ptrSrc = (char*)bStrPtr;
 
             int i = 0;
-            while (ptr[i] != '\0')
+
+            fixed (char* _ptr = buffer)
             {
-                buffer[i] = ptr[i];
-                i++;
+                char* ptr = _ptr;
+
+                while (ptrSrc[i] != '\0')
+                {
+                    *ptr = ptrSrc[i];
+                    i++;
+                    ptr++;
+                }
             }
 
             _size = i;
