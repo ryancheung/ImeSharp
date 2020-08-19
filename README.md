@@ -1,4 +1,5 @@
 # IME Sharp
+[![Nuget](https://img.shields.io/nuget/v/ImeSharp)](https://www.nuget.org/packages/ImeSharp/)
 
 A C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
 
