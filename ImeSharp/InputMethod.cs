@@ -55,12 +55,14 @@ namespace ImeSharp
         /// Set the position of the candidate window rendered by the OS.
         /// Let the OS render the candidate window by set param "showOSImeWindow" to <c>true</c> on <see cref="Initialize"/>.
         /// </summary>
-        public static void SetTextInputRect(int x, int y, int width, int height)
+        public static void SetTextInputRect(int x, int y, int width, int height, InputLanguage inputLanguage = InputLanguage.Chinese)
         {
             TextInputRect.left = x;
             TextInputRect.top = y;
             TextInputRect.right = x + width;
             TextInputRect.bottom = y + height;
+
+            Imm32Manager.Current.SetCandidateWindow(TextInputRect, inputLanguage);
         }
 
         private static bool _showOSImeWindow;

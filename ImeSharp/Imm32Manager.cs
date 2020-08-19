@@ -86,6 +86,8 @@ namespace ImeSharp
         {
             if (DefaultImc != IntPtr.Zero)
             {
+                // Create a temporary system caret
+                NativeMethods.CreateCaret(_windowHandle, IntPtr.Zero, 2, 10);
                 NativeMethods.ImmAssociateContext(_windowHandle, _defaultImc);
             }
         }
@@ -93,6 +95,74 @@ namespace ImeSharp
         public void Disable()
         {
             NativeMethods.ImmAssociateContext(_windowHandle, IntPtr.Zero);
+            NativeMethods.DestroyCaret();
+        }
+
+        const int kCaretMargin = 1;
+
+        // Set candidate window position.
+        // Borrowed from https://github.com/chromium/chromium/blob/master/ui/base/ime/win/imm32_manager.cc
+        public void SetCandidateWindow(NativeMethods.RECT caretRect, InputLanguage inputLanguage)
+        {
+            int x = caretRect.left;
+            int y = caretRect.top;
+
+            if (inputLanguage == InputLanguage.Chinese)
+            {
+                // Chinese IMEs ignore function calls to ::ImmSetCandidateWindow()
+                // when a user disables TSF (Text Service Framework) and CUAS (Cicero
+                // Unaware Application Support).
+                // On the other hand, when a user enables TSF and CUAS, Chinese IMEs
+                // ignore the position of the current system caret and uses the
+                // parameters given to ::ImmSetCandidateWindow() with its 'dwStyle'
+                // parameter CFS_CANDIDATEPOS.
+                // Therefore, we do not only call ::ImmSetCandidateWindow() but also
+                // set the positions of the temporary system caret.
+                var candidateForm = new NativeMethods.CANDIDATEFORM();
+                candidateForm.dwStyle = NativeMethods.CFS_CANDIDATEPOS;
+                candidateForm.ptCurrentPos.x = x;
+                candidateForm.ptCurrentPos.y = y;
+                NativeMethods.ImmSetCandidateWindow(_defaultImc, ref candidateForm);
+            }
+
+            if (inputLanguage == InputLanguage.Japanese)
+                NativeMethods.SetCaretPos(x, caretRect.bottom);
+            else
+                NativeMethods.SetCaretPos(x, y);
+
+            // Set composition window position also to ensure move the candidate window position.
+            var compositionForm = new NativeMethods.COMPOSITIONFORM();
+            compositionForm.dwStyle = NativeMethods.CFS_POINT;
+            compositionForm.ptCurrentPos.x = x;
+            compositionForm.ptCurrentPos.y = y;
+            NativeMethods.ImmSetCompositionWindow(_defaultImc, ref compositionForm);
+
+            if (inputLanguage == InputLanguage.Korean)
+            {
+                // Chinese IMEs and Japanese IMEs require the upper-left corner of
+                // the caret to move the position of their candidate windows.
+                // On the other hand, Korean IMEs require the lower-left corner of the
+                // caret to move their candidate windows.
+                y += kCaretMargin;
+            }
+
+            // Need to return here since some Chinese IMEs would stuck if set
+            // candidate window position with CFS_EXCLUDE style.
+            if (inputLanguage == InputLanguage.Chinese) return;
+
+            // Japanese IMEs and Korean IMEs also use the rectangle given to
+            // ::ImmSetCandidateWindow() with its 'dwStyle' parameter CFS_EXCLUDE
+            // to move their candidate windows when a user disables TSF and CUAS.
+            // Therefore, we also set this parameter here.
+            var excludeRectangle = new NativeMethods.CANDIDATEFORM();
+            compositionForm.dwStyle = NativeMethods.CFS_EXCLUDE;
+            compositionForm.ptCurrentPos.x = x;
+            compositionForm.ptCurrentPos.y = y;
+            compositionForm.rcArea.left = x;
+            compositionForm.rcArea.top = y;
+            compositionForm.rcArea.right = caretRect.right;
+            compositionForm.rcArea.bottom = caretRect.bottom;
+            NativeMethods.ImmSetCandidateWindow(_defaultImc, ref excludeRectangle);
         }
 
         internal bool ProcessMessage(IntPtr hWnd, uint msg, ref IntPtr wParam, ref IntPtr lParam)
@@ -108,8 +178,12 @@ namespace ImeSharp
                         if (!NativeMethods.ImmGetOpenStatus(DefaultImc))
                             NativeMethods.ImmSetOpenStatus(DefaultImc, true);
 
+                        var lParam64 = lParam.ToInt64();
                         if (!InputMethod.ShowOSImeWindow)
-                            lParam = IntPtr.Zero;
+                            lParam64 &= ~NativeMethods.ISC_SHOWUICANDIDATEWINDOW;
+                        else
+                            lParam64 &= ~NativeMethods.ISC_SHOWUICOMPOSITIONWINDOW;
+                        lParam = (IntPtr)(int)lParam64;
                     }
                     else
                         NativeMethods.ImmSetOpenStatus(DefaultImc, false);
@@ -122,9 +196,8 @@ namespace ImeSharp
                 case NativeMethods.WM_IME_STARTCOMPOSITION:
                     //Debug.WriteLine("NativeMethods.WM_IME_STARTCOMPOSITION");
                     IMEStartComposion(lParam.ToInt32());
-                    if (!InputMethod.ShowOSImeWindow)
-                        return true;
-                    break;
+                    // Force to not show composition window, `lParam64 &= ~ISC_SHOWUICOMPOSITIONWINDOW` don't work sometime.
+                    return true;
                 case NativeMethods.WM_IME_COMPOSITION:
                     //Debug.WriteLine("NativeMethods.WM_IME_COMPOSITION");
                     IMEComposition(lParam.ToInt32());

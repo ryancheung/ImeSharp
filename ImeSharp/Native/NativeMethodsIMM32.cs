@@ -65,7 +65,16 @@ namespace ImeSharp.Native
         public const int GCS_RESULT = (GCS_RESULTSTR | GCS_RESULTCLAUSE);
         public const int GCS_RESULTREAD = (GCS_RESULTREADSTR | GCS_RESULTREADCLAUSE);
 
-        public const int CFS_CANDIDATEPOS = 64;
+        public const int CFS_CANDIDATEPOS = 0x0040;
+        public const int CFS_POINT = 0x0002;
+        public const int CFS_EXCLUDE = 0x0080;
+
+        // lParam for WM_IME_SETCONTEXT
+        public const long ISC_SHOWUICANDIDATEWINDOW = 0x00000001;
+        public const long ISC_SHOWUICOMPOSITIONWINDOW = 0x80000000;
+        public const long ISC_SHOWUIGUIDELINE = 0x40000000;
+        public const long ISC_SHOWUIALLCANDIDATEWINDOW = 0x0000000F;
+        public const long ISC_SHOWUIALL = 0xC000000F;
 
         #endregion Constants
 
@@ -82,22 +91,23 @@ namespace ImeSharp.Native
             public uint[] dwOffset;
         }
 
-        [StructLayoutAttribute(LayoutKind.Sequential)]
-        public struct CandidateForm
+        // CANDIDATEFORM structures
+        [StructLayout(LayoutKind.Sequential)]
+        public struct CANDIDATEFORM
         {
-            public uint dwIndex;
-            public uint dwStyle;
-            public POINT ptCurrentPos;
-            public RECT rcArea;
+            public int    dwIndex;
+            public int    dwStyle;
+            public POINT  ptCurrentPos;
+            public RECT   rcArea;
+        }
 
-
-            public CandidateForm(POINT pos)
-            {
-                this.dwIndex = 0;
-                this.dwStyle = CFS_CANDIDATEPOS;
-                this.ptCurrentPos = pos;
-                this.rcArea = new RECT();
-            }
+        // COMPOSITIONFORM structures
+        [StructLayout(LayoutKind.Sequential)]
+        public struct COMPOSITIONFORM
+        {
+            public int    dwStyle;
+            public POINT  ptCurrentPos;
+            public RECT   rcArea;
         }
 
         [DllImport("imm32.dll", SetLastError = true)]
@@ -128,6 +138,19 @@ namespace ImeSharp.Native
         public static extern bool ImmSetOpenStatus(IntPtr hIMC, bool open);
 
         [DllImport("imm32.dll", SetLastError = true)]
-        public static extern bool ImmSetCandidateWindow(IntPtr hIMC, ref CandidateForm candidateForm);
+        public static extern bool ImmSetCandidateWindow(IntPtr hIMC, ref CANDIDATEFORM candidateForm);
+
+        [DllImport("imm32.dll", SetLastError = true)]
+        public static extern int ImmSetCompositionWindow(IntPtr hIMC, ref COMPOSITIONFORM compForm);
+
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool CreateCaret(IntPtr hWnd, IntPtr hBitmap, int nWidth, int nHeight);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool DestroyCaret();
+
+        [DllImport("user32.dll", SetLastError = true)]
+        public static extern bool SetCaretPos(int x, int y);
     }
 }
