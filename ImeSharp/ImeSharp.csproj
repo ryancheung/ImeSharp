@@ -7,6 +7,9 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <Description>C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.</Description>
+    <PackageTags>IME;netcoreapp3.1</PackageTags>
+    <PackageId>ImeSharp</PackageId>
     <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
     <Authors>ryancheung</Authors>
@@ -17,7 +20,6 @@
     <BaseOutputPath>..\Artifacts</BaseOutputPath>
     <AssemblyName>ImeSharp</AssemblyName>
     <RootNamespace>ImeSharp</RootNamespace>
-
     <LangVersion>5</LangVersion>
   </PropertyGroup>
 
