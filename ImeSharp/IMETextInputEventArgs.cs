@@ -1,8 +1,8 @@
 namespace ImeSharp
 {
-    public struct TextInputEventArgs
+    public struct IMETextInputEventArgs
     {
-        public TextInputEventArgs(char character)
+        public IMETextInputEventArgs(char character)
         {
             Character = character;
         }

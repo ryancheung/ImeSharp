@@ -5,12 +5,12 @@ namespace ImeSharp
     /// <summary>
     /// Arguments for the <see cref="IImmService.TextComposition" /> event.
     /// </summary>
-    public struct TextCompositionEventArgs
+    public struct IMETextCompositionEventArgs
     {
         /// <summary>
         // Construct a TextCompositionEventArgs with composition infos.
         /// </summary>
-        public TextCompositionEventArgs(IMEString compositionText,
+        public IMETextCompositionEventArgs(IMEString compositionText,
                                         int cursorPosition,
                                         IMEString[] candidateList = null,
                                         int candidatePageStart = 0,

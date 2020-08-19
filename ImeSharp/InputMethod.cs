@@ -81,8 +81,8 @@ namespace ImeSharp
             CandidateSelection = 0;
         }
 
-        public static event EventHandler<TextCompositionEventArgs> TextComposition;
-        public static event EventHandler<TextInputEventArgs> TextInput;
+        public static event EventHandler<IMETextCompositionEventArgs> TextComposition;
+        public static event EventHandler<IMETextInputEventArgs> TextInput;
 
         public static TextInputCallback TextInputCallback { get; set; }
         public static TextCompositionCallback TextCompositionCallback { get; set; }
@@ -107,7 +107,7 @@ namespace ImeSharp
         internal static void OnTextInput(object sender, char character)
         {
             if (TextInput != null)
-                TextInput.Invoke(sender, new TextInputEventArgs(character));
+                TextInput.Invoke(sender, new IMETextInputEventArgs(character));
 
             if (TextInputCallback != null)
                 TextInputCallback(character);
@@ -124,7 +124,7 @@ namespace ImeSharp
             if (TextComposition != null)
             {
                 TextComposition.Invoke(sender,
-                    new TextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
+                    new IMETextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
             }
 
             if (TextCompositionCallback != null)
@@ -134,7 +134,7 @@ namespace ImeSharp
         internal static void OnTextCompositionEnded(object sender)
         {
             if (TextComposition != null)
-                TextComposition.Invoke(sender, new TextCompositionEventArgs(IMEString.Empty, 0));
+                TextComposition.Invoke(sender, new IMETextCompositionEventArgs(IMEString.Empty, 0));
 
             if (TextCompositionCallback != null)
                 TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
