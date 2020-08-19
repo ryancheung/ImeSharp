@@ -259,7 +259,7 @@ namespace ImeSharp
             {
                 IntPtr pointer = Marshal.AllocHGlobal((int)length);
                 length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, pointer, length);
-                NativeMethods.CandidateList cList = (NativeMethods.CandidateList)Marshal.PtrToStructure(pointer, typeof(NativeMethods.CandidateList));
+                NativeMethods.CANDIDATELIST cList = (NativeMethods.CANDIDATELIST)Marshal.PtrToStructure(pointer, typeof(NativeMethods.CANDIDATELIST));
 
                 var selection = (int)cList.dwSelection;
                 var pageStart = (int)cList.dwPageStart;

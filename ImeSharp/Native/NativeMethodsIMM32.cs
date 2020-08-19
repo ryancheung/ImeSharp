@@ -79,7 +79,7 @@ namespace ImeSharp.Native
         #endregion Constants
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct CandidateList
+        public struct CANDIDATELIST
         {
             public uint dwSize;
             public uint dwStyle;
