@@ -247,7 +247,10 @@ namespace ImeSharp
 
                     if (threadMgr != null)
                     {
-                        threadMgr.Deactivate();
+                        bool focus;
+                        threadMgr.IsThreadFocus(out focus);
+                        if (focus)
+                            threadMgr.Deactivate();
                         _threadManager = threadMgr as NativeMethods.ITfThreadMgrEx;
                     }
                     else
