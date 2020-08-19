@@ -82,6 +82,9 @@ namespace ImeSharp
         public static event EventHandler<TextCompositionEventArgs> TextComposition;
         public static event EventHandler<TextInputEventArgs> TextInput;
 
+        public static TextInputCallback TextInputCallback { get; set; }
+        public static TextCompositionCallback TextCompositionCallback { get; set; }
+
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
         /// Let the OS render the candidate window by set <see paramref="showOSImeWindow"/> to <c>true</c>.
@@ -103,21 +106,36 @@ namespace ImeSharp
         {
             if (TextInput != null)
                 TextInput.Invoke(sender, new TextInputEventArgs(character));
+
+            if (TextInputCallback != null)
+                TextInputCallback(character);
         }
 
         internal static void OnTextComposition(object sender, IMEString compositionText, int cursorPos)
         {
+            if (compositionText.Count == 0) // Crash guard
+                cursorPos = 0;
+
+            if (cursorPos > compositionText.Count)  // Another crash guard
+                cursorPos = compositionText.Count;
+
             if (TextComposition != null)
             {
-                if (compositionText.Count == 0) // Crash guard
-                    cursorPos = 0;
-
-                if (cursorPos > compositionText.Count)  // Another crash guard
-                    cursorPos = compositionText.Count;
-
                 TextComposition.Invoke(sender,
                     new TextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
             }
+
+            if (TextCompositionCallback != null)
+                TextCompositionCallback(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection);
+        }
+
+        internal static void OnTextCompositionEnded(object sender)
+        {
+            if (TextComposition != null)
+                TextComposition.Invoke(sender, new TextCompositionEventArgs(IMEString.Empty, 0));
+
+            if (TextCompositionCallback != null)
+                TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
         }
 
         /// <summary>

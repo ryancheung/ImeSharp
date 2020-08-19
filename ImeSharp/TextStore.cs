@@ -689,7 +689,7 @@ namespace ImeSharp
             //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
 
             InputMethod.ClearCandidates();
-            InputMethod.OnTextComposition(this, IMEString.Empty, 0);
+            InputMethod.OnTextCompositionEnded(this);
 
             for (int i = start; i < count; i++)
                 InputMethod.OnTextInput(this, _inputBuffer[i]);

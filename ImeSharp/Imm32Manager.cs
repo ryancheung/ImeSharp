@@ -241,7 +241,7 @@ namespace ImeSharp
             InputMethod.ClearCandidates();
             ClearComposition();
 
-            InputMethod.OnTextComposition(this, IMEString.Empty, 0);
+            InputMethod.OnTextCompositionEnded(this);
         }
     }
 }
