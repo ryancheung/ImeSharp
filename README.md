@@ -28,6 +28,13 @@ InputMethod.TextInput += (o, e) =>
 };
 ```
 
+### Or you prefer callbacks
+
+```c#
+InputMethod.TextInputCallback = OnTextInput;
+InputMethod.TextCompositionCallback = OnTextComposition;
+```
+
 ## Test IMM32 implementation only
 
 IMM32 would be only enabled if TSF service is not available.
