@@ -39,7 +39,7 @@ InputMethod.TextCompositionCallback = OnTextComposition;
 ### Set position of OS rendered IME Candidate Window
 
 ```c#
-InputMethod.SetTextInputRect(labelComp.Location.X + labelComp.Size.Width, labelComp.Location.Y, 0, labelComp.Size.Height);
+InputMethod.SetTextInputRect(location.X, location.Y, 0, textBoxHeight);
 ```
 
 ## Test IMM32 implementation only
@@ -69,3 +69,4 @@ https://discord.gg/BC4GKKr
 ## Credits
 
 - [WPF Core](https://github.com/dotnet/wpf)
+- [Chromium](https://github.com/chromium/chromium)
