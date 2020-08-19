@@ -51,6 +51,10 @@ You can `return false` manually in `TextServicesLoader.ServicesInstalled` to mim
 
 https://discord.gg/BC4GKKr
 
+## TODO
+
+- Make it work in Unity3d
+
 ## MS Docs
 
 - [TSF Application](https://docs.microsoft.com/en-us/windows/win32/tsf/applications)
