@@ -129,6 +129,18 @@ namespace ImeSharp
                 TextInputCallback(character);
         }
 
+        // Some Chinese IME only send composition start event but no composition update event.
+        // We need this to ensure candidate window position can be set in time.
+        internal static void OnTextCompositionStarted(object sender)
+        {
+            if (TextComposition != null)
+                TextComposition.Invoke(sender, new IMETextCompositionEventArgs(IMEString.Empty, 0));
+
+            if (TextCompositionCallback != null)
+                TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
+        }
+
+        // On text composition update.
         internal static void OnTextComposition(object sender, IMEString compositionText, int cursorPos)
         {
             if (compositionText.Count == 0) // Crash guard

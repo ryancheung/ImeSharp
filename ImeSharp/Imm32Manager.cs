@@ -296,6 +296,7 @@ namespace ImeSharp
 
         private void IMEStartComposion(int lParam)
         {
+            InputMethod.OnTextCompositionStarted(this);
             ClearComposition();
         }
 

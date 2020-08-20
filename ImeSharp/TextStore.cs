@@ -662,6 +662,8 @@ namespace ImeSharp
             ok = true;
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
+
+            InputMethod.OnTextCompositionStarted(this);
         }
 
         public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
