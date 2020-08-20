@@ -62,7 +62,8 @@ namespace ImeSharp
             TextInputRect.right = x + width;
             TextInputRect.bottom = y + height;
 
-            Imm32Manager.Current.SetCandidateWindow(TextInputRect, _inputLanguage);
+            if (Imm32Manager.ImmEnabled)
+                Imm32Manager.Current.SetCandidateWindow(TextInputRect, _inputLanguage);
         }
 
         private static bool _showOSImeWindow;
