@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
@@ -65,7 +66,7 @@ namespace ImeSharp
             TextInputRect.bottom = y + height;
 
             if (Imm32Manager.ImmEnabled)
-                Imm32Manager.Current.SetCandidateWindow(TextInputRect, _inputLanguage);
+                Imm32Manager.Current.SetCandidateWindow(TextInputRect);
         }
 
         private static bool _showOSImeWindow;
@@ -74,17 +75,6 @@ namespace ImeSharp
         /// Return if let OS render IME Candidate window or not.
         /// </summary>
         public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
-
-        private static InputLanguage _inputLanguage = InputLanguage.Chinese;
-
-        /// <summary>
-        /// Set or get input language. Defaults to Chinese.
-        /// </summary>
-        public static InputLanguage InputLanguage
-        {
-            get { return _inputLanguage; }
-            set { _inputLanguage = value; }
-        }
 
         internal static int CandidatePageStart;
         internal static int CandidatePageSize;
@@ -211,8 +201,12 @@ namespace ImeSharp
             if (current.ProcessMessage(hWnd, msg, ref wParam, ref lParam))
                 return IntPtr.Zero;
 
-            if (msg == NativeMethods.WM_DESTROY)
-                TextServicesContext.Current.Uninitialize(true);
+            switch (msg)
+            {
+                case NativeMethods.WM_DESTROY:
+                    TextServicesContext.Current.Uninitialize(true);
+                    break;
+            }
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
