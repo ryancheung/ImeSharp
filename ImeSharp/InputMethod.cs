@@ -211,6 +211,9 @@ namespace ImeSharp
             if (current.ProcessMessage(hWnd, msg, ref wParam, ref lParam))
                 return IntPtr.Zero;
 
+            if (msg == NativeMethods.WM_DESTROY)
+                TextServicesContext.Current.Uninitialize(true);
+
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
     }

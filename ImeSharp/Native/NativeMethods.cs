@@ -46,6 +46,8 @@ namespace ImeSharp.Native
         public const int WM_SETFOCUS = 0x0007;
         public const int WM_KILLFOCUS = 0x0008;
 
+        public const int WM_DESTROY = 0x0002;
+
         public const int CLSCTX_INPROC_SERVER = 0x1;
 
         #endregion Constants
