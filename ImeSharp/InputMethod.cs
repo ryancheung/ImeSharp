@@ -55,18 +55,33 @@ namespace ImeSharp
         /// Set the position of the candidate window rendered by the OS.
         /// Let the OS render the candidate window by set param "showOSImeWindow" to <c>true</c> on <see cref="Initialize"/>.
         /// </summary>
-        public static void SetTextInputRect(int x, int y, int width, int height, InputLanguage inputLanguage = InputLanguage.Chinese)
+        public static void SetTextInputRect(int x, int y, int width, int height)
         {
             TextInputRect.left = x;
             TextInputRect.top = y;
             TextInputRect.right = x + width;
             TextInputRect.bottom = y + height;
 
-            Imm32Manager.Current.SetCandidateWindow(TextInputRect, inputLanguage);
+            Imm32Manager.Current.SetCandidateWindow(TextInputRect, _inputLanguage);
         }
 
         private static bool _showOSImeWindow;
+
+        /// <summary>
+        /// Return if let OS render IME Candidate window or not.
+        /// </summary>
         public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
+
+        private static InputLanguage _inputLanguage = InputLanguage.Chinese;
+
+        /// <summary>
+        /// Set or get input language. Defaults to Chinese.
+        /// </summary>
+        public static InputLanguage InputLanguage
+        {
+            get { return _inputLanguage; }
+            set { _inputLanguage = value; }
+        }
 
         internal static int CandidatePageStart;
         internal static int CandidatePageSize;
