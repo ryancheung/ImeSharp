@@ -57,6 +57,8 @@ namespace ImeSharp
         /// </summary>
         public static void SetTextInputRect(int x, int y, int width, int height)
         {
+            if (!_showOSImeWindow) return;
+
             TextInputRect.left = x;
             TextInputRect.top = y;
             TextInputRect.right = x + width;
