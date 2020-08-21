@@ -47,8 +47,14 @@ namespace ImeSharp.Native
         public const int WM_KILLFOCUS = 0x0008;
 
         public const int WM_DESTROY = 0x0002;
+        public const int WM_NULL = 0x0000;
+        public const int WM_QUIT = 0x0012;
 
         public const int CLSCTX_INPROC_SERVER = 0x1;
+
+        public const int PM_NOREMOVE = 0x0000;
+        public const int PM_REMOVE = 0x0001;
+        public const int PM_NOYIELD = 0x0002;
 
         #endregion Constants
 
@@ -109,6 +115,15 @@ namespace ImeSharp.Native
 
         [DllImport("user32.dll", CharSet = CharSet.Auto)]
         public static extern IntPtr SendMessage(IntPtr hWnd, int Msg, int wParam, IntPtr lParam);
+
+        [DllImport("user32.dll", CharSet = CharSet.Auto)]
+        public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
+
+        [DllImport("user32.dll")]
+        public static extern bool TranslateMessage(ref MSG lpMsg);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr DispatchMessage(ref MSG lpmsg);
 
 
         [DllImport("ole32.dll", CharSet = CharSet.Auto, ExactSpelling = true, PreserveSig = false)]
