@@ -230,13 +230,6 @@ namespace ImeSharp
                     if (!InputMethod.ShowOSImeWindow)
                         return true;
                     break;
-                case NativeMethods.WM_CHAR:
-                    {
-                        if (InputMethod.Enabled)
-                            InputMethod.OnTextInput(this, (char)wParam.ToInt32());
-
-                        break;
-                    }
             }
 
             return false;

@@ -197,15 +197,24 @@ namespace ImeSharp
 
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
-            var current = Imm32Manager.Current;
-            if (current.ProcessMessage(hWnd, msg, ref wParam, ref lParam))
-                return IntPtr.Zero;
+            if (Imm32Manager.ImmEnabled)
+            {
+                if (Imm32Manager.Current.ProcessMessage(hWnd, msg, ref wParam, ref lParam))
+                    return IntPtr.Zero;
+            }
 
             switch (msg)
             {
                 case NativeMethods.WM_DESTROY:
                     TextServicesContext.Current.Uninitialize(true);
                     break;
+                case NativeMethods.WM_CHAR:
+                    {
+                        if (InputMethod.Enabled)
+                            InputMethod.OnTextInput(null, (char)wParam.ToInt32());
+
+                        break;
+                    }
             }
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
