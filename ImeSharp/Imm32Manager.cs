@@ -14,6 +14,11 @@ namespace ImeSharp
 
         public static bool ImmEnabled { get { return _immEnabled; } }
 
+        static Imm32Manager()
+        {
+            SetCurrentCulture();
+        }
+
         /// <summary>
         /// return true if the current keyboard layout is a real IMM32-IME.
         /// </summary>
@@ -36,6 +41,15 @@ namespace ImeSharp
                 return false;
 
             return ((NativeMethods.IntPtrToInt32(hkl) & 0xf0000000) == 0xe0000000);
+        }
+
+        private static CultureInfo _currentCulture;
+
+        internal static void SetCurrentCulture()
+        {
+            var hkl =  NativeMethods.GetKeyboardLayout(0);
+            var keyboardLayout = NativeMethods.IntPtrToInt32(hkl) & 0xFFFF;
+            _currentCulture = new CultureInfo(keyboardLayout);
         }
 
         private IntPtr _windowHandle;
@@ -109,12 +123,10 @@ namespace ImeSharp
         // Borrowed from https://github.com/chromium/chromium/blob/master/ui/base/ime/win/imm32_manager.cc
         public void SetCandidateWindow(NativeMethods.RECT caretRect)
         {
-            CultureInfo currentCulture = CultureInfo.CurrentCulture;
-
             int x = caretRect.left;
             int y = caretRect.top;
 
-            if (currentCulture.IetfLanguageTag == ChineseLangTag)
+            if (_currentCulture.IetfLanguageTag == ChineseLangTag)
             {
                 // Chinese IMEs ignore function calls to ::ImmSetCandidateWindow()
                 // when a user disables TSF (Text Service Framework) and CUAS (Cicero
@@ -132,7 +144,7 @@ namespace ImeSharp
                 NativeMethods.ImmSetCandidateWindow(_defaultImc, ref candidateForm);
             }
 
-            if (currentCulture.IetfLanguageTag == JapaneseLangTag)
+            if (_currentCulture.IetfLanguageTag == JapaneseLangTag)
                 NativeMethods.SetCaretPos(x, caretRect.bottom);
             else
                 NativeMethods.SetCaretPos(x, y);
@@ -144,7 +156,7 @@ namespace ImeSharp
             compositionForm.ptCurrentPos.y = y;
             NativeMethods.ImmSetCompositionWindow(_defaultImc, ref compositionForm);
 
-            if (currentCulture.IetfLanguageTag == KoreaLangTag)
+            if (_currentCulture.IetfLanguageTag == KoreaLangTag)
             {
                 // Chinese IMEs and Japanese IMEs require the upper-left corner of
                 // the caret to move the position of their candidate windows.
@@ -155,7 +167,7 @@ namespace ImeSharp
 
             // Need to return here since some Chinese IMEs would stuck if set
             // candidate window position with CFS_EXCLUDE style.
-            if (currentCulture.IetfLanguageTag == ChineseLangTag) return;
+            if (_currentCulture.IetfLanguageTag == ChineseLangTag) return;
 
             // Japanese IMEs and Korean IMEs also use the rectangle given to
             // ::ImmSetCandidateWindow() with its 'dwStyle' parameter CFS_EXCLUDE
@@ -176,6 +188,9 @@ namespace ImeSharp
         {
             switch (msg)
             {
+                case NativeMethods.WM_INPUTLANGCHANGE:
+                    SetCurrentCulture();
+                    break;
                 case NativeMethods.WM_IME_SETCONTEXT:
                     if (wParam.ToInt32() == 1 && InputMethod.Enabled)
                     {
