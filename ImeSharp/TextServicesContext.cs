@@ -206,6 +206,8 @@ namespace ImeSharp
 
                 doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _editContext, out editCookie);
                 _defaultTextStore.EditCookie = editCookie;
+                _contextOwnerServices = _editContext as NativeMethods.ITfContextOwnerServices;
+
                 doc.Push(_editContext);
 
                 AdviseSinks();
@@ -272,11 +274,19 @@ namespace ImeSharp
         }
 
         /// <summary>
-        /// Return the created ITfContext object.
+        /// Return the created ITfUIElementMgr object.
         /// </summary>
         public NativeMethods.ITfUIElementMgr UIElementMgr
         {
             get { return _uiElementMgr; }
+        }
+
+        /// <summary>
+        /// Return the created ITfContextOwnerServices object.
+        /// </summary>
+        public NativeMethods.ITfContextOwnerServices ContextOwnerServices
+        {
+            get { return _contextOwnerServices; }
         }
 
         //------------------------------------------------------
@@ -413,6 +423,7 @@ namespace ImeSharp
 
         private NativeMethods.ITfContext _editContext;
         private NativeMethods.ITfUIElementMgr _uiElementMgr;
+        private NativeMethods.ITfContextOwnerServices _contextOwnerServices;
 
         // This is true if thread manager is activated.
         private bool _istimactivated;

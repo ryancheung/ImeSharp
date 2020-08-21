@@ -103,7 +103,7 @@ namespace ImeSharp
 
             _acpStart = _acpEnd = _inputBuffer.Count;
             _sink.OnSelectionChange();
-            _commitStart = commitEnd = 0;
+            _commitStart = _commitLength = 0;
 
             //Debug.WriteLine("TextStore reset!!!");
         }
@@ -677,24 +677,15 @@ namespace ImeSharp
 
         public void OnEndComposition(NativeMethods.ITfCompositionView view)
         {
+
             NativeMethods.ITfRange range;
             view.GetRange(out range);
             var rangeacp = (NativeMethods.ITfRangeACP)range;
 
-            int start;
-            int count;
-            rangeacp.GetExtent(out start, out count);
-            _commitStart = start;
-            _commitLength = count;
-            _commited = true;
-
-            //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(start, count).ToArray()) });
+            rangeacp.GetExtent(out _commitStart, out _commitLength);
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
-
-            for (int i = start; i < count; i++)
-                InputMethod.OnTextInput(this, _inputBuffer[i]);
         }
 
         #endregion ITfContextOwnerCompositionSink
@@ -703,6 +694,30 @@ namespace ImeSharp
 
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
+            NativeMethods.ITfProperty property;
+            Guid composingGuid = NativeMethods.GUID_PROP_COMPOSING;
+            context.GetProperty(ref composingGuid, out property);
+
+            NativeMethods.ITfRangeACP rangeACP;
+            TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionLength, out rangeACP);
+
+            object val;
+            property.GetValue(ecReadOnly, rangeACP as NativeMethods.ITfRange, out val);
+            if (val == null || (int)val == 0)
+            {
+                if (_commitLength == 0 || _inputBuffer.Count == 0)
+                {
+                    Marshal.ReleaseComObject(editRecord);
+                    return NativeMethods.S_OK;
+                }
+
+                //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(_commitStart, _commitLength).ToArray()) });
+
+                _commited = true;
+                for (int i = _commitStart; i < _commitLength; i++)
+                    InputMethod.OnTextInput(this, _inputBuffer[i]);
+            }
+
             if (_commited)
             {
                 Marshal.ReleaseComObject(editRecord);
