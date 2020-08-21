@@ -684,6 +684,10 @@ namespace ImeSharp
 
             rangeacp.GetExtent(out _commitStart, out _commitLength);
 
+            // Ensure composition string reset
+            _compositionStart = _compositionLength = 0;
+            _currentComposition.Clear();
+
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
         }
