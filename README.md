@@ -13,6 +13,23 @@ Call `InputMethod.Initialize` to initialize the input method with a window handl
 
 If you don't want the OS Candidate Window, do `InputMethod.Initialize(someWindowHandle, false)`.
 
+### Custom message pumping
+
+If we don't enable custom windows message pumping. Use TSF WinForms would have a issue: Frame will randomly stuck when composing with IME.
+This is because TSF disables Application.Idel event when it's busy. Enables custom message pumping fix this.
+
+In WinForms, we add message pumping at the end line in `Application.Idle` handler, e.g.:
+
+```c#
+private void Application_Idle(object sender, EventArgs e)
+{
+    Game.Tick();
+
+    // Enables custom message pumping
+    InputMethod.PumpMessage();
+}
+```
+
 ### Hook events
 
 ```c#
