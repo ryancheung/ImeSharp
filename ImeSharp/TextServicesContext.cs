@@ -139,7 +139,7 @@ namespace ImeSharp
         /// Callers should stop further processing of the keystroke on true,
         /// continue otherwise.
         /// </returns>
-        public bool Keystroke(int wParam, int lParam, KeyOp op)
+        public bool Keystroke(IntPtr wParam, IntPtr lParam, KeyOp op)
         {
             bool fConsume;
             NativeMethods.ITfKeystrokeMgr keystrokeMgr;
