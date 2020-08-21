@@ -126,53 +126,6 @@ namespace ImeSharp
             }
         }
 
-        /// <summary>
-        /// Feeds a keystroke to the Text Services Framework, wrapper for
-        /// ITfKeystrokeMgr::TestKeyUp/TestKeyDown/KeyUp/KeyDown.
-        /// </summary>
-        /// <remarks>
-        /// Must be called on the main dispatcher thread.
-        /// </remarks>
-        /// <returns>
-        /// true if the keystroke will be eaten by the Text Services Framework,
-        /// false otherwise.
-        /// Callers should stop further processing of the keystroke on true,
-        /// continue otherwise.
-        /// </returns>
-        public bool Keystroke(IntPtr wParam, IntPtr lParam, KeyOp op)
-        {
-            bool fConsume;
-            NativeMethods.ITfKeystrokeMgr keystrokeMgr;
-
-            // We delay load cicero until someone creates an ITextStore.
-            // Or this thread may not have a ThreadMgr.
-            if ((_threadManager == null) || (_threadManager == null))
-                return false;
-
-            keystrokeMgr = _threadManager as NativeMethods.ITfKeystrokeMgr;
-
-            switch (op)
-            {
-                case KeyOp.TestUp:
-                    keystrokeMgr.TestKeyUp(wParam, lParam, out fConsume);
-                    break;
-                case KeyOp.TestDown:
-                    keystrokeMgr.TestKeyDown(wParam, lParam, out fConsume);
-                    break;
-                case KeyOp.Up:
-                    keystrokeMgr.KeyUp(wParam, lParam, out fConsume);
-                    break;
-                case KeyOp.Down:
-                    keystrokeMgr.KeyDown(wParam, lParam, out fConsume);
-                    break;
-                default:
-                    fConsume = false;
-                    break;
-            }
-
-            return fConsume;
-        }
-
         // Called by framework's TextStore class.  This method registers a
         // document with TSF.  The TextServicesContext must maintain this list
         // to ensure all native resources are released after gc or uninitialization.
@@ -294,43 +247,6 @@ namespace ImeSharp
         //  public Events
         //
         //------------------------------------------------------
-
-        //------------------------------------------------------
-        //
-        //  public Enums
-        //
-        //------------------------------------------------------
-
-        #region public Enums
-
-        /// <summary>
-        /// Specifies the type of keystroke operation to perform in the
-        /// TextServicesContext.Keystroke method.
-        /// </summary>
-        public enum KeyOp
-        {
-            /// <summary>
-            /// ITfKeystrokeMgr::TestKeyUp
-            /// </summary>
-            TestUp,
-
-            /// <summary>
-            /// ITfKeystrokeMgr::TestKeyDown
-            /// </summary>
-            TestDown,
-
-            /// <summary>
-            /// ITfKeystrokeMgr::KeyUp
-            /// </summary>
-            Up,
-
-            /// <summary>
-            /// ITfKeystrokeMgr::KeyDown
-            /// </summary>
-            Down
-        };
-
-        #endregion public Enums
 
         //------------------------------------------------------
         //

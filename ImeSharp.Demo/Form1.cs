@@ -90,6 +90,8 @@ namespace ImeSharp.Demo
                 FakeDraw();
             }
             while (!PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) && IsDisposed == false);
+
+            InputMethod.PumpMessage();
         }
 
         // Mimic MonoGame WndProc
