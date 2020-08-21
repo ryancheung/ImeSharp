@@ -1161,7 +1161,7 @@ namespace ImeSharp.Native
                 int msgFilterMin,
                 int msgFilterMax,
                 int removeMsg,
-                out int result);
+                [MarshalAs(UnmanagedType.Bool)] out bool result);
 
             //HRESULT GetMessageA([out] LPMSG pMsg,
             //                    [in] HWND hwnd,
@@ -1173,7 +1173,7 @@ namespace ImeSharp.Native
                 IntPtr hwnd,
                 int msgFilterMin,
                 int msgFilterMax,
-                out int result);
+                [MarshalAs(UnmanagedType.Bool)] out bool result);
 
             //HRESULT PeekMessageW([out] LPMSG pMsg,
             //                     [in] HWND hwnd,
@@ -1187,7 +1187,7 @@ namespace ImeSharp.Native
                 int msgFilterMin,
                 int msgFilterMax,
                 int removeMsg,
-                out int result);
+                [MarshalAs(UnmanagedType.Bool)] out bool result);
 
             //HRESULT GetMessageW([out] LPMSG pMsg,
             //                    [in] HWND hwnd,
@@ -1199,7 +1199,7 @@ namespace ImeSharp.Native
                 IntPtr hwnd,
                 int msgFilterMin,
                 int msgFilterMax,
-                out int result);
+                [MarshalAs(UnmanagedType.Bool)] out bool result);
         };
 
         /// <summary></summary>
@@ -1555,7 +1555,7 @@ namespace ImeSharp.Native
             //HRESULT GetString(
             //    [in] UINT uIndex,
             //    [out] BSTR *pstr) = 0;
-            void GetString(int index,  out IntPtr str);
+            void GetString(int index, out IntPtr str);
 
             //HRESULT GetPageIndex(
             //    [length_is][size_is][out] UINT *pIndex,
@@ -2320,6 +2320,15 @@ namespace ImeSharp.Native
             void UnadviseSink(int cookie);
         }
 
+        [ComImport]
+        [Guid("0D2C969A-BC9C-437C-84EE-951C49B1A764")]
+        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
+        public interface ITfConfigureSystemKeystrokeFeed
+        {
+            void DisableSystemKeystrokeFeed();
+            void EnableSystemKeystrokeFeed();
+        }
+
         /// <summary></summary>
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -2345,28 +2354,28 @@ namespace ImeSharp.Native
             //                    [in] LPARAM lParam,
             //                    [out] BOOL *pfEaten);
             // int should be ok here, bit fields are well defined for this call as 32 bit, no pointers
-            void TestKeyDown(int wParam, int lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
+            void TestKeyDown(IntPtr wParam, IntPtr lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
 
             // <summary></summary>
             //HRESULT TestKeyUp([in] WPARAM wParam,
             //                  [in] LPARAM lParam,
             //                  [out] BOOL *pfEaten);
             // int should be ok here, bit fields are well defined for this call as 32 bit, no pointers
-            void TestKeyUp(int wParam, int lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
+            void TestKeyUp(IntPtr wParam, IntPtr lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
 
             // <summary></summary>
             //HRESULT KeyDown([in] WPARAM wParam,
             //                [in] LPARAM lParam,
             //                [out] BOOL *pfEaten);
             // int should be ok here, bit fields are well defined for this call as 32 bit, no pointers
-            void KeyDown(int wParam, int lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
+            void KeyDown(IntPtr wParam, IntPtr lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
 
             // <summary></summary>
             //HRESULT KeyUp([in] WPARAM wParam,
             //              [in] LPARAM lParam,
             //              [out] BOOL *pfEaten);
             // int should be ok here, bit fields are well defined for this call as 32 bit, no pointers
-            void KeyUp(int wParam, int lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
+            void KeyUp(IntPtr wParam, IntPtr lParam, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
 
             /// <summary></summary>
             //HRESULT GetPreservedKey([in] ITfContext *pic,
