@@ -91,6 +91,7 @@ namespace ImeSharp.Demo
             }
             while (!PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) && IsDisposed == false);
 
+            // Enables custom message pumping to fix frame stuck randomly.
             InputMethod.PumpMessage();
         }
 
