@@ -13,6 +13,7 @@ namespace ImeSharp.Demo
     public partial class Form1 : Form
     {
         private string _inputContent = string.Empty;
+        private DateTime _lastFakeDrawTime = DateTime.Now;
 
         private void OnTextInput(char character)
         {
@@ -86,6 +87,13 @@ namespace ImeSharp.Demo
 
         private void FakeDraw()
         {
+            var now = DateTime.Now;
+            if (_lastFakeDrawTime.AddMilliseconds(50) < now)
+                Console.WriteLine("{0}.{1}.{2} - SLOW FakeDraw!", now.ToShortTimeString(), now.Second, now.Millisecond);
+
+            label1.Text = Guid.NewGuid().ToString();
+
+            _lastFakeDrawTime = now;
         }
 
     }
