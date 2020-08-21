@@ -15,8 +15,8 @@ If you don't want the OS Candidate Window, do `InputMethod.Initialize(someWindow
 
 ### Custom message pumping
 
-If we don't enable custom windows message pumping. Use TSF WinForms would have a issue: Frame will randomly stuck when composing with IME.
-This is because TSF disables Application.Idel event when it's busy. Enables custom message pumping fix this.
+If we don't enable custom windows message pumping. Use TSF in WinForms would have a issue: Frame will randomly stuck when composing with IME.
+This is because TSF disables Application.Idle event when it's busy. Enables custom message pumping fix this.
 
 In WinForms, we add message pumping at the end line in `Application.Idle` handler, e.g.:
 
