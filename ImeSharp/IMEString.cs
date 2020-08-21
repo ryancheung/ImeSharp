@@ -180,6 +180,14 @@ namespace ImeSharp
             }
         }
 
+        public IntPtr ToIntPtr()
+        {
+            fixed (char* ptr = buffer)
+            {
+                return (IntPtr)ptr;
+            }
+        }
+
         public IEnumerator<char> GetEnumerator()
         {
             return new Enumerator(this);
