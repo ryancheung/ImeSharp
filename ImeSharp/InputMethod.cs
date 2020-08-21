@@ -220,10 +220,10 @@ namespace ImeSharp
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
 
-        /// <summory>
+        /// <summary>
         /// Custom windows message pumping to fix frame stuck issue.
         /// Normally, you need call this method in <see cref="Application.Idle" /> handler.
-        /// </summory>
+        /// </summary>
         public static void PumpMessage()
         {
             if (!Enabled) return;
