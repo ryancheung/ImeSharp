@@ -73,6 +73,8 @@ namespace ImeSharp
         private static ImmCompositionStringHandler _compositionStringHandler;
         private static ImmCompositionIntHandler _compositionCursorHandler;
 
+        private bool _lastImmOpenStatus;
+
         public Imm32Manager(IntPtr windowHandle)
         {
             _windowHandle = windowHandle;
@@ -197,7 +199,7 @@ namespace ImeSharp
                         // Must re-associate ime context or things won't work.
                         NativeMethods.ImmAssociateContext(_windowHandle, DefaultImc);
 
-                        if (!NativeMethods.ImmGetOpenStatus(DefaultImc))
+                        if (_lastImmOpenStatus)
                             NativeMethods.ImmSetOpenStatus(DefaultImc, true);
 
                         var lParam64 = lParam.ToInt64();
@@ -207,8 +209,9 @@ namespace ImeSharp
                             lParam64 &= ~NativeMethods.ISC_SHOWUICOMPOSITIONWINDOW;
                         lParam = (IntPtr)(int)lParam64;
                     }
-                    else
-                        NativeMethods.ImmSetOpenStatus(DefaultImc, false);
+                    break;
+                case NativeMethods.WM_KILLFOCUS:
+                    _lastImmOpenStatus = NativeMethods.ImmGetOpenStatus(DefaultImc);
                     break;
                 case NativeMethods.WM_IME_NOTIFY:
                     IMENotify(wParam.ToInt32());
