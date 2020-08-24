@@ -121,7 +121,7 @@ namespace ImeSharp.Demo
             if (_lastFakeDrawTime.AddMilliseconds(50) < now)
                 Console.WriteLine("{0}.{1}.{2} - SLOW FakeDraw!", now.ToShortTimeString(), now.Second, now.Millisecond);
 
-            label1.Text = Guid.NewGuid().ToString();
+            //label1.Text = Guid.NewGuid().ToString();
 
             _lastFakeDrawTime = now;
         }
