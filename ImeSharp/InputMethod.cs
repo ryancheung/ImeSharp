@@ -236,8 +236,11 @@ namespace ImeSharp
             {
                 result = NativeMethods.PeekMessage(out msg, _windowHandle, 0, 0, NativeMethods.PM_REMOVE);
 
-                NativeMethods.TranslateMessage(ref msg);
-                NativeMethods.DispatchMessage(ref msg);
+                if (result)
+                {
+                    NativeMethods.TranslateMessage(ref msg);
+                    NativeMethods.DispatchMessage(ref msg);
+                }
             } while (result);
 
             NativeMethods.PostMessage(_windowHandle, NativeMethods.WM_NULL, IntPtr.Zero, IntPtr.Zero);
