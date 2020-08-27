@@ -11,7 +11,7 @@
 
 This package provide IME support for none WinForms target.</Description>
     <PackageTags>IME;netstandard2;windows</PackageTags>
-    <PackageId>ImeSharp</PackageId>
+    <PackageId>ImeSharp.NetStandard</PackageId>
     <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
     <Authors>ryancheung</Authors>

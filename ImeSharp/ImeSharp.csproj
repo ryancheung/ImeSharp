@@ -20,7 +20,7 @@ This package provide IME support for WinForms target.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
-    <BaseOutputPath>..\Artifacts</BaseOutputPath>
+    <BaseOutputPath>..\Artifacts\WinForms</BaseOutputPath>
     <AssemblyName>ImeSharp</AssemblyName>
     <RootNamespace>ImeSharp</RootNamespace>
     <LangVersion>5</LangVersion>
