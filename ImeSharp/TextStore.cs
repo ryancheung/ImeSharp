@@ -705,13 +705,14 @@ namespace ImeSharp
             NativeMethods.ITfRangeACP rangeACP;
             TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionLength, out rangeACP);
 
-            object val;
+            NativeMethods.VARIANT val;
             property.GetValue(ecReadOnly, rangeACP as NativeMethods.ITfRange, out val);
-            if (val == null || (int)val == 0)
+            if (val.intVal == 0)
             {
                 if (_commitLength == 0 || _inputBuffer.Count == 0)
                 {
                     Marshal.ReleaseComObject(editRecord);
+                    val.Clear();
                     return NativeMethods.S_OK;
                 }
 
@@ -721,6 +722,7 @@ namespace ImeSharp
                 for (int i = _commitStart; i < _commitLength; i++)
                     InputMethod.OnTextInput(this, _inputBuffer[i]);
             }
+            val.Clear();
 
             if (_commited)
             {

@@ -888,19 +888,6 @@ namespace ImeSharp.Native
             public int acpNewEnd;
         }
 
-        [StructLayout(LayoutKind.Sequential)]
-        public sealed class VARIANT
-        {
-            [MarshalAs(UnmanagedType.I2)]
-            public short vt;
-            [MarshalAs(UnmanagedType.I2)]
-            public short reserved1;
-            [MarshalAs(UnmanagedType.I2)]
-            public short reserved2;
-            [MarshalAs(UnmanagedType.I2)]
-            public short reserved3;
-        }
-
         /// <summary></summary>
         [StructLayout(LayoutKind.Sequential)]
         public struct TS_ATTRVAL
@@ -916,7 +903,6 @@ namespace ImeSharp.Native
             public Int32 reserved;
 
             /// <summary> </summary>
-            [MarshalAs(UnmanagedType.Struct)]
             public VARIANT val;
         }
 
@@ -1224,7 +1210,7 @@ namespace ImeSharp.Native
             //                [in] ITfRange *pRange,
             //                [out] VARIANT *pvarValue);
             [PreserveSig]
-            int GetValue(int editCookie, ITfRange range, out object value);
+            int GetValue(int editCookie, ITfRange range, out VARIANT value);
 
             /// <summary></summary>
             //HRESULT GetContext([out] ITfContext **ppContext);
@@ -1247,7 +1233,7 @@ namespace ImeSharp.Native
             //HRESULT SetValue([in] TfEditCookie ec,
             //                [in] ITfRange *pRange,
             //                [in] const VARIANT *pvarValue);
-            void SetValue(int editCookie, ITfRange range, object value);
+            void SetValue(int editCookie, ITfRange range, VARIANT value);
 
             /// <summary></summary>
             //HRESULT Clear([in] TfEditCookie ec,
@@ -1313,7 +1299,7 @@ namespace ImeSharp.Native
             [PreserveSig]
             int EnumRanges(int editCookie, out IEnumTfRanges ppEnum, ITfRange pTargetRange);
             [PreserveSig]
-            int GetValue(int editCookie, ITfRange pRange, [MarshalAs(UnmanagedType.Struct)] out object varValue);
+            int GetValue(int editCookie, ITfRange pRange, out VARIANT varValue);
             [PreserveSig]
             int GetContext(out ITfContext ppContext);
         }
@@ -1800,10 +1786,10 @@ namespace ImeSharp.Native
             //HRESULT SetValue([in] TfClientId tid,
             //                 [in] const VARIANT *pvarValue);
             [PreserveSig]
-            int SetValue(int tid, ref object varValue);
+            int SetValue(int tid, ref VARIANT varValue);
 
             /// <summary></summary>
-            void GetValue(out object varValue);
+            void GetValue(out VARIANT varValue);
         }
 
         /// <summary></summary>
@@ -3354,7 +3340,7 @@ namespace ImeSharp.Native
 
             /// <summary></summary>
             // HRESULT GetAttribute([in] REFGUID rguidAttribute, [out] VARIANT *pvarValue);
-            void GetValue(ref Guid guidAttribute, out object varValue);
+            void GetValue(ref Guid guidAttribute, out VARIANT varValue);
         }
 
 
