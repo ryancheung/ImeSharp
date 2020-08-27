@@ -2,7 +2,9 @@ using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
+#if WINFORMS
 using Microsoft.Win32;
+#endif
 using ImeSharp.Native;
 
 namespace ImeSharp
@@ -20,10 +22,10 @@ namespace ImeSharp
         #region Constructors
 
         // Private ctor to prevent anyone from instantiating this static class.
-        private TextServicesLoader() {}
+        private TextServicesLoader() { }
 
         #endregion Constructors
- 
+
         //------------------------------------------------------
         //
         //  public Properties
@@ -31,7 +33,7 @@ namespace ImeSharp
         //------------------------------------------------------
 
         #region public Properties
-        
+
         /// <summary>
         /// Loads an instance of the Text Services Framework.
         /// </summary>
@@ -63,6 +65,20 @@ namespace ImeSharp
         }
 
         /// <summary>
+        /// return true if current OS version is Windows 7 or below.
+        /// </summary>
+        public static bool IsWindows7OrBelow()
+        {
+            if (Environment.OSVersion.Version.Major <= 5)
+                return true;
+
+            if (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor <= 1)
+                return true;
+
+            return false;
+        }
+
+        /// <summary>
         /// Informs the caller if text services are installed for the current user.
         /// </summary>
         /// <returns>
@@ -77,6 +93,7 @@ namespace ImeSharp
         {
             get
             {
+#if WINFORMS
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)
@@ -86,11 +103,16 @@ namespace ImeSharp
                 }
 
                 return (s_servicesInstalled == InstallState.Installed);
+#elif NETSTANDARD
+                // Use IMM32 instead of TSF in Win7 or below.
+                return !IsWindows7OrBelow();
+#endif
             }
         }
 
         #endregion public Properties
 
+#if WINFORMS
         //------------------------------------------------------
         //
         //  public Events
@@ -313,5 +335,6 @@ namespace ImeSharp
         private static object s_servicesInstalledLock = new object();
 
         #endregion Private Fields
+#endif
     }
 }

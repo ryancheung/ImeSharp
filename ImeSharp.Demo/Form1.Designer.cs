@@ -112,8 +112,12 @@
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-            this.Name = "Form1";
-            this.Text = "Form1";
+#if WINFORMS
+            this.Name = "ImeSharp WinForms Demo";
+#else
+            this.Name = "ImeSharp NetStandard Demo";
+#endif
+            this.Text = this.Name;
             this.ResumeLayout(false);
             this.PerformLayout();
 

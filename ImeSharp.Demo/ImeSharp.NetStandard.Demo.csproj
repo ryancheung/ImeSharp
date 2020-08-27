@@ -1,14 +1,14 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
 
   <ItemGroup>
-    <ProjectReference Include="..\ImeSharp\ImeSharp.csproj" />
+    <ProjectReference Include="..\ImeSharp\ImeSharp.NetStandard.csproj" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
-    <DefineConstants>WINFORMS;</DefineConstants>
+    <DefineConstants>NETSTANDARD;</DefineConstants>
   </PropertyGroup>
 
 </Project>

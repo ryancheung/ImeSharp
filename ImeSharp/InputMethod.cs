@@ -160,20 +160,6 @@ namespace ImeSharp
                 TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
         }
 
-        /// <summary>
-        /// return true if current OS version is Windows 7 or below.
-        /// </summary>
-        public static bool IsWindows7OrBelow()
-        {
-            if (Environment.OSVersion.Version.Major <= 5)
-                return true;
-
-            if (Environment.OSVersion.Version.Major == 6 && Environment.OSVersion.Version.Minor <= 1)
-                return true;
-
-            return false;
-        }
-
         private static void EnableOrDisableInputMethod(bool bEnabled)
         {
             // InputMethod enable/disabled status was changed on the current focus Element.
