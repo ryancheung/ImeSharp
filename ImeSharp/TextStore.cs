@@ -686,7 +686,9 @@ namespace ImeSharp
             ok = true;
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
+#if WINDOWS_UAP
             _compositionJustStarted = true;
+#endif
 
             InputMethod.OnTextCompositionStarted(this);
         }
@@ -718,7 +720,9 @@ namespace ImeSharp
             // Ensure composition string reset
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
+#if WINDOWS_UAP
             _compositionJustStarted = false;
+#endif
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
@@ -1012,6 +1016,8 @@ namespace ImeSharp
 
         private bool _supportUIElement = true;
 
+#if WINDOWS_UAP
         private bool _compositionJustStarted;
+#endif
     }
 }

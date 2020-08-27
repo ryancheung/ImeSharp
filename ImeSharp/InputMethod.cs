@@ -12,8 +12,10 @@ namespace ImeSharp
         private static IntPtr _windowHandle;
         public static IntPtr WindowHandle { get { return _windowHandle; } }
 
+#if !WINDOWS_UAP
         private static IntPtr _prevWndProc;
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
+#endif
 
         private static TextServicesContext _textServicesContext;
         internal static TextServicesContext TextServicesContext
