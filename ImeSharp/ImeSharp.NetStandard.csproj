@@ -7,9 +7,10 @@
   </PropertyGroup>
 
   <PropertyGroup>
-    <Description>This package provide IME support for none winforms case. Note this package only works in Windows. 
-C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.</Description>
-    <PackageTags>IME;netcoreapp3.1;netstandard2</PackageTags>
+    <Description>C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
+
+This package provide IME support for none WinForms target.</Description>
+    <PackageTags>IME;netstandard2;windows</PackageTags>
     <PackageId>ImeSharp</PackageId>
     <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
     <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
