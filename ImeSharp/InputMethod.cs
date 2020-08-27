@@ -106,11 +106,17 @@ namespace ImeSharp
             // Forced to show OS IME Candidate window for UWP
             _showOSImeWindow = true;
 
-            _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
-            _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
-                Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+            //_wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
+            //_prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
+            //    Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
 
             window.CharacterReceived += CoreWindow_CharacterReceived;
+            window.Closed += CoreWindow_Closed;
+        }
+
+        private static void CoreWindow_Closed(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CoreWindowEventArgs args)
+        {
+            TextServicesContext.Current.Uninitialize(true);
         }
 
         private static void CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
@@ -206,6 +212,7 @@ namespace ImeSharp
             }
         }
 
+#if !WINDOWS_UAP
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             if (Imm32Manager.ImmEnabled)
@@ -230,6 +237,7 @@ namespace ImeSharp
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
+#endif
 
         /// <summary>
         /// Custom windows message pumping to fix frame stuck issue.
