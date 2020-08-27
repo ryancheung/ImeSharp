@@ -44,10 +44,12 @@ namespace ImeSharp
         /// </summary>
         private TextServicesContext()
         {
+#if !WINDOWS_UAP
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "SetDispatcherThreaad on MTA thread");
+#endif
         }
 
-        #endregion Constructors
+#endregion Constructors
 
         //------------------------------------------------------
         //
@@ -55,7 +57,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region public Methods
+#region public Methods
 
         /// <summary>
         /// Releases all unmanaged resources allocated by the
@@ -96,10 +98,14 @@ namespace ImeSharp
                 // shuts down in any case.  In theory we could also work around this
                 // problem by creating our own XP proxy/stub implementation, which would
                 // be added to WPF setup....
+#if WINDOWS_UAP
+                _threadManager.Deactivate();
+#else
                 if (!appDomainShutdown || System.Environment.OSVersion.Version.Major >= 6)
                 {
                     _threadManager.Deactivate();
                 }
+#endif
                 _istimactivated = false;
             }
 
@@ -179,7 +185,7 @@ namespace ImeSharp
         }
 
 
-        #endregion public Methods
+#endregion public Methods
 
         //------------------------------------------------------
         //
@@ -333,7 +339,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region Private Fields
+#region Private Fields
 
         private TextStore _defaultTextStore;
 
@@ -353,6 +359,6 @@ namespace ImeSharp
         // The empty dim for this thread. Created on demand.
         private NativeMethods.ITfDocumentMgr _dimEmpty;
 
-        #endregion Private Fields
+#endregion Private Fields
     }
 }

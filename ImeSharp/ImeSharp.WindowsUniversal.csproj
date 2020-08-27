@@ -1,0 +1,36 @@
+<Project Sdk="MSBuild.Sdk.Extras">
+
+  <PropertyGroup>
+    <TargetFramework>uap10.0</TargetFramework>
+    <DefineConstants>WINDOWS_UAP;</DefineConstants>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
+    <TargetPlatformVersion>10.0.18362.0</TargetPlatformVersion>
+    <TargetPlatformMinVersion>10.0.16299.0</TargetPlatformMinVersion>
+    <AppendTargetFrameworkToOutputPath>False</AppendTargetFrameworkToOutputPath>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <SDKReference Include="WindowsMobile, Version=10.0.18362.0">
+      <Name>Windows Mobile Extensions for the UWP</Name>
+    </SDKReference>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <Description>C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
+
+This package provide IME support for UWP target.</Description>
+    <PackageTags>IME;uwp;windows</PackageTags>
+    <PackageId>ImeSharp.WindowsUniversal</PackageId>
+    <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
+    <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
+    <Authors>ryancheung</Authors>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <Compile Remove="bin\**\*" />
+    <Compile Remove="obj\**\*" />
+    <Compile Remove="Properties\**\*" />
+  </ItemGroup>
+
+</Project>
