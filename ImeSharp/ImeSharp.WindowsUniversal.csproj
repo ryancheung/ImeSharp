@@ -33,4 +33,11 @@ This package provide IME support for UWP target.</Description>
     <Compile Remove="Properties\**\*" />
   </ItemGroup>
 
+  <PropertyGroup>
+    <BaseOutputPath>..\Artifacts\WindowsUniversal</BaseOutputPath>
+    <AssemblyName>ImeSharp</AssemblyName>
+    <RootNamespace>ImeSharp</RootNamespace>
+    <LangVersion>5</LangVersion>
+  </PropertyGroup>
+
 </Project>
