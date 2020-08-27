@@ -13,12 +13,38 @@ var apiKey = Argument("api-key", "");
 // PREPARATION
 //////////////////////////////////////////////////////////////////////
 
+MSBuildSettings msPackSettings;
 DotNetCoreMSBuildSettings dnBuildSettings;
 DotNetCorePackSettings dnPackSettings;
 
 private void PackDotnet(string filePath)
 {
     DotNetCorePack(filePath, dnPackSettings);
+}
+
+private void PackMSBuild(string filePath)
+{
+    MSBuild(filePath, msPackSettings);
+}
+
+private bool GetMSBuildWith(string requires)
+{
+    if (IsRunningOnWindows())
+    {
+        DirectoryPath vsLatest = VSWhereLatest(new VSWhereLatestSettings { Requires = requires });
+
+        if (vsLatest != null)
+        {
+            var files = GetFiles(vsLatest.FullPath + "/**/MSBuild.exe");
+            if (files.Any())
+            {
+                msPackSettings.ToolPath = files.First();
+                return true;
+            }
+        }
+    }
+
+    return false;
 }
 
 var NuGetToolPath = Context.Tools.Resolve ("nuget.exe");
@@ -40,6 +66,13 @@ Task("Prep")
 {
     Console.WriteLine("Build Version: {0}", version);
 
+    msPackSettings = new MSBuildSettings();
+    msPackSettings.Verbosity = Verbosity.Minimal;
+    msPackSettings.Configuration = configuration;
+    msPackSettings.Restore = true;
+    msPackSettings.WithProperty("Version", version);
+    msPackSettings.WithTarget("Pack");
+
     dnBuildSettings = new DotNetCoreMSBuildSettings();
     dnBuildSettings.WithProperty("Version", version);
 
@@ -49,19 +82,39 @@ Task("Prep")
     dnPackSettings.Configuration = configuration;
 });
 
-Task("Build")
+Task("BuildWindows")
     .IsDependentOn("Prep")
+    .WithCriteria(() => IsRunningOnWindows())
     .Does(() =>
 {
     DotNetCoreRestore("ImeSharp/ImeSharp.csproj");
     PackDotnet("ImeSharp/ImeSharp.csproj");
 });
 
+Task("BuildNetStandard")
+    .IsDependentOn("Prep")
+    .WithCriteria(() => IsRunningOnWindows())
+    .Does(() =>
+{
+    DotNetCoreRestore("ImeSharp/ImeSharp.NetStandard.csproj");
+    PackDotnet("ImeSharp/ImeSharp.NetStandard.csproj");
+});
+
+Task("BuildUWP")
+    .IsDependentOn("Prep")
+    .WithCriteria(() => GetMSBuildWith("Microsoft.VisualStudio.Component.Windows10SDK.18362"))
+    .Does(() =>
+{
+    PackMSBuild("ImeSharp/ImeSharp.WindowsUniversal.csproj");
+});
+
 Task("Default")
-    .IsDependentOn("Build");
+    .IsDependentOn("BuildWindows")
+    .IsDependentOn("BuildNetStandard")
+    .IsDependentOn("BuildUWP");
 
 Task("Publish")
-    .IsDependentOn("Build")
+    .IsDependentOn("Default")
 .Does(() =>
 {
     var args = $"push -Source \"https://api.nuget.org/v3/index.json\" -ApiKey {apiKey} Artifacts/Release/ImeSharp.{version}.nupkg";
