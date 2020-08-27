@@ -112,7 +112,7 @@
             this.Controls.Add(this.label4);
             this.Controls.Add(this.label2);
             this.Controls.Add(this.label1);
-#if WINFORMS
+#if WINDOWS
             this.Name = "ImeSharp WinForms Demo";
 #else
             this.Name = "ImeSharp NetStandard Demo";

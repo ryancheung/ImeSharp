@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
-#if WINFORMS
+#if WINDOWS
 using Microsoft.Win32;
 #endif
 using ImeSharp.Native;
@@ -42,7 +42,9 @@ namespace ImeSharp
         /// </returns>
         public static NativeMethods.ITfThreadMgrEx Load()
         {
+#if !WINDOWS_UAP
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
+#endif
 
             if (ServicesInstalled)
             {
@@ -69,6 +71,9 @@ namespace ImeSharp
         /// </summary>
         public static bool IsWindows7OrBelow()
         {
+#if WINDOWS_UAP
+            return false;
+#else
             if (Environment.OSVersion.Version.Major <= 5)
                 return true;
 
@@ -76,6 +81,7 @@ namespace ImeSharp
                 return true;
 
             return false;
+#endif
         }
 
         /// <summary>
@@ -93,7 +99,7 @@ namespace ImeSharp
         {
             get
             {
-#if WINFORMS
+#if WINDOWS
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)
@@ -103,16 +109,16 @@ namespace ImeSharp
                 }
 
                 return (s_servicesInstalled == InstallState.Installed);
-#elif NETSTANDARD
+#else
                 // Use IMM32 instead of TSF in Win7 or below.
                 return !IsWindows7OrBelow();
 #endif
             }
         }
 
-        #endregion public Properties
+#endregion public Properties
 
-#if WINFORMS
+#if WINDOWS
         //------------------------------------------------------
         //
         //  public Events
@@ -125,7 +131,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region Private Methods
+#region Private Methods
 
         //
         // This method tries to stop Avalon from loading Cicero when there are no TIPs to run.
@@ -288,7 +294,7 @@ namespace ImeSharp
             return state;
         }
 
-        #endregion Private Methods
+#endregion Private Methods
 
         //------------------------------------------------------
         //
@@ -302,7 +308,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        #region Private Fields
+#region Private Fields
 
         // String consts used to validate registry entires.
         private const int CLSIDLength = 38;  // {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
@@ -334,7 +340,7 @@ namespace ImeSharp
         private static InstallState s_servicesInstalled = InstallState.Unknown;
         private static object s_servicesInstalledLock = new object();
 
-        #endregion Private Fields
+#endregion Private Fields
 #endif
     }
 }

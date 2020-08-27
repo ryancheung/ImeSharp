@@ -12,7 +12,17 @@ namespace ImeSharp
         // If the system is IMM enabled, this is true.
         private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
 
-        public static bool ImmEnabled { get { return _immEnabled; } }
+        public static bool ImmEnabled
+        {
+            get
+            {
+#if WINDOWS_UAP
+                return false;
+#else
+                return _immEnabled;
+#endif
+            }
+        }
 
         public const int LANG_CHINESE = 0x04;
         public const int LANG_KOREAN = 0x12;
@@ -281,7 +291,7 @@ namespace ImeSharp
             {
                 IntPtr pointer = Marshal.AllocHGlobal((int)length);
                 length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, pointer, length);
-                NativeMethods.CANDIDATELIST cList = (NativeMethods.CANDIDATELIST)Marshal.PtrToStructure(pointer, typeof(NativeMethods.CANDIDATELIST));
+                NativeMethods.CANDIDATELIST cList = Marshal.PtrToStructure<NativeMethods.CANDIDATELIST>(pointer);
 
                 var selection = (int)cList.dwSelection;
                 var pageStart = (int)cList.dwPageStart;

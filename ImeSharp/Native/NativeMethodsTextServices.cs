@@ -902,8 +902,12 @@ namespace ImeSharp.Native
             /// <summary></summary>
             public Int32 reserved;
 
+#if WINDOWS_UAP
             /// <summary> </summary>
+            public object val;
+#else
             public VARIANT val;
+#endif
         }
 
         /// <summary></summary>
@@ -968,7 +972,6 @@ namespace ImeSharp.Native
         }
 
         [StructLayout(LayoutKind.Sequential)]
-        [Serializable]
         public struct MSG
         {
             public MSG(IntPtr hwnd, int message, IntPtr wParam, IntPtr lParam, int time, int pt_x, int pt_y)
@@ -1095,8 +1098,12 @@ namespace ImeSharp.Native
         public struct TF_PROPERTYVAL
         {
             public Guid guidId;
-            [MarshalAs(UnmanagedType.Struct)]
+
+#if WINDOWS_UAP
             public object varValue;
+#else
+            public VARIANT varValue;
+#endif
         }
 
         [StructLayout(LayoutKind.Sequential)]
@@ -1120,7 +1127,7 @@ namespace ImeSharp.Native
         [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
         internal class NullAllowedAttribute : Attribute { }
 
-        #endregion Structs
+#endregion Structs
 
         //------------------------------------------------------
         //
@@ -1128,7 +1135,7 @@ namespace ImeSharp.Native
         //
         //------------------------------------------------------
 
-        #region Interfaces
+#region Interfaces
 
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -1210,7 +1217,11 @@ namespace ImeSharp.Native
             //                [in] ITfRange *pRange,
             //                [out] VARIANT *pvarValue);
             [PreserveSig]
+#if WINDOWS_UAP
+            int GetValue(int editCookie, ITfRange range, out object value);
+#else
             int GetValue(int editCookie, ITfRange range, out VARIANT value);
+#endif
 
             /// <summary></summary>
             //HRESULT GetContext([out] ITfContext **ppContext);
@@ -1233,7 +1244,11 @@ namespace ImeSharp.Native
             //HRESULT SetValue([in] TfEditCookie ec,
             //                [in] ITfRange *pRange,
             //                [in] const VARIANT *pvarValue);
+#if WINDOWS_UAP
+            void SetValue(int editCookie, ITfRange range, object value);
+#else
             void SetValue(int editCookie, ITfRange range, VARIANT value);
+#endif
 
             /// <summary></summary>
             //HRESULT Clear([in] TfEditCookie ec,
@@ -1299,7 +1314,11 @@ namespace ImeSharp.Native
             [PreserveSig]
             int EnumRanges(int editCookie, out IEnumTfRanges ppEnum, ITfRange pTargetRange);
             [PreserveSig]
+#if WINDOWS_UAP
+            int GetValue(int editCookie, ITfRange pRange, out object varValue);
+#else
             int GetValue(int editCookie, ITfRange pRange, out VARIANT varValue);
+#endif
             [PreserveSig]
             int GetContext(out ITfContext ppContext);
         }
@@ -1786,10 +1805,18 @@ namespace ImeSharp.Native
             //HRESULT SetValue([in] TfClientId tid,
             //                 [in] const VARIANT *pvarValue);
             [PreserveSig]
+#if WINDOWS_UAP
+            int SetValue(int tid, ref object varValue);
+#else
             int SetValue(int tid, ref VARIANT varValue);
+#endif
 
             /// <summary></summary>
+#if WINDOWS_UAP
+            void GetValue(out object varValue);
+#else
             void GetValue(out VARIANT varValue);
+#endif
         }
 
         /// <summary></summary>
@@ -3340,7 +3367,11 @@ namespace ImeSharp.Native
 
             /// <summary></summary>
             // HRESULT GetAttribute([in] REFGUID rguidAttribute, [out] VARIANT *pvarValue);
+#if WINDOWS_UAP
+            void GetValue(ref Guid guidAttribute, out object varValue);
+#else
             void GetValue(ref Guid guidAttribute, out VARIANT varValue);
+#endif
         }
 
 
@@ -3470,6 +3501,6 @@ namespace ImeSharp.Native
             int OnMouseEvent(int edge, int quadrant, int btnStatus, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
         }
 
-        #endregion Interfaces
+#endregion Interfaces
     }
 }

@@ -69,7 +69,7 @@ namespace ImeSharp
                 Imm32Manager.Current.SetCandidateWindow(TextInputRect);
         }
 
-        private static bool _showOSImeWindow;
+        private static bool _showOSImeWindow = false;
 
         /// <summary>
         /// Return if let OS render IME Candidate window or not.
@@ -95,6 +95,36 @@ namespace ImeSharp
         public static TextInputCallback TextInputCallback { get; set; }
         public static TextCompositionCallback TextCompositionCallback { get; set; }
 
+#if WINDOWS_UAP
+        public static void Initialize(Windows.UI.Core.CoreWindow window)
+        {
+            if (_windowHandle != IntPtr.Zero)
+                throw new InvalidOperationException("InputMethod can only be initialized once!");
+
+            var interop = (NativeMethods.ICoreWindowInterop)(window as dynamic);
+            _windowHandle = interop.WindowHandle;
+            // Forced to show OS IME Candidate window for UWP
+            _showOSImeWindow = true;
+
+            //_wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
+            //_prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
+            //    Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+
+            window.CharacterReceived += CoreWindow_CharacterReceived;
+            window.Closed += CoreWindow_Closed;
+        }
+
+        private static void CoreWindow_Closed(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CoreWindowEventArgs args)
+        {
+            TextServicesContext.Current.Uninitialize(true);
+        }
+
+        private static void CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
+        {
+            if (InputMethod.Enabled)
+                OnTextInput(sender, (char)args.KeyCode);
+        }
+#else
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
         /// Let the OS render the candidate window by set <see paramref="showOSImeWindow"/> to <c>true</c>.
@@ -111,6 +141,7 @@ namespace ImeSharp
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
+#endif
 
         internal static void OnTextInput(object sender, char character)
         {
@@ -181,6 +212,7 @@ namespace ImeSharp
             }
         }
 
+#if !WINDOWS_UAP
         private static IntPtr WndProc(IntPtr hWnd, uint msg, IntPtr wParam, IntPtr lParam)
         {
             if (Imm32Manager.ImmEnabled)
@@ -205,6 +237,7 @@ namespace ImeSharp
 
             return NativeMethods.CallWindowProc(_prevWndProc, hWnd, msg, wParam, lParam);
         }
+#endif
 
         /// <summary>
         /// Custom windows message pumping to fix frame stuck issue.

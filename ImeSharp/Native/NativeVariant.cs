@@ -46,7 +46,8 @@ namespace ImeSharp.Native
 {
     public partial class NativeMethods
     {
-
+        // VARIANT marshaling is deprecated in UAP
+#if !WINDOWS_UAP
         [StructLayout(LayoutKind.Sequential, Pack = 0)]
         public struct PROPARRAY
         {
@@ -642,5 +643,6 @@ namespace ImeSharp.Native
                 throw new System.NotSupportedException("TSF_PropertyNotSupported");
             }
         }
+#endif
     }
 }
