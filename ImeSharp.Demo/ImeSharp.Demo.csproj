@@ -8,7 +8,7 @@
     <OutputType>WinExe</OutputType>
     <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
     <UseWindowsForms>true</UseWindowsForms>
-    <DefineConstants>WINFORMS;</DefineConstants>
+    <DefineConstants>WINDOWS;</DefineConstants>
   </PropertyGroup>
 
 </Project>

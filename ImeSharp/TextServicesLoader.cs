@@ -2,7 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
-#if WINFORMS
+#if WINDOWS
 using Microsoft.Win32;
 #endif
 using ImeSharp.Native;
@@ -99,7 +99,7 @@ namespace ImeSharp
         {
             get
             {
-#if WINFORMS
+#if WINDOWS
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)
@@ -118,7 +118,7 @@ namespace ImeSharp
 
 #endregion public Properties
 
-#if WINFORMS
+#if WINDOWS
         //------------------------------------------------------
         //
         //  public Events
