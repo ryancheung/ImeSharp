@@ -112,19 +112,9 @@ namespace ImeSharp
             //_prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
             //    Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
 
-            window.CharacterReceived += CoreWindow_CharacterReceived;
-            window.Closed += CoreWindow_Closed;
-        }
-
-        private static void CoreWindow_Closed(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CoreWindowEventArgs args)
-        {
-            TextServicesContext.Current.Uninitialize(true);
-        }
-
-        private static void CoreWindow_CharacterReceived(Windows.UI.Core.CoreWindow sender, Windows.UI.Core.CharacterReceivedEventArgs args)
-        {
-            if (InputMethod.Enabled)
-                OnTextInput(sender, (char)args.KeyCode);
+            window.CharacterReceived += (o, e) => { if (Enabled) OnTextInput(o, (char)e.KeyCode); };
+            window.Closed += (o, e) => OnWindowClose();
+            window.Activated += (o, e) => OnWindowFocus();
         }
 #else
         /// <summary>
@@ -144,6 +134,22 @@ namespace ImeSharp
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 #endif
+
+        private static void OnWindowFocus()
+        {
+            if (TextServicesLoader.ServicesInstalled)
+            {
+                if (Enabled)
+                    TextServicesContext.Current.SetFocusOnDefaultTextStore();
+                else
+                    TextServicesContext.Current.SetFocusOnEmptyDim();
+            }
+        }
+
+        private static void OnWindowClose()
+        {
+            TextServicesContext.Current.Uninitialize(true);
+        }
 
         internal static void OnTextInput(object sender, char character)
         {
@@ -225,8 +231,11 @@ namespace ImeSharp
 
             switch (msg)
             {
+                case NativeMethods.WM_SETFOCUS:
+                    OnWindowFocus();
+                    break;
                 case NativeMethods.WM_DESTROY:
-                    TextServicesContext.Current.Uninitialize(true);
+                    OnWindowClose();
                     break;
                 case NativeMethods.WM_CHAR:
                     {
