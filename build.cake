@@ -100,18 +100,9 @@ Task("BuildNetStandard")
     PackDotnet("ImeSharp/ImeSharp.NetStandard.csproj");
 });
 
-Task("BuildUWP")
-    .IsDependentOn("Prep")
-    .WithCriteria(() => GetMSBuildWith("Microsoft.VisualStudio.Component.Windows10SDK.18362"))
-    .Does(() =>
-{
-    PackMSBuild("ImeSharp/ImeSharp.WindowsUniversal.csproj");
-});
-
 Task("Default")
     .IsDependentOn("BuildWindows")
     .IsDependentOn("BuildNetStandard")
-    .IsDependentOn("BuildUWP");
 
 Task("Publish")
     .IsDependentOn("Default")
@@ -122,10 +113,6 @@ Task("Publish")
     RunProcess(NuGetToolPath, args);
 
     args = $"push -Source \"https://api.nuget.org/v3/index.json\" -ApiKey {apiKey} Artifacts/NetStandard/Release/ImeSharp.NetStandard.{version}.nupkg";
-
-    RunProcess(NuGetToolPath, args);
-
-    args = $"push -Source \"https://api.nuget.org/v3/index.json\" -ApiKey {apiKey} Artifacts/WindowsUniversal/Release/ImeSharp.WindowsUniversal.{version}.nupkg";
 
     RunProcess(NuGetToolPath, args);
 });

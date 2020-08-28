@@ -229,13 +229,6 @@ namespace ImeSharp
                 return NativeMethods.E_INVALIDARG;
             }
 
-#if WINDOWS_UAP
-            if (!_compositionJustStarted)
-            {
-                _acpStart = _acpEnd = 0;
-            }
-#endif
-
             selection.acpStart = _acpStart;
             selection.acpEnd = _acpEnd;
             selection.style.fInterimChar = _interimChar;
@@ -275,14 +268,6 @@ namespace ImeSharp
             _acpStart = selections[0].acpStart;
             _acpEnd = selections[0].acpEnd;
             _interimChar = selections[0].style.fInterimChar;
-
-#if WINDOWS_UAP
-            if (!_compositionJustStarted)
-            {
-                _acpStart = 0;
-                _acpEnd = 0;
-            }
-#endif
 
             if (_interimChar)
             {
@@ -437,14 +422,6 @@ namespace ImeSharp
         public int SetText(NativeMethods.SetTextFlags dwFlags, int acpStart, int acpEnd, char[] pchText, int cch, out NativeMethods.TS_TEXTCHANGE change)
         {
             int hr;
-
-#if WINDOWS_UAP
-            if (!_compositionJustStarted)
-            {
-                change = new NativeMethods.TS_TEXTCHANGE();
-                return NativeMethods.S_FALSE;
-            }
-#endif
 
             /*
             dwFlags can be:
@@ -686,9 +663,6 @@ namespace ImeSharp
             ok = true;
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
-#if WINDOWS_UAP
-            _compositionJustStarted = true;
-#endif
 
             InputMethod.OnTextCompositionStarted(this);
         }
@@ -711,18 +685,9 @@ namespace ImeSharp
 
             rangeacp.GetExtent(out _commitStart, out _commitLength);
 
-#if WINDOWS_UAP
-            _commited = true;
-            for (int i = _commitStart; i < _commitLength; i++)
-                InputMethod.OnTextInput(this, _inputBuffer[i]);
-#endif
-
             // Ensure composition string reset
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
-#if WINDOWS_UAP
-            _compositionJustStarted = false;
-#endif
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
@@ -734,11 +699,6 @@ namespace ImeSharp
 
         public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
         {
-#if WINDOWS_UAP
-            if (!_compositionJustStarted)
-                return NativeMethods.S_FALSE;
-#endif
-
             NativeMethods.ITfProperty property;
             Guid composingGuid = NativeMethods.GUID_PROP_COMPOSING;
             context.GetProperty(ref composingGuid, out property);
@@ -746,7 +706,6 @@ namespace ImeSharp
             NativeMethods.ITfRangeACP rangeACP;
             TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionLength, out rangeACP);
 
-#if !WINDOWS_UAP
             NativeMethods.VARIANT val;
             property.GetValue(ecReadOnly, rangeACP as NativeMethods.ITfRange, out val);
             if (val.intVal == 0)
@@ -771,7 +730,6 @@ namespace ImeSharp
                 Marshal.ReleaseComObject(editRecord);
                 return NativeMethods.S_OK;
             }
-#endif
 
             if (_inputBuffer.Count == 0 && _compositionLength > 0) // Composition just ended
             {
@@ -1016,8 +974,5 @@ namespace ImeSharp
 
         private bool _supportUIElement = true;
 
-#if WINDOWS_UAP
-        private bool _compositionJustStarted;
-#endif
     }
 }

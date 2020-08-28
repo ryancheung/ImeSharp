@@ -42,9 +42,7 @@ namespace ImeSharp
         /// </returns>
         public static NativeMethods.ITfThreadMgrEx Load()
         {
-#if !WINDOWS_UAP
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
-#endif
 
             if (ServicesInstalled)
             {
@@ -71,9 +69,6 @@ namespace ImeSharp
         /// </summary>
         public static bool IsWindows7OrBelow()
         {
-#if WINDOWS_UAP
-            return false;
-#else
             if (Environment.OSVersion.Version.Major <= 5)
                 return true;
 
@@ -81,7 +76,6 @@ namespace ImeSharp
                 return true;
 
             return false;
-#endif
         }
 
         /// <summary>

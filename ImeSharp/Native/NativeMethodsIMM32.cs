@@ -3,7 +3,6 @@ using System.Runtime.InteropServices;
 
 namespace ImeSharp.Native
 {
-#if !WINDOWS_UAP
     public partial class NativeMethods
     {
         #region Constants
@@ -154,5 +153,4 @@ namespace ImeSharp.Native
         [DllImport("user32.dll", SetLastError = true)]
         public static extern bool SetCaretPos(int x, int y);
     }
-#endif
 }

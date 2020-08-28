@@ -6,7 +6,6 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
-#if !WINDOWS_UAP
     internal class Imm32Manager
     {
 
@@ -341,5 +340,4 @@ namespace ImeSharp
             InputMethod.OnTextCompositionEnded(this);
         }
     }
-#endif
 }

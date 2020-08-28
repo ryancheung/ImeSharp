@@ -44,9 +44,7 @@ namespace ImeSharp
         /// </summary>
         private TextServicesContext()
         {
-#if !WINDOWS_UAP
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "SetDispatcherThreaad on MTA thread");
-#endif
         }
 
 #endregion Constructors
@@ -98,14 +96,10 @@ namespace ImeSharp
                 // shuts down in any case.  In theory we could also work around this
                 // problem by creating our own XP proxy/stub implementation, which would
                 // be added to WPF setup....
-#if WINDOWS_UAP
-                _threadManager.Deactivate();
-#else
                 if (!appDomainShutdown || System.Environment.OSVersion.Version.Major >= 6)
                 {
                     _threadManager.Deactivate();
                 }
-#endif
                 _istimactivated = false;
             }
 

@@ -129,16 +129,5 @@ namespace ImeSharp.Native
         [DllImport("ole32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, PreserveSig = false)]
         public static extern int CoCreateInstance(Guid rclsid, IntPtr pUnkOuter, int dwClsContext, Guid riid, out IntPtr ppv);
 
-#if WINDOWS_UAP
-
-        [ComImport, Guid("45D64A29-A63E-4CB6-B498-5781D298CB4F")]
-        [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
-        public interface ICoreWindowInterop
-        {
-            IntPtr WindowHandle { get; }
-            bool MessageHandled { set; }
-        }
-#endif
-
     }
 }
