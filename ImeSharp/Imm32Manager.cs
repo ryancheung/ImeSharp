@@ -6,23 +6,14 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
+#if !WINDOWS_UAP
     internal class Imm32Manager
     {
 
         // If the system is IMM enabled, this is true.
         private static bool _immEnabled = SafeSystemMetrics.IsImmEnabled;
 
-        public static bool ImmEnabled
-        {
-            get
-            {
-#if WINDOWS_UAP
-                return false;
-#else
-                return _immEnabled;
-#endif
-            }
-        }
+        public static bool ImmEnabled { get { return _immEnabled; } }
 
         public const int LANG_CHINESE = 0x04;
         public const int LANG_KOREAN = 0x12;
@@ -350,4 +341,5 @@ namespace ImeSharp
             InputMethod.OnTextCompositionEnded(this);
         }
     }
+#endif
 }

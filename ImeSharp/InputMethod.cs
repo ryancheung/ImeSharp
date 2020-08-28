@@ -31,12 +31,14 @@ namespace ImeSharp
             set { _defaultTextStore = value; }
         }
 
+#if !WINDOWS_UAP
         private static Imm32Manager _defaultImm32Manager;
         internal static Imm32Manager DefaultImm32Manager
         {
             get { return _defaultImm32Manager; }
             set { _defaultImm32Manager = value; }
         }
+#endif
 
         private static bool _enabled;
         public static bool Enabled
@@ -67,8 +69,10 @@ namespace ImeSharp
             TextInputRect.right = x + width;
             TextInputRect.bottom = y + height;
 
+#if !WINDOWS_UAP
             if (Imm32Manager.ImmEnabled)
                 Imm32Manager.Current.SetCandidateWindow(TextInputRect);
+#endif
         }
 
         private static bool _showOSImeWindow = false;
@@ -210,6 +214,7 @@ namespace ImeSharp
                     TextServicesContext.Current.SetFocusOnEmptyDim();
             }
 
+#if !WINDOWS_UAP
             // Under IMM32 enabled system, we associate default hIMC or null hIMC.
             if (Imm32Manager.ImmEnabled)
             {
@@ -218,6 +223,7 @@ namespace ImeSharp
                 else
                     Imm32Manager.Current.Disable();
             }
+#endif
         }
 
 #if !WINDOWS_UAP

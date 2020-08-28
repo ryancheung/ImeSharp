@@ -5,6 +5,7 @@ using ImeSharp.Native;
 
 namespace ImeSharp
 {
+#if !WINDOWS_UAP
     internal abstract class ImmCompositionResultHandler
     {
         protected IntPtr _imeContext;
@@ -116,4 +117,5 @@ namespace ImeSharp
             Value = NativeMethods.ImmGetCompositionString(_imeContext, Flag, IntPtr.Zero, 0);
         }
     }
+#endif
 }
