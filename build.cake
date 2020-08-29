@@ -102,7 +102,7 @@ Task("BuildNetStandard")
 
 Task("Default")
     .IsDependentOn("BuildWindows")
-    .IsDependentOn("BuildNetStandard")
+    .IsDependentOn("BuildNetStandard");
 
 Task("Publish")
     .IsDependentOn("Default")
