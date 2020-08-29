@@ -47,7 +47,7 @@ namespace ImeSharp
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "SetDispatcherThreaad on MTA thread");
         }
 
-#endregion Constructors
+        #endregion Constructors
 
         //------------------------------------------------------
         //
@@ -55,7 +55,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-#region public Methods
+        #region public Methods
 
         /// <summary>
         /// Releases all unmanaged resources allocated by the
@@ -179,7 +179,7 @@ namespace ImeSharp
         }
 
 
-#endregion public Methods
+        #endregion public Methods
 
         //------------------------------------------------------
         //
@@ -259,7 +259,10 @@ namespace ImeSharp
             NativeMethods.ITfThreadMgrEx threadmgr = ThreadManager;
 
             if (threadmgr != null)
-                threadmgr.SetFocus(dim);
+            {
+                NativeMethods.ITfDocumentMgr prevDocMgr;
+                threadmgr.AssociateFocus(InputMethod.WindowHandle, dim, out prevDocMgr);
+            }
         }
 
         private void AdviseSinks()
@@ -329,7 +332,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-#region Private Fields
+        #region Private Fields
 
         private TextStore _defaultTextStore;
 
@@ -349,6 +352,6 @@ namespace ImeSharp
         // The empty dim for this thread. Created on demand.
         private NativeMethods.ITfDocumentMgr _dimEmpty;
 
-#endregion Private Fields
+        #endregion Private Fields
     }
 }

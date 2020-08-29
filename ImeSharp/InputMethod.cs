@@ -112,22 +112,6 @@ namespace ImeSharp
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
         }
 
-        private static void OnWindowFocus()
-        {
-            if (TextServicesLoader.ServicesInstalled)
-            {
-                if (Enabled)
-                    TextServicesContext.Current.SetFocusOnDefaultTextStore();
-                else
-                    TextServicesContext.Current.SetFocusOnEmptyDim();
-            }
-        }
-
-        private static void OnWindowClose()
-        {
-            TextServicesContext.Current.Uninitialize(true);
-        }
-
         internal static void OnTextInput(object sender, char character)
         {
             if (TextInput != null)
@@ -207,11 +191,8 @@ namespace ImeSharp
 
             switch (msg)
             {
-                case NativeMethods.WM_SETFOCUS:
-                    OnWindowFocus();
-                    break;
                 case NativeMethods.WM_DESTROY:
-                    OnWindowClose();
+                    TextServicesContext.Current.Uninitialize(true);
                     break;
                 case NativeMethods.WM_CHAR:
                     {
