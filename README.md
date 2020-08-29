@@ -7,11 +7,13 @@ TSF Implementation is based on WPF core.
 
 ## Packages
 
-### Windows Form based
+ImeSharp provide two nuget packages, one for Windows Forms based app/game, another for none Windows Forms cases.
+
+For Windows Forms based app/game:
 
 `dotnet add package ImeSharp`
 
-### None Windows Form
+For none Windows Forms cases:
 
 `dotnet add package ImeSharp.NetStandard`
 
