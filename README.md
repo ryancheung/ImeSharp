@@ -5,6 +5,16 @@ A C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
 
 TSF Implementation is based on WPF core.
 
+## Packages
+
+### Windows Form based
+
+`dotnet add package ImeSharp`
+
+### None Windows Form
+
+`dotnet add package ImeSharp.NetStandard`
+
 ## Usage
 
 ### Initialization
