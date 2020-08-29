@@ -1119,7 +1119,7 @@ namespace ImeSharp.Native
         [AttributeUsage(AttributeTargets.Parameter, AllowMultiple = false)]
         internal class NullAllowedAttribute : Attribute { }
 
-#endregion Structs
+        #endregion Structs
 
         //------------------------------------------------------
         //
@@ -1127,7 +1127,7 @@ namespace ImeSharp.Native
         //
         //------------------------------------------------------
 
-#region Interfaces
+        #region Interfaces
 
         [ComImport]
         [InterfaceType(ComInterfaceType.InterfaceIsIUnknown)]
@@ -3469,6 +3469,6 @@ namespace ImeSharp.Native
             int OnMouseEvent(int edge, int quadrant, int btnStatus, [MarshalAs(UnmanagedType.Bool)] out bool eaten);
         }
 
-#endregion Interfaces
+        #endregion Interfaces
     }
 }

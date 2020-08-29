@@ -95,19 +95,19 @@ namespace ImeSharp.Native
         [StructLayout(LayoutKind.Sequential)]
         public struct CANDIDATEFORM
         {
-            public int    dwIndex;
-            public int    dwStyle;
-            public POINT  ptCurrentPos;
-            public RECT   rcArea;
+            public int dwIndex;
+            public int dwStyle;
+            public POINT ptCurrentPos;
+            public RECT rcArea;
         }
 
         // COMPOSITIONFORM structures
         [StructLayout(LayoutKind.Sequential)]
         public struct COMPOSITIONFORM
         {
-            public int    dwStyle;
-            public POINT  ptCurrentPos;
-            public RECT   rcArea;
+            public int dwStyle;
+            public POINT ptCurrentPos;
+            public RECT rcArea;
         }
 
         [DllImport("imm32.dll", SetLastError = true)]

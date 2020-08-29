@@ -110,7 +110,7 @@ namespace ImeSharp
             }
         }
 
-#endregion public Properties
+        #endregion public Properties
 
 #if WINDOWS
         //------------------------------------------------------
@@ -125,7 +125,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-#region Private Methods
+        #region Private Methods
 
         //
         // This method tries to stop Avalon from loading Cicero when there are no TIPs to run.
@@ -174,7 +174,7 @@ namespace ImeSharp
             }
 
             // Loop through all the TIP entries for machine and current user.
-            tipsWantToRun = IterateSubKeys(Registry.LocalMachine, "SOFTWARE\\Microsoft\\CTF\\TIP",new IterateHandler(SingleTIPWantsToRun), true) == EnableState.Enabled;
+            tipsWantToRun = IterateSubKeys(Registry.LocalMachine, "SOFTWARE\\Microsoft\\CTF\\TIP", new IterateHandler(SingleTIPWantsToRun), true) == EnableState.Enabled;
 
             return tipsWantToRun;
         }
@@ -288,7 +288,7 @@ namespace ImeSharp
             return state;
         }
 
-#endregion Private Methods
+        #endregion Private Methods
 
         //------------------------------------------------------
         //
@@ -302,7 +302,7 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-#region Private Fields
+        #region Private Fields
 
         // String consts used to validate registry entires.
         private const int CLSIDLength = 38;  // {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
@@ -310,7 +310,7 @@ namespace ImeSharp
 
         // Status of a TIP assembly.
         private enum EnableState
-        { 
+        {
             Error,      // Invalid entry.
             None,       // No explicit Enable entry on the assembly.
             Enabled,    // Assembly is enabled.
@@ -322,7 +322,7 @@ namespace ImeSharp
 
         // Install state.
         private enum InstallState
-        { 
+        {
             Unknown,        // Haven't checked to see if any TIPs are installed yet.
             Installed,      // Checked and installed.
             NotInstalled    // Checked and not installed.
@@ -334,7 +334,7 @@ namespace ImeSharp
         private static InstallState s_servicesInstalled = InstallState.Unknown;
         private static object s_servicesInstalledLock = new object();
 
-#endregion Private Fields
+        #endregion Private Fields
 #endif
     }
 }
