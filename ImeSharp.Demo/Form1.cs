@@ -46,7 +46,7 @@ namespace ImeSharp.Demo
 
             string candidateText = string.Empty;
 
-            for (int i = 0; candidateList != null && i < candidateList.Length; i++)
+            for (int i = 0; candidateList != null && i < candidatePageSize; i++)
                 candidateText += string.Format("  {2}{0}.{1}\r\n", i + 1, candidateList[i], i == candidateSelection ? "*" : "");
 
             textBoxCandidates.Text = candidateText;
