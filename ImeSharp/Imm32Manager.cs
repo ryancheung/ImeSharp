@@ -127,10 +127,10 @@ namespace ImeSharp
 
         // Set candidate window position.
         // Borrowed from https://github.com/chromium/chromium/blob/master/ui/base/ime/win/imm32_manager.cc
-        public void SetCandidateWindow(NativeMethods.RECT caretRect)
+        public void SetCandidateWindow(TsfSharp.Rect caretRect)
         {
-            int x = caretRect.left;
-            int y = caretRect.top;
+            int x = caretRect.Left;
+            int y = caretRect.Top;
 
             if (PRIMARYLANGID(_inputLanguageId) == LANG_CHINESE)
             {
@@ -145,21 +145,21 @@ namespace ImeSharp
                 // set the positions of the temporary system caret.
                 var candidateForm = new NativeMethods.CANDIDATEFORM();
                 candidateForm.dwStyle = NativeMethods.CFS_CANDIDATEPOS;
-                candidateForm.ptCurrentPos.x = x;
-                candidateForm.ptCurrentPos.y = y;
+                candidateForm.ptCurrentPos.X = x;
+                candidateForm.ptCurrentPos.Y = y;
                 NativeMethods.ImmSetCandidateWindow(_defaultImc, ref candidateForm);
             }
 
             if (PRIMARYLANGID(_inputLanguageId) == LANG_JAPANESE)
-                NativeMethods.SetCaretPos(x, caretRect.bottom);
+                NativeMethods.SetCaretPos(x, caretRect.Bottom);
             else
                 NativeMethods.SetCaretPos(x, y);
 
             // Set composition window position also to ensure move the candidate window position.
             var compositionForm = new NativeMethods.COMPOSITIONFORM();
             compositionForm.dwStyle = NativeMethods.CFS_POINT;
-            compositionForm.ptCurrentPos.x = x;
-            compositionForm.ptCurrentPos.y = y;
+            compositionForm.ptCurrentPos.X = x;
+            compositionForm.ptCurrentPos.Y = y;
             NativeMethods.ImmSetCompositionWindow(_defaultImc, ref compositionForm);
 
             if (PRIMARYLANGID(_inputLanguageId) == LANG_KOREAN)
@@ -181,12 +181,12 @@ namespace ImeSharp
             // Therefore, we also set this parameter here.
             var excludeRectangle = new NativeMethods.CANDIDATEFORM();
             compositionForm.dwStyle = NativeMethods.CFS_EXCLUDE;
-            compositionForm.ptCurrentPos.x = x;
-            compositionForm.ptCurrentPos.y = y;
-            compositionForm.rcArea.left = x;
-            compositionForm.rcArea.top = y;
-            compositionForm.rcArea.right = caretRect.right;
-            compositionForm.rcArea.bottom = caretRect.bottom;
+            compositionForm.ptCurrentPos.X = x;
+            compositionForm.ptCurrentPos.Y = y;
+            compositionForm.rcArea.Left = x;
+            compositionForm.rcArea.Top = y;
+            compositionForm.rcArea.Right = caretRect.Right;
+            compositionForm.rcArea.Bottom = caretRect.Bottom;
             NativeMethods.ImmSetCandidateWindow(_defaultImc, ref excludeRectangle);
         }
 

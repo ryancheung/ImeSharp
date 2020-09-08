@@ -2,11 +2,13 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ImeSharp\ImeSharp.csproj" />
+    <PackageReference Include="Microsoft.DotNet.ILCompiler" Version="1.0.0-alpha-29228-02" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    <TargetFrameworks>net472;netcoreapp3.1</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
     <DefineConstants>WINDOWS;</DefineConstants>
   </PropertyGroup>

@@ -3,14 +3,21 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ImeSharp.Native;
+using SharpGen.Runtime;
+using SharpGen.Runtime.Win32;
+using TsfSharp;
 
 namespace ImeSharp
 {
-    internal class TextStore : NativeMethods.ITextStoreACP,
-                             NativeMethods.ITfContextOwnerCompositionSink,
-                             NativeMethods.ITfTextEditSink,
-                             NativeMethods.ITfUIElementSink
+    internal class TextStore : CallbackBase,
+                             ITextStoreACP,
+                             ITfContextOwnerCompositionSink,
+                             ITfTextEditSink,
+                             ITfUIElementSink
     {
+        public static readonly Guid IID_ITextStoreACPSink = new Guid(0x22d44c94, 0xa419, 0x4542, 0xa2, 0x72, 0xae, 0x26, 0x09, 0x3e, 0xce, 0xcf);
+        public static readonly Guid GUID_PROP_COMPOSING = new Guid("e12ac060-af15-11d2-afc5-00105a2799b5");
+
         //------------------------------------------------------
         //
         //  Constructors
@@ -27,9 +34,9 @@ namespace ImeSharp
 
             _viewCookie = Environment.TickCount;
 
-            _editCookie = NativeMethods.TF_INVALID_COOKIE;
-            _uiElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
-            _textEditSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+            _editCookie = Tsf.TF_INVALID_COOKIE;
+            _uiElementSinkCookie = Tsf.TF_INVALID_COOKIE;
+            _textEditSinkCookie = Tsf.TF_INVALID_COOKIE;
         }
 
         #endregion Constructors
@@ -42,38 +49,38 @@ namespace ImeSharp
 
         #region ITextStoreACP
 
-        public int AdviseSink(ref Guid riid, object obj, NativeMethods.AdviseFlags flags)
+        public void AdviseSink(Guid riid, IUnknown obj, int flags)
         {
-            NativeMethods.ITextStoreACPSink sink;
+            ITextStoreACPSink sink;
 
-            if (riid != NativeMethods.IID_ITextStoreACPSink)
+            if (riid != IID_ITextStoreACPSink)
                 throw new COMException("TextStore_CONNECT_E_CANNOTCONNECT");
 
-            sink = obj as NativeMethods.ITextStoreACPSink;
+            sink = (obj as ComObject).QueryInterface<ITextStoreACPSink>();
+
             if (sink == null)
                 throw new COMException("TextStore_E_NOINTERFACE");
 
             // It's legal to replace existing sink.
             if (_sink != null)
-                Marshal.ReleaseComObject(_sink);
+                _sink.Dispose();
+
+            (obj as ComObject).Dispose();
 
             _sink = sink;
-
-            return NativeMethods.S_OK;
         }
 
-        public int UnadviseSink(object obj)
+        public void UnadviseSink(IUnknown obj)
         {
-            if (obj != _sink)
+            var sink = (obj as ComObject).QueryInterface<ITextStoreACPSink>();
+            if (sink.NativePointer != _sink.NativePointer)
                 throw new COMException("TextStore_CONNECT_E_NOCONNECTION");
 
-            Marshal.ReleaseComObject(_sink);
+            _sink.Release();
             _sink = null;
-
-            return NativeMethods.S_OK;
         }
 
-        private bool _LockDocument(NativeMethods.LockFlags dwLockFlags)
+        private bool _LockDocument(TsfSharp.TsLfFlags dwLockFlags)
         {
             if (_locked)
                 return false;
@@ -84,24 +91,22 @@ namespace ImeSharp
             return true;
         }
 
-
         private void ResetIfRequired()
         {
             if (!_commited)
                 return;
 
             _commited = false;
-            int commitEnd = _commitStart + _commitLength;
-            _inputBuffer.RemoveRange(_commitStart, _commitLength);
 
-            NativeMethods.TS_TEXTCHANGE textChange;
-            textChange.acpStart = _commitStart;
-            textChange.acpOldEnd = commitEnd;
-            textChange.acpNewEnd = _commitStart;
+            TsTextchange textChange;
+            textChange.AcpStart = 0;
+            textChange.AcpOldEnd = _inputBuffer.Count;
+            textChange.AcpNewEnd = 0;
+            _inputBuffer.Clear();
 
-            _sink.OnTextChange(0, ref textChange);
+            _sink.OnTextChange(0, textChange);
 
-            _acpStart = _acpEnd = _inputBuffer.Count;
+            _acpStart = _acpEnd = 0;
             _sink.OnSelectionChange();
             _commitStart = _commitLength = 0;
 
@@ -110,7 +115,7 @@ namespace ImeSharp
 
         private void _UnlockDocument()
         {
-            int hr;
+            Result hr;
             _locked = false;
             _lockFlags = 0;
 
@@ -126,16 +131,16 @@ namespace ImeSharp
             if (_layoutChanged)
             {
                 _layoutChanged = false;
-                _sink.OnLayoutChange(NativeMethods.TsLayoutCode.TS_LC_CHANGE, _viewCookie);
+                _sink.OnLayoutChange(TsLayoutCode.TsLcChange, _viewCookie);
             }
         }
 
-        private bool _IsLocked(NativeMethods.LockFlags dwLockType)
+        private bool _IsLocked(TsfSharp.TsLfFlags dwLockType)
         {
             return _locked && (_lockFlags & dwLockType) != 0;
         }
 
-        public int RequestLock(NativeMethods.LockFlags dwLockFlags, out int hrSession)
+        public void RequestLock(TsfSharp.TsLfFlags dwLockFlags, out Result hrSession)
         {
             if (_sink == null)
                 throw new COMException("TextStore_NoSink");
@@ -143,19 +148,19 @@ namespace ImeSharp
             if (dwLockFlags == 0)
                 throw new COMException("TextStore_BadLockFlags");
 
-            hrSession = NativeMethods.E_FAIL;
+            hrSession = Result.Fail;
 
             if (_locked)
             {
                 //the document is locked
 
-                if ((dwLockFlags & NativeMethods.LockFlags.TS_LF_SYNC) == NativeMethods.LockFlags.TS_LF_SYNC)
+                if ((dwLockFlags & TsfSharp.TsLfFlags.Sync) == TsfSharp.TsLfFlags.Sync)
                 {
                     /*
                     The caller wants an immediate lock, but this cannot be granted because
                     the document is already locked.
                     */
-                    hrSession = NativeMethods.TS_E_SYNCHRONOUS;
+                    hrSession = (int)TsErrors.TsESynchronous;
                 }
                 else
                 {
@@ -163,10 +168,10 @@ namespace ImeSharp
 
                     //Queue the lock request
                     _lockRequestQueue.Enqueue(dwLockFlags);
-                    hrSession = NativeMethods.TS_S_ASYNC;
+                    hrSession = (int)TsErrors.TsSAsync;
                 }
 
-                return NativeMethods.S_OK;
+                return;
             }
 
             //lock the document
@@ -177,47 +182,45 @@ namespace ImeSharp
 
             //unlock the document
             _UnlockDocument();
-
-            return NativeMethods.S_OK;
         }
 
-        public int GetStatus(out NativeMethods.TS_STATUS status)
+        public void GetStatus(out TsStatus status)
         {
-            status.dynamicFlags = 0;
-
-            // This textstore supports Regions.
-            status.staticFlags = 0;
-            return NativeMethods.S_OK;
+            status.DwDynamicFlags = 0;
+            status.DwStaticFlags = 0;
         }
 
-        public int QueryInsert(int acpTestStart, int acpTestEnd, int cch, out int acpResultStart, out int acpResultEnd)
+        public void QueryInsert(int acpTestStart, int acpTestEnd, uint cch, out int acpResultStart, out int acpResultEnd)
         {
             acpResultStart = acpResultEnd = 0;
 
+            // Fix possible crash
+            if (_inputBuffer.Count == 0)
+                return;
+
             //Queryins
             if (acpTestStart > _inputBuffer.Count || acpTestEnd > _inputBuffer.Count)
-                return NativeMethods.E_INVALIDARG;
+                throw new COMException("", Result.InvalidArg.Code);
 
             //Microsoft Pinyin seems does not init the result value, so we set the test value here, in case crash
             acpResultStart = acpTestStart;
             acpResultEnd = acpTestEnd;
-
-            return NativeMethods.S_OK;
         }
 
-        public int GetSelection(int index, int count, ref NativeMethods.TS_SELECTION_ACP selection, out int cFetched)
+        public void GetSelection(uint index, ref TsSelectionAcp selection, out uint cFetched)
         {
             cFetched = 0;
 
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READ))
+            if (!_IsLocked(TsLfFlags.Read))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                //return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
             //check the requested index
-            if (NativeMethods.TS_DEFAULT_SELECTION == index)
+            if (-1 == (int)index)
             {
                 index = 0;
             }
@@ -226,12 +229,12 @@ namespace ImeSharp
                 /*
                 The index is too high. This app only supports one selection.
                 */
-                return NativeMethods.E_INVALIDARG;
+                throw new COMException("", Result.InvalidArg.Code);
             }
 
-            selection.acpStart = _acpStart;
-            selection.acpEnd = _acpEnd;
-            selection.style.fInterimChar = _interimChar;
+            selection.AcpStart = _acpStart;
+            selection.AcpEnd = _acpEnd;
+            selection.Style.FInterimChar = _interimChar;
 
             if (_interimChar)
             {
@@ -241,33 +244,33 @@ namespace ImeSharp
                 used to enter characters and a character has been set, but the IME
                 is still active.
                 */
-                selection.style.ase = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
+                selection.Style.Ase = TsActiveSelEnd.TsAeNone;
             }
             else
             {
-                selection.style.ase = _activeSelectionEnd;
+                selection.Style.Ase = _activeSelectionEnd;
             }
 
             cFetched = 1;
-
-            return NativeMethods.S_OK;
         }
 
-        public int SetSelection(int count, NativeMethods.TS_SELECTION_ACP[] selections)
+        public void SetSelection(uint count, ref TsSelectionAcp selections)
         {
             //this implementaiton only supports a single selection
-            if (count != 1) return NativeMethods.E_INVALIDARG;
+            if (count != 1)
+                throw new COMException("", Result.InvalidArg.Code);
 
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READWRITE))
+            if (!_IsLocked(TsLfFlags.Readwrite))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                //return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
-            _acpStart = selections[0].acpStart;
-            _acpEnd = selections[0].acpEnd;
-            _interimChar = selections[0].style.fInterimChar;
+            _acpStart = selections.AcpStart;
+            _acpEnd = selections.AcpEnd;
+            _interimChar = selections.Style.FInterimChar;
 
             if (_interimChar)
             {
@@ -277,44 +280,42 @@ namespace ImeSharp
                 used to enter characters and a character has been set, but the IME
                 is still active.
                 */
-                _activeSelectionEnd = NativeMethods.TsActiveSelEnd.TS_AE_NONE;
+                _activeSelectionEnd = TsActiveSelEnd.TsAeNone;
             }
             else
             {
-                _activeSelectionEnd = selections[0].style.ase;
+                _activeSelectionEnd = selections.Style.Ase;
             }
 
             //if the selection end is at the start of the selection, reverse the parameters
             int lStart = _acpStart;
             int lEnd = _acpEnd;
 
-            if (NativeMethods.TsActiveSelEnd.TS_AE_START == _activeSelectionEnd)
+            if (TsActiveSelEnd.TsAeStart == _activeSelectionEnd)
             {
                 lStart = _acpEnd;
                 lEnd = _acpStart;
             }
-
-            return NativeMethods.S_OK;
         }
 
-        public int GetText(int acpStart, int acpEnd, char[] pchPlain, int cchPlainReq, out int cchPlainRet,
-            NativeMethods.TS_RUNINFO[] rgRunInfo, int cRunInfoReq, out int cRunInfoRet, out int acpNext)
+
+        public void GetText(int acpStart, int acpEnd, System.IntPtr pchPlain, uint cchPlainReq, out uint cchPlainRet,
+            ref TsfSharp.TsRuninfo rgRunInfo, uint cRunInfoReq, out uint cRunInfoRet, out int acpNext)
         {
             cchPlainRet = 0;
             cRunInfoRet = 0;
             acpNext = 0;
 
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READ))
+            if (!_IsLocked(TsLfFlags.Read))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
             bool fDoText = cchPlainReq > 0;
             bool fDoRunInfo = cRunInfoReq > 0;
             int cchTotal;
-            int hr = NativeMethods.E_FAIL;
 
             cchPlainRet = 0;
             acpNext = acpStart;
@@ -324,14 +325,14 @@ namespace ImeSharp
             //validate the start pos
             if ((acpStart < 0) || (acpStart > cchTotal))
             {
-                hr = NativeMethods.TS_E_INVALIDPOS;
+                throw new COMException("", Result.InvalidArg.Code);
             }
             else
             {
                 //are we at the end of the document
                 if (acpStart == cchTotal)
                 {
-                    hr = NativeMethods.S_OK;
+                    return;
                 }
                 else
                 {
@@ -354,18 +355,29 @@ namespace ImeSharp
                     {
                         if (cchReq > cchPlainReq)
                         {
-                            cchReq = cchPlainReq;
+                            cchReq = (int)cchPlainReq;
                         }
 
                         //extract the specified text range
                         if (pchPlain != null && cchPlainReq > 0)
                         {
-                            _inputBuffer.CopyTo(acpStart, pchPlain, 0, cchReq);
+                            //_inputBuffer.CopyTo(acpStart, pchPlain, 0, cchReq);
+
+                            unsafe
+                            {
+                                var ptr = (char*)pchPlain;
+
+                                for (int i = acpStart; i < cchReq; i++)
+                                {
+                                    *ptr = _inputBuffer[i];
+                                    ptr++;
+                                }
+                            }
                         }
                     }
 
                     //it is possible that only the length of the text is being requested
-                    cchPlainRet = cchReq;
+                    cchPlainRet = (uint)cchReq;
 
                     if (fDoRunInfo)
                     {
@@ -406,84 +418,69 @@ namespace ImeSharp
                         If there were multiple runs, it would be an error to have consecuative runs
                         of the same type.
                         */
-                        rgRunInfo[0].type = NativeMethods.TsRunType.TS_RT_PLAIN;
-                        rgRunInfo[0].count = cchReq;
+                        rgRunInfo.Type = TsRunType.TsRtPlain;
+                        rgRunInfo.UCount = (uint)cchReq;
                     }
 
                     acpNext = acpStart + cchReq;
-
-                    hr = NativeMethods.S_OK;
                 }
             }
-
-            return hr;
         }
 
-        public int SetText(NativeMethods.SetTextFlags dwFlags, int acpStart, int acpEnd, char[] pchText, int cch, out NativeMethods.TS_TEXTCHANGE change)
+        public void SetText(int dwFlags, int acpStart, int acpEnd, string pchText, uint cch, out TsfSharp.TsTextchange change)
         {
-            int hr;
-
             /*
             dwFlags can be:
             TS_ST_CORRECTION
             */
 
             //set the selection to the specified range
-            NativeMethods.TS_SELECTION_ACP[] tsa = new NativeMethods.TS_SELECTION_ACP[1];
-            tsa[0].acpStart = acpStart;
-            tsa[0].acpEnd = acpEnd;
-            tsa[0].style.ase = NativeMethods.TsActiveSelEnd.TS_AE_START;
-            tsa[0].style.fInterimChar = false;
+            TsSelectionAcp tsa = new TsSelectionAcp();
+            tsa.AcpStart = acpStart;
+            tsa.AcpEnd = acpEnd;
+            tsa.Style.Ase = TsActiveSelEnd.TsAeStart;
+            tsa.Style.FInterimChar = false;
 
-            hr = SetSelection(1, tsa);
+            SetSelection(1, ref tsa);
 
-            if (hr == NativeMethods.S_OK)
-            {
-                int start, end;
-                hr = InsertTextAtSelection(NativeMethods.InsertAtSelectionFlags.TS_IAS_NOQUERY, pchText, cch, out start, out end, out change);
-            }
-            else
-            {
-                change = new NativeMethods.TS_TEXTCHANGE();
-            }
-
-            return hr;
+            int start, end;
+            InsertTextAtSelection(TsIasFlags.Noquery, pchText, cch, out start, out end, out change);
         }
 
-        public int GetFormattedText(int startIndex, int endIndex, out object obj)
+        public void GetFormattedText(int startIndex, int endIndex, out IDataObject obj)
         {
             obj = null;
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int GetEmbedded(int index, ref Guid guidService, ref Guid riid, out object obj)
+        public void GetEmbedded(int index, Guid guidService, Guid riid, out IUnknown obj)
         {
             obj = null;
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int QueryInsertEmbedded(ref Guid guidService, ref int formatEtc, out bool insertable)
+        public void QueryInsertEmbedded(Guid guidService, ref Formatetc formatEtc, out bool insertable)
         {
             insertable = false;
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int InsertEmbedded(NativeMethods.InsertEmbeddedFlags flags, int startIndex, int endIndex, object obj, out NativeMethods.TS_TEXTCHANGE change)
+        public void InsertEmbedded(int flags, int startIndex, int endIndex, TsfSharp.IDataObject dataObjectRef, out TsfSharp.TsTextchange change)
         {
-            change = new NativeMethods.TS_TEXTCHANGE();
-            return NativeMethods.E_NOTIMPL;
+            change = new TsTextchange();
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int InsertTextAtSelection(NativeMethods.InsertAtSelectionFlags dwFlags, char[] pchText, int cch, out int pacpStart, out int pacpEnd, out NativeMethods.TS_TEXTCHANGE pChange)
+        public void InsertTextAtSelection(TsfSharp.TsIasFlags dwFlags, string pchText, uint cch, out int pacpStart, out int pacpEnd, out TsfSharp.TsTextchange pChange)
         {
             pacpStart = pacpEnd = 0;
-            pChange = new NativeMethods.TS_TEXTCHANGE();
+            pChange = new TsTextchange();
 
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READWRITE))
+            if (!_IsLocked(TsLfFlags.Readwrite))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
             int acpStart;
@@ -496,13 +493,13 @@ namespace ImeSharp
             acpStart = _acpStart;
 
             //set the end point after the insertion
-            acpNewEnd = _acpStart + cch;
+            acpNewEnd = _acpStart + (int)cch;
 
-            if ((dwFlags & NativeMethods.InsertAtSelectionFlags.TS_IAS_QUERYONLY) == NativeMethods.InsertAtSelectionFlags.TS_IAS_QUERYONLY)
+            if ((dwFlags & TsIasFlags.Queryonly) == TsIasFlags.Queryonly)
             {
                 pacpStart = acpStart;
                 pacpEnd = acpOldEnd;
-                return NativeMethods.S_OK;
+                return;
             }
 
             //insert the text
@@ -513,101 +510,92 @@ namespace ImeSharp
             _acpStart = acpStart;
             _acpEnd = acpNewEnd;
 
-            if ((dwFlags & NativeMethods.InsertAtSelectionFlags.TS_IAS_NOQUERY) != NativeMethods.InsertAtSelectionFlags.TS_IAS_NOQUERY)
+            if ((dwFlags & TsIasFlags.Noquery) != TsIasFlags.Noquery)
             {
                 pacpStart = acpStart;
                 pacpEnd = acpNewEnd;
             }
 
             //set the TS_TEXTCHANGE members
-            pChange.acpStart = acpStart;
-            pChange.acpOldEnd = acpOldEnd;
-            pChange.acpNewEnd = acpNewEnd;
+            pChange.AcpStart = acpStart;
+            pChange.AcpOldEnd = acpOldEnd;
+            pChange.AcpNewEnd = acpNewEnd;
 
             //defer the layout change notification until the document is unlocked
             _layoutChanged = true;
-
-            return NativeMethods.S_OK;
         }
 
-        public int InsertEmbeddedAtSelection(NativeMethods.InsertAtSelectionFlags flags, object obj, out int startIndex, out int endIndex, out NativeMethods.TS_TEXTCHANGE change)
+        public void InsertEmbeddedAtSelection(int flags, IDataObject obj, out int startIndex, out int endIndex, out TsTextchange change)
         {
             startIndex = endIndex = 0;
-            change = new NativeMethods.TS_TEXTCHANGE();
-            return NativeMethods.E_NOTIMPL;
+            change = new TsTextchange();
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int RequestSupportedAttrs(NativeMethods.AttributeFlags flags, int count, Guid[] filterAttributes)
+        public void RequestSupportedAttrs(int flags, Guid[] filterAttributes)
         {
-            return NativeMethods.E_NOTIMPL;
         }
 
-        public int RequestAttrsAtPosition(int index, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags)
+        public void RequestAttrsAtPosition(int index, Guid[] filterAttributes, int flags)
         {
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
 
-        public int RequestAttrsTransitioningAtPosition(int position, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags)
+        public void RequestAttrsTransitioningAtPosition(int position, Guid[] filterAttributes, int flags)
         {
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int FindNextAttrTransition(int startIndex, int haltIndex, int count, Guid[] filterAttributes, NativeMethods.AttributeFlags flags, out int acpNext, out bool found, out int foundOffset)
+        public void FindNextAttrTransition(int startIndex, int haltIndex, Guid[] filterAttributes, int flags, out int acpNext, out bool found, out int foundOffset)
         {
             acpNext = 0;
             found = false;
             foundOffset = 0;
-
-            return NativeMethods.S_OK;
         }
 
-        public int RetrieveRequestedAttrs(int count, NativeMethods.TS_ATTRVAL[] attributeVals, out int fetched)
+        public void RetrieveRequestedAttrs(TsAttrval[] attributeVals, out uint fetched)
         {
             fetched = 0;
-            return NativeMethods.E_NOTIMPL;
         }
 
-        public int GetEndACP(out int acp)
+        public void GetEndACP(out int acp)
         {
             acp = 0;
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READ))
+            if (!_IsLocked(TsLfFlags.Read))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
             acp = _inputBuffer.Count;
-
-            return NativeMethods.S_OK;
         }
 
-        public int GetActiveView(out int viewCookie)
+        public void GetActiveView(out int viewCookie)
         {
             viewCookie = _viewCookie;
-            return NativeMethods.S_OK;
         }
 
-        public int GetACPFromPoint(int viewCookie, ref NativeMethods.POINT tsfPoint, NativeMethods.GetPositionFromPointFlags flags, out int positionCP)
+        public void GetACPFromPoint(int viewCookie, TsfSharp.Point tsfPoint, int dwFlags, out int positionCP)
         {
             positionCP = 0;
-            return NativeMethods.E_NOTIMPL;
+            throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public int GetTextExt(int viewCookie, int acpStart, int acpEnd, out NativeMethods.RECT rect, out bool clipped)
+        public void GetTextExt(int viewCookie, int acpStart, int acpEnd, out Rect rect, out bool clipped)
         {
             clipped = false;
             rect = InputMethod.TextInputRect;
 
             if (_viewCookie != viewCookie)
-                return NativeMethods.E_INVALIDARG;
+                throw new COMException("", Result.InvalidArg.Code);
 
             //does the caller have a lock
-            if (!_IsLocked(NativeMethods.LockFlags.TS_LF_READ))
+            if (!_IsLocked(TsLfFlags.Read))
             {
                 //the caller doesn't have a lock
-                return NativeMethods.TS_E_NOLOCK;
+                throw new COMException("", (int)TsErrors.TsENolock);
             }
 
             //According to Microsoft's doc, an ime should not make empty request,
@@ -618,32 +606,27 @@ namespace ImeSharp
             //}
 
             NativeMethods.MapWindowPoints(_windowHandle, IntPtr.Zero, ref rect, 2);
-
-            return NativeMethods.S_OK;
         }
 
-        public int GetScreenExt(int viewCookie, out NativeMethods.RECT rect)
+        public void GetScreenExt(int viewCookie, out Rect rect)
         {
-            rect = new NativeMethods.RECT();
+            rect = new Rect();
 
             if (_viewCookie != viewCookie)
-                return NativeMethods.E_INVALIDARG;
+                throw new COMException("", Result.InvalidArg.Code);
 
             NativeMethods.GetWindowRect(_windowHandle, out rect);
-            return NativeMethods.S_OK;
         }
 
-        public int GetWnd(int viewCookie, out IntPtr hwnd)
+        public void GetWnd(int viewCookie, out IntPtr hwnd)
         {
             if (viewCookie != _viewCookie)
             {
                 hwnd = IntPtr.Zero;
-                return NativeMethods.S_FALSE;
+                throw new COMException("", Result.False.Code);
             }
 
             hwnd = _windowHandle;
-
-            return NativeMethods.S_OK;
         }
 
         #endregion ITextStoreACP2
@@ -657,7 +640,7 @@ namespace ImeSharp
 
         #region ITfContextOwnerCompositionSink
 
-        public void OnStartComposition(NativeMethods.ITfCompositionView view, out bool ok)
+        public void OnStartComposition(ITfCompositionView view, out bool ok)
         {
             // Return true in ok to start the composition.
             ok = true;
@@ -665,25 +648,28 @@ namespace ImeSharp
             _currentComposition.Clear();
 
             InputMethod.OnTextCompositionStarted(this);
+            _compViews.Add(view);
         }
 
-        public void OnUpdateComposition(NativeMethods.ITfCompositionView view, NativeMethods.ITfRange rangeNew)
+        public void OnUpdateComposition(ITfCompositionView view, ITfRange rangeNew)
         {
-            NativeMethods.ITfRange range;
-            view.GetRange(out range);
-            var rangeacp = (NativeMethods.ITfRangeACP)range;
+            var range = view.Range;
+            var rangeacp = range.QueryInterface<ITfRangeACP>();
 
             rangeacp.GetExtent(out _compositionStart, out _compositionLength);
+            rangeacp.Dispose();
+            range.Dispose();
+            _compViews.Add(view);
         }
 
-        public void OnEndComposition(NativeMethods.ITfCompositionView view)
+        public void OnEndComposition(ITfCompositionView view)
         {
-
-            NativeMethods.ITfRange range;
-            view.GetRange(out range);
-            var rangeacp = (NativeMethods.ITfRangeACP)range;
+            var range = view.Range;
+            var rangeacp = range.QueryInterface<ITfRangeACP>();
 
             rangeacp.GetExtent(out _commitStart, out _commitLength);
+            rangeacp.Dispose();
+            range.Dispose();
 
             // Ensure composition string reset
             _compositionStart = _compositionLength = 0;
@@ -691,31 +677,31 @@ namespace ImeSharp
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
+            view.Dispose();
+            foreach(var item in _compViews)
+                item.Dispose();
+            _compViews.Clear();
         }
 
         #endregion ITfContextOwnerCompositionSink
 
         #region ITfTextEditSink
 
-        public int OnEndEdit(NativeMethods.ITfContext context, int ecReadOnly, NativeMethods.ITfEditRecord editRecord)
+        public void OnEndEdit(ITfContext context, int ecReadOnly, ITfEditRecord editRecord)
         {
-            NativeMethods.ITfProperty property;
-            Guid composingGuid = NativeMethods.GUID_PROP_COMPOSING;
-            context.GetProperty(ref composingGuid, out property);
+            ITfProperty property;
+            context.GetProperty(GUID_PROP_COMPOSING, out property);
 
-            NativeMethods.ITfRangeACP rangeACP;
-            TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionLength, out rangeACP);
-
-            NativeMethods.VARIANT val;
-            property.GetValue(ecReadOnly, rangeACP as NativeMethods.ITfRange, out val);
-            if (val.intVal == 0)
+            ITfRangeACP rangeACP;
+            TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionStart + _compositionLength, out rangeACP);
+            Variant val;
+            property.GetValue(ecReadOnly, rangeACP, out val);
+            property.Dispose();
+            rangeACP.Dispose();
+            if (val.Value == null || (int)val.Value == 0)
             {
                 if (_commitLength == 0 || _inputBuffer.Count == 0)
-                {
-                    Marshal.ReleaseComObject(editRecord);
-                    val.Clear();
-                    return NativeMethods.S_OK;
-                }
+                    return;
 
                 //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(_commitStart, _commitLength).ToArray()) });
 
@@ -723,19 +709,12 @@ namespace ImeSharp
                 for (int i = _commitStart; i < _commitLength; i++)
                     InputMethod.OnTextInput(this, _inputBuffer[i]);
             }
-            val.Clear();
 
             if (_commited)
-            {
-                Marshal.ReleaseComObject(editRecord);
-                return NativeMethods.S_OK;
-            }
+                return;
 
             if (_inputBuffer.Count == 0 && _compositionLength > 0) // Composition just ended
-            {
-                Marshal.ReleaseComObject(editRecord);
-                return NativeMethods.S_OK;
-            }
+                return;
 
             _currentComposition.Clear();
             for (int i = _compositionStart; i < _compositionLength; i++)
@@ -746,11 +725,6 @@ namespace ImeSharp
             //var compStr = new string(_currentComposition.ToArray());
             //compStr = compStr.Insert(_acpEnd, "|");
             //Debug.WriteLine("Composition string: {0}, cursor pos: {1}", compStr, _acpEnd);
-
-            // Release editRecord so Finalizer won't do Release() to Cicero's object in GC thread.
-            Marshal.ReleaseComObject(editRecord);
-
-            return NativeMethods.S_OK;
         }
 
         #endregion ITfTextEditSink
@@ -763,25 +737,21 @@ namespace ImeSharp
 
         #region ITfUIElementSink
 
-        public int BeginUIElement(int dwUIElementId, [MarshalAs(UnmanagedType.Bool)] ref bool pbShow)
+        public void BeginUIElement(int dwUIElementId, out bool pbShow)
         {
             // Hide OS rendered Candidate list Window
             pbShow = InputMethod.ShowOSImeWindow;
 
             OnUIElement(dwUIElementId, true);
-
-            return NativeMethods.S_OK;
         }
 
-        public int UpdateUIElement(int dwUIElementId)
+        public void UpdateUIElement(int dwUIElementId)
         {
             OnUIElement(dwUIElementId, false);
-            return NativeMethods.S_OK;
         }
 
-        public int EndUIElement(int dwUIElementId)
+        public void EndUIElement(int dwUIElementId)
         {
-            return NativeMethods.S_OK;
         }
 
         public const int MaxCandidateCount = 100;
@@ -790,29 +760,33 @@ namespace ImeSharp
         {
             if (InputMethod.ShowOSImeWindow || !_supportUIElement) return;
 
-            IntPtr uiElement;
+            ITfUIElement uiElement;
 
             TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
 
-            NativeMethods.ITfCandidateListUIElementBehavior candList;
+            ITfCandidateListUIElementBehavior candList;
 
             try
             {
-                candList = (NativeMethods.ITfCandidateListUIElementBehavior)Marshal.GetObjectForIUnknown(uiElement);
+                candList = uiElement.QueryInterface<ITfCandidateListUIElementBehavior>();
             }
-            catch (System.InvalidCastException)
+            catch (SharpGenException)
             {
                 _supportUIElement = false;
                 return;
             }
+            finally
+            {
+                uiElement.Dispose();
+            }
 
-            int selection = 0;
-            int currentPage = 0;
-            int count = 0;
-            int pageCount = 0;
-            int pageStart = 0;
-            int pageSize = 0;
-            int i, j;
+            uint selection = 0;
+            uint currentPage = 0;
+            uint count = 0;
+            uint pageCount = 0;
+            uint pageStart = 0;
+            uint pageSize = 0;
+            uint i, j;
 
             candList.GetSelection(out selection);
             candList.GetCurrentPage(out currentPage);
@@ -827,7 +801,7 @@ namespace ImeSharp
 
             if (pageCount > 0)
             {
-                int[] pageStartIndexes = new int[pageCount];
+                uint[] pageStartIndexes = new uint[pageCount];
                 candList.GetPageIndex(pageStartIndexes, pageCount, out pageCount);
                 pageStart = pageStartIndexes[currentPage];
 
@@ -860,15 +834,15 @@ namespace ImeSharp
             //    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
             //Debug.WriteLine("TSF++++++++TSF");
 
-            InputMethod.CandidatePageStart = pageStart;
-            InputMethod.CandidatePageSize = pageSize;
-            InputMethod.CandidateSelection = selection;
+            InputMethod.CandidatePageStart = (int)pageStart;
+            InputMethod.CandidatePageSize = (int)pageSize;
+            InputMethod.CandidateSelection = (int)selection;
             InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
                 InputMethod.OnTextComposition(this, new IMEString(_currentComposition), _acpEnd);
 
-            Marshal.ReleaseComObject(candList);
+            candList.Dispose();
         }
 
         #endregion ITfUIElementSink
@@ -895,7 +869,7 @@ namespace ImeSharp
             }
         }
 
-        public NativeMethods.ITfDocumentMgr DocumentManager
+        public ITfDocumentMgr DocumentManager
         {
             get { return _documentMgr; }
             set { _documentMgr = value; }
@@ -943,7 +917,7 @@ namespace ImeSharp
         //------------------------------------------------------
 
         // The TSF document object.  This is a native resource.
-        private NativeMethods.ITfDocumentMgr _documentMgr;
+        private ITfDocumentMgr _documentMgr;
 
         private int _viewCookie;
 
@@ -952,17 +926,17 @@ namespace ImeSharp
         private int _uiElementSinkCookie;
         private int _textEditSinkCookie;
 
-        private NativeMethods.ITextStoreACPSink _sink;
+        private ITextStoreACPSink _sink;
         private IntPtr _windowHandle;
         private int _acpStart;
         private int _acpEnd;
         private bool _interimChar;
-        private NativeMethods.TsActiveSelEnd _activeSelectionEnd;
+        private TsActiveSelEnd _activeSelectionEnd;
         private List<char> _inputBuffer = new List<char>();
 
         private bool _locked;
-        private NativeMethods.LockFlags _lockFlags;
-        private Queue<NativeMethods.LockFlags> _lockRequestQueue = new Queue<NativeMethods.LockFlags>();
+        private TsLfFlags _lockFlags;
+        private Queue<TsLfFlags> _lockRequestQueue = new Queue<TsLfFlags>();
         private bool _layoutChanged;
 
         private List<char> _currentComposition = new List<char>();
@@ -973,6 +947,7 @@ namespace ImeSharp
         private bool _commited;
 
         private bool _supportUIElement = true;
+        private List<ITfCompositionView> _compViews = new List<ITfCompositionView>();
 
     }
 }

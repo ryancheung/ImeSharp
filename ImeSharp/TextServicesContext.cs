@@ -3,6 +3,7 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Diagnostics;
 using ImeSharp.Native;
+using TsfSharp;
 
 namespace ImeSharp
 {
@@ -20,6 +21,12 @@ namespace ImeSharp
     /// </remarks>
     internal class TextServicesContext
     {
+        public const int TF_POPF_ALL = 0x0001;
+        public const int TF_INVALID_COOKIE = -1;
+        public static readonly Guid IID_ITfUIElementSink = new Guid(0xea1ea136, 0x19df, 0x11d7, 0xa6, 0xd2, 0x00, 0x06, 0x5b, 0x84, 0x43, 0x5c);
+        public static readonly Guid IID_ITfTextEditSink = new Guid(0x8127d409, 0xccd3, 0x4683, 0x96, 0x7a, 0xb4, 0x3d, 0x5b, 0x48, 0x2b, 0xf7);
+
+
         public static TextServicesContext Current
         {
             get
@@ -74,8 +81,8 @@ namespace ImeSharp
                 UnadviseSinks();
                 if (_defaultTextStore.DocumentManager != null)
                 {
-                    _defaultTextStore.DocumentManager.Pop(NativeMethods.PopFlags.TF_POPF_ALL);
-                    Marshal.ReleaseComObject(_defaultTextStore.DocumentManager);
+                    _defaultTextStore.DocumentManager.Pop(TF_POPF_ALL);
+                    _defaultTextStore.DocumentManager.Dispose();
                     _defaultTextStore.DocumentManager = null;
                 }
 
@@ -108,7 +115,7 @@ namespace ImeSharp
             {
                 if (_dimEmpty != null)
                 {
-                    Marshal.ReleaseComObject(_dimEmpty);
+                    _dimEmpty.Dispose();
                 }
                 _dimEmpty = null;
             }
@@ -120,7 +127,7 @@ namespace ImeSharp
             {
                 if (_threadManager != null)
                 {
-                    Marshal.ReleaseComObject(_threadManager);
+                    _threadManager.Dispose();
                 }
                 _threadManager = null;
             }
@@ -133,12 +140,12 @@ namespace ImeSharp
         {
             _defaultTextStore = defaultTextStore;
 
-            NativeMethods.ITfThreadMgrEx threadManager = ThreadManager;
+            ITfThreadMgrEx threadManager = ThreadManager;
 
             if (threadManager != null)
             {
-                NativeMethods.ITfDocumentMgr doc;
-                int editCookie = NativeMethods.TF_INVALID_COOKIE;
+                ITfDocumentMgr doc;
+                int editCookie = TF_INVALID_COOKIE;
 
                 // Activate TSF on this thread if this is the first TextStore.
                 if (_istimactivated == false)
@@ -148,7 +155,7 @@ namespace ImeSharp
                     if (InputMethod.ShowOSImeWindow)
                         threadManager.Activate(out _clientId);
                     else
-                        threadManager.ActivateEx(out _clientId, NativeMethods.ThreadManagerFlags.TF_TMF_UIELEMENTENABLEDONLY);
+                        threadManager.ActivateEx(out _clientId, TfTmaeFlags.Uielementenabledonly);
 
                     _istimactivated = true;
                 }
@@ -159,7 +166,7 @@ namespace ImeSharp
 
                 doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _editContext, out editCookie);
                 _defaultTextStore.EditCookie = editCookie;
-                _contextOwnerServices = _editContext as NativeMethods.ITfContextOwnerServices;
+                _contextOwnerServices = _editContext.QueryInterface<ITfContextOwnerServices>();
 
                 doc.Push(_editContext);
 
@@ -190,28 +197,27 @@ namespace ImeSharp
         /// <summary>
         /// The default ITfThreadMgrEx object.
         /// </summary>
-        public NativeMethods.ITfThreadMgrEx ThreadManager
+        public ITfThreadMgrEx ThreadManager
         {
             // The ITfThreadMgr for this thread.
             get
             {
                 if (_threadManager == null)
                 {
-                    NativeMethods.ITfThreadMgr threadMgr;
-                    NativeMethods.TF_GetThreadMgr(out threadMgr);
+                    ITfThreadMgr threadMgr;
+                    Tsf.GetThreadMgr(out threadMgr);
 
+                    // Dispose previous ITfThreadMgr in case something weird happens 
                     if (threadMgr != null)
                     {
-                        bool focus;
-                        threadMgr.IsThreadFocus(out focus);
-                        if (focus)
+                        if (threadMgr.IsThreadFocus)
                             threadMgr.Deactivate();
-                        _threadManager = threadMgr as NativeMethods.ITfThreadMgrEx;
+                        threadMgr.Dispose();
                     }
-                    else
-                        _threadManager = TextServicesLoader.Load();
 
-                    _uiElementMgr = _threadManager as NativeMethods.ITfUIElementMgr;
+                    _threadManager = TextServicesLoader.Load();
+
+                    _uiElementMgr = _threadManager.QueryInterface<ITfUIElementMgr>();
                 }
 
                 return _threadManager;
@@ -221,7 +227,7 @@ namespace ImeSharp
         /// <summary>
         /// Return the created ITfContext object.
         /// </summary>
-        public NativeMethods.ITfContext EditContext
+        public ITfContext EditContext
         {
             get { return _editContext; }
         }
@@ -229,7 +235,7 @@ namespace ImeSharp
         /// <summary>
         /// Return the created ITfUIElementMgr object.
         /// </summary>
-        public NativeMethods.ITfUIElementMgr UIElementMgr
+        public ITfUIElementMgr UIElementMgr
         {
             get { return _uiElementMgr; }
         }
@@ -237,7 +243,7 @@ namespace ImeSharp
         /// <summary>
         /// Return the created ITfContextOwnerServices object.
         /// </summary>
-        public NativeMethods.ITfContextOwnerServices ContextOwnerServices
+        public ITfContextOwnerServices ContextOwnerServices
         {
             get { return _contextOwnerServices; }
         }
@@ -254,47 +260,51 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        private void SetFocusOnDim(NativeMethods.ITfDocumentMgr dim)
+        private void SetFocusOnDim(ITfDocumentMgr dim)
         {
-            NativeMethods.ITfThreadMgrEx threadmgr = ThreadManager;
+            ITfThreadMgrEx threadmgr = ThreadManager;
 
             if (threadmgr != null)
             {
-                NativeMethods.ITfDocumentMgr prevDocMgr;
+                ITfDocumentMgr prevDocMgr;
                 threadmgr.AssociateFocus(InputMethod.WindowHandle, dim, out prevDocMgr);
             }
         }
 
         private void AdviseSinks()
         {
-            var source = _uiElementMgr as NativeMethods.ITfSource;
-            var guid = NativeMethods.IID_ITfUIElementSink;
+            var source = _uiElementMgr.QueryInterface<ITfSource>();
+            var guid = IID_ITfUIElementSink;
             int sinkCookie;
-            source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
+            source.AdviseSink(guid, _defaultTextStore, out sinkCookie);
             _defaultTextStore.UIElementSinkCookie = sinkCookie;
+            source.Dispose();
 
-            source = _editContext as NativeMethods.ITfSource;
-            guid = NativeMethods.IID_ITfTextEditSink;
-            source.AdviseSink(ref guid, _defaultTextStore, out sinkCookie);
+            source = _editContext.QueryInterface<ITfSource>();
+            guid = IID_ITfTextEditSink;
+            source.AdviseSink(guid, _defaultTextStore, out sinkCookie);
             _defaultTextStore.TextEditSinkCookie = sinkCookie;
+            source.Dispose();
         }
 
         private void UnadviseSinks()
         {
-            var source = _uiElementMgr as NativeMethods.ITfSource;
+            var source = _uiElementMgr.QueryInterface<ITfSource>();
 
-            if (_defaultTextStore.UIElementSinkCookie != NativeMethods.TF_INVALID_COOKIE)
+            if (_defaultTextStore.UIElementSinkCookie != TF_INVALID_COOKIE)
             {
                 source.UnadviseSink(_defaultTextStore.UIElementSinkCookie);
-                _defaultTextStore.UIElementSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+                _defaultTextStore.UIElementSinkCookie = TF_INVALID_COOKIE;
             }
+            source.Dispose();
 
-            source = _editContext as NativeMethods.ITfSource;
-            if (_defaultTextStore.TextEditSinkCookie != NativeMethods.TF_INVALID_COOKIE)
+            source = _editContext.QueryInterface<ITfSource>();
+            if (_defaultTextStore.TextEditSinkCookie != TF_INVALID_COOKIE)
             {
                 source.UnadviseSink(_defaultTextStore.TextEditSinkCookie);
-                _defaultTextStore.TextEditSinkCookie = NativeMethods.TF_INVALID_COOKIE;
+                _defaultTextStore.TextEditSinkCookie = TF_INVALID_COOKIE;
             }
+            source.Dispose();
         }
 
         //------------------------------------------------------
@@ -304,19 +314,19 @@ namespace ImeSharp
         //------------------------------------------------------
 
         // Create an empty dim on demand.
-        private NativeMethods.ITfDocumentMgr EmptyDocumentManager
+        private ITfDocumentMgr EmptyDocumentManager
         {
             get
             {
                 if (_dimEmpty == null)
                 {
-                    NativeMethods.ITfThreadMgrEx threadManager = ThreadManager;
+                    ITfThreadMgrEx threadManager = ThreadManager;
                     if (threadManager == null)
                     {
                         return null;
                     }
 
-                    NativeMethods.ITfDocumentMgr dimEmptyTemp;
+                    ITfDocumentMgr dimEmptyTemp;
                     // Create a TSF document.
                     threadManager.CreateDocumentMgr(out dimEmptyTemp);
                     _dimEmpty = dimEmptyTemp;
@@ -336,21 +346,21 @@ namespace ImeSharp
 
         private TextStore _defaultTextStore;
 
-        private NativeMethods.ITfContext _editContext;
-        private NativeMethods.ITfUIElementMgr _uiElementMgr;
-        private NativeMethods.ITfContextOwnerServices _contextOwnerServices;
+        private ITfContext _editContext;
+        private ITfUIElementMgr _uiElementMgr;
+        private ITfContextOwnerServices _contextOwnerServices;
 
         // This is true if thread manager is activated.
         private bool _istimactivated;
 
         // The root TSF object, created on demand.
-        private NativeMethods.ITfThreadMgrEx _threadManager;
+        private ITfThreadMgrEx _threadManager;
 
         // TSF ClientId from Activate call.
         private int _clientId;
 
         // The empty dim for this thread. Created on demand.
-        private NativeMethods.ITfDocumentMgr _dimEmpty;
+        private ITfDocumentMgr _dimEmpty;
 
         #endregion Private Fields
     }

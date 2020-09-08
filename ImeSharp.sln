@@ -1,11 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 15
-VisualStudioVersion = 15.0.26124.0
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30413.136
 MinimumVisualStudioVersion = 15.0.26124.0
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImeSharp", "ImeSharp\ImeSharp.csproj", "{90542336-E164-4A9B-AE77-2820ABB4A342}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImeSharp", "ImeSharp\ImeSharp.csproj", "{90542336-E164-4A9B-AE77-2820ABB4A342}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ImeSharp.Demo", "ImeSharp.Demo\ImeSharp.Demo.csproj", "{664CE2A0-81D3-418B-B86D-642727AF7174}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "ImeSharp.Demo", "ImeSharp.Demo\ImeSharp.Demo.csproj", "{664CE2A0-81D3-418B-B86D-642727AF7174}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,9 +15,6 @@ Global
 		Release|Any CPU = Release|Any CPU
 		Release|x64 = Release|x64
 		Release|x86 = Release|x86
-	EndGlobalSection
-	GlobalSection(SolutionProperties) = preSolution
-		HideSolutionNode = FALSE
 	EndGlobalSection
 	GlobalSection(ProjectConfigurationPlatforms) = postSolution
 		{90542336-E164-4A9B-AE77-2820ABB4A342}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
@@ -44,5 +41,11 @@ Global
 		{664CE2A0-81D3-418B-B86D-642727AF7174}.Release|x64.Build.0 = Release|Any CPU
 		{664CE2A0-81D3-418B-B86D-642727AF7174}.Release|x86.ActiveCfg = Release|Any CPU
 		{664CE2A0-81D3-418B-B86D-642727AF7174}.Release|x86.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {1D8A758D-856B-422C-857E-863E77915742}
 	EndGlobalSection
 EndGlobal

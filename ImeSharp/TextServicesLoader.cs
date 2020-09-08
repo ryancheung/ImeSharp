@@ -6,6 +6,7 @@ using System.Threading;
 using Microsoft.Win32;
 #endif
 using ImeSharp.Native;
+using TsfSharp;
 
 namespace ImeSharp
 {
@@ -13,6 +14,11 @@ namespace ImeSharp
     // Framework.
     internal class TextServicesLoader
     {
+        public static readonly Guid CLSID_TF_ThreadMgr = new Guid("529a9e6b-6587-4f23-ab9e-9c7d683e3c50");
+        public static readonly Guid IID_ITfThreadMgr = new Guid("aa80e801-2021-11d2-93e0-0060b067b86e");
+        public static readonly Guid IID_ITfThreadMgrEx = new Guid("3e90ade3-7594-4cb0-bb58-69628f5f458c");
+        public static readonly Guid IID_ITfThreadMgr2 = new Guid("0AB198EF-6477-4EE8-8812-6780EDB82D5E");
+
         //------------------------------------------------------
         //
         //  Constructors
@@ -40,7 +46,7 @@ namespace ImeSharp
         /// <returns>
         /// May return null if no text services are available.
         /// </returns>
-        public static NativeMethods.ITfThreadMgrEx Load()
+        public static ITfThreadMgrEx Load()
         {
             Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
 
@@ -52,13 +58,13 @@ namespace ImeSharp
                 // which lives in nt\windows\advcore\ctf\lib\immxutil.cpp.  If that's the
                 // problem, ServicesInstalled is out of sync with Cicero's thinking.
                 IntPtr ret;
-                var hr = NativeMethods.CoCreateInstance(NativeMethods.CLSID_TF_ThreadMgr,
+                var hr = NativeMethods.CoCreateInstance(CLSID_TF_ThreadMgr,
                     IntPtr.Zero,
                     NativeMethods.CLSCTX_INPROC_SERVER,
-                    NativeMethods.IID_ITfThreadMgrEx, out ret);
+                    IID_ITfThreadMgrEx, out ret);
 
                 if (hr == NativeMethods.S_OK)
-                    return (NativeMethods.ITfThreadMgrEx)Marshal.GetObjectForIUnknown(ret);
+                    return new ITfThreadMgrEx(ret);
             }
 
             return null;

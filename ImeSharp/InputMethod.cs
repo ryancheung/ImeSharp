@@ -50,7 +50,7 @@ namespace ImeSharp
             }
         }
 
-        internal static NativeMethods.RECT TextInputRect;
+        internal static TsfSharp.Rect TextInputRect;
 
         /// <summary>
         /// Set the position of the candidate window rendered by the OS.
@@ -60,10 +60,10 @@ namespace ImeSharp
         {
             if (!_showOSImeWindow) return;
 
-            TextInputRect.left = x;
-            TextInputRect.top = y;
-            TextInputRect.right = x + width;
-            TextInputRect.bottom = y + height;
+            TextInputRect.Left = x;
+            TextInputRect.Top = y;
+            TextInputRect.Right = x + width;
+            TextInputRect.Bottom = y + height;
 
             if (Imm32Manager.ImmEnabled)
                 Imm32Manager.Current.SetCandidateWindow(TextInputRect);
@@ -216,7 +216,7 @@ namespace ImeSharp
             if (!TextServicesLoader.ServicesInstalled) return;
 
             bool result;
-            var msg = new NativeMethods.MSG();
+            var msg = new NativeMethods.NativeMessage();
 
             do
             {

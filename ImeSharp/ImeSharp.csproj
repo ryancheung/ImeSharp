@@ -2,6 +2,7 @@
 
   <PropertyGroup>
     <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
+    <TargetFramework>netcoreapp3.1</TargetFramework>
     <DefineConstants>WINDOWS;</DefineConstants>
     <UseWindowsForms>true</UseWindowsForms>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
@@ -25,5 +26,9 @@ This package provide IME support for WinForms target.</Description>
     <RootNamespace>ImeSharp</RootNamespace>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="TsfSharp" Version="0.5.0" />
+  </ItemGroup>
 
 </Project>

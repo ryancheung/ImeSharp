@@ -25,4 +25,8 @@ This package provide IME support for none WinForms target.</Description>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
 
+  <ItemGroup>
+    <PackageReference Include="TsfSharp" Version="0.5.0" />
+  </ItemGroup>
+
 </Project>

@@ -58,6 +58,22 @@ namespace ImeSharp.Native
 
         #endregion Constants
 
+        #region Structs
+
+        [StructLayout(LayoutKind.Sequential)]
+        public struct NativeMessage
+        {
+            public IntPtr handle;
+            public uint msg;
+            public IntPtr wParam;
+            public IntPtr lParam;
+            public uint time;
+            public int ptX;
+            public int ptY;
+        }
+
+        #endregion
+
         [DllImport("user32.dll")]
         public static extern int GetSystemMetrics(SM nIndex);
 
@@ -92,10 +108,10 @@ namespace ImeSharp.Native
         private static extern IntPtr SetWindowLongPtr64(IntPtr hWnd, int nIndex, IntPtr dwNewLong);
 
         [DllImport("user32.dll", SetLastError = true)]
-        public static extern bool GetWindowRect(IntPtr hwnd, out RECT lpRect);
+        public static extern bool GetWindowRect(IntPtr hwnd, out TsfSharp.Rect lpRect);
 
         [DllImport("user32", ExactSpelling = true, SetLastError = true)]
-        public static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, ref NativeMethods.RECT rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
+        public static extern int MapWindowPoints(IntPtr hWndFrom, IntPtr hWndTo, ref TsfSharp.Rect rect, [MarshalAs(UnmanagedType.U4)] int cPoints);
 
 
         [DllImport("user32.dll", CharSet = CharSet.Unicode)]
@@ -117,13 +133,13 @@ namespace ImeSharp.Native
         public static extern bool PostMessage(IntPtr hWnd, uint Msg, IntPtr wParam, IntPtr lParam);
 
         [DllImport("user32.dll")]
-        public static extern bool TranslateMessage(ref MSG lpMsg);
+        public static extern bool TranslateMessage(ref NativeMessage lpMsg);
 
         [DllImport("user32.dll")]
-        public static extern IntPtr DispatchMessage(ref MSG lpmsg);
+        public static extern IntPtr DispatchMessage(ref NativeMessage lpmsg);
 
         [DllImport("User32.dll", CharSet = CharSet.Unicode)]
-        public static extern bool PeekMessage(out MSG msg, IntPtr hWnd, uint messageFilterMin, uint messageFilterMax, uint flags);
+        public static extern bool PeekMessage(out NativeMessage msg, IntPtr hWnd, uint messageFilterMin, uint messageFilterMax, uint flags);
 
 
         [DllImport("ole32.dll", CharSet = CharSet.Unicode, ExactSpelling = true, PreserveSig = false)]

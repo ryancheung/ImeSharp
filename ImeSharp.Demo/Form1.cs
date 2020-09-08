@@ -10,7 +10,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using ImeSharp.Native;
-using NativeMessage = ImeSharp.Native.NativeMethods.MSG;
+using NativeMessage = ImeSharp.Native.NativeMethods.NativeMessage;
 
 namespace ImeSharp.Demo
 {
