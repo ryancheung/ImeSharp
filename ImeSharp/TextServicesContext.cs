@@ -208,11 +208,12 @@ namespace ImeSharp
                     ITfThreadMgr threadMgr = null;
                     try
                     {
-                        // This might fail
+                        // This might fail in CoreRT
                         Tsf.GetThreadMgr(out threadMgr);
                     }
                     catch (SharpGen.Runtime.SharpGenException)
                     {
+                        threadMgr = null;
                     }
 
                     // Dispose previous ITfThreadMgr in case something weird happens
