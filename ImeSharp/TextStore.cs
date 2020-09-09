@@ -535,29 +535,29 @@ namespace ImeSharp
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void RequestSupportedAttrs(int flags, Guid[] filterAttributes)
+        public void RequestSupportedAttrs(int flags, uint cFilterAttrs, ref Guid filterAttributes)
         {
         }
 
-        public void RequestAttrsAtPosition(int index, Guid[] filterAttributes, int flags)
-        {
-            throw new COMException("", Result.NotImplemented.Code);
-        }
-
-
-        public void RequestAttrsTransitioningAtPosition(int position, Guid[] filterAttributes, int flags)
+        public void RequestAttrsAtPosition(int index, uint cFilterAttrs, ref Guid filterAttributes, int flags)
         {
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void FindNextAttrTransition(int startIndex, int haltIndex, Guid[] filterAttributes, int flags, out int acpNext, out bool found, out int foundOffset)
+
+        public void RequestAttrsTransitioningAtPosition(int position, uint cFilterAttrs, ref Guid filterAttributes, int flags)
+        {
+            throw new COMException("", Result.NotImplemented.Code);
+        }
+
+        public void FindNextAttrTransition(int startIndex, int haltIndex, uint cFilterAttrs, ref Guid filterAttributes, int flags, out int acpNext, out bool found, out int foundOffset)
         {
             acpNext = 0;
             found = false;
             foundOffset = 0;
         }
 
-        public void RetrieveRequestedAttrs(TsAttrval[] attributeVals, out uint fetched)
+        public void RetrieveRequestedAttrs(uint ulCount, ref TsfSharp.TsAttrval aAttrValsRef, out uint fetched)
         {
             fetched = 0;
         }
