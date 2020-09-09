@@ -804,13 +804,14 @@ namespace ImeSharp
 
             if (pageCount > 0)
             {
-                uint[] pageStartIndexes = new uint[pageCount];
+                uint[] pageStartIndexes = ArrayPool<uint>.Shared.Rent((int)pageCount);
                 candList.GetPageIndex(pageStartIndexes, pageCount, out pageCount);
                 pageStart = pageStartIndexes[currentPage];
 
                 if (pageStart >= count - 1)
                 {
                     candList.Abort();
+                    ArrayPool<uint>.Shared.Return(pageStartIndexes);
                     return;
                 }
 
@@ -818,6 +819,8 @@ namespace ImeSharp
                     pageSize = Math.Min(count, pageStartIndexes[currentPage + 1]) - pageStart;
                 else
                     pageSize = count - pageStart;
+
+                ArrayPool<uint>.Shared.Return(pageStartIndexes);
             }
 
             selection -= pageStart;
