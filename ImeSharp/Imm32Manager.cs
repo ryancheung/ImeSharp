@@ -1,4 +1,5 @@
 using System;
+using System.Buffers;
 using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Diagnostics;
@@ -272,6 +273,9 @@ namespace ImeSharp
             UpdateCandidates();
             // Send event on candidate updates
             InputMethod.OnTextComposition(this, new IMEString(_compositionStringHandler.Values, _compositionStringHandler.Count), _compositionCursorHandler.Value);
+
+            if (InputMethod.CandidateList != null)
+                ArrayPool<IMEString>.Shared.Return(InputMethod.CandidateList);
         }
 
         private void UpdateCandidates()
@@ -287,7 +291,7 @@ namespace ImeSharp
                 var pageStart = (int)cList.dwPageStart;
                 var pageSize = (int)cList.dwPageSize;
 
-                IMEString[] candidates = new IMEString[pageSize];
+                IMEString[] candidates = ArrayPool<IMEString>.Shared.Rent(pageSize);
 
                 int i, j;
                 for (i = pageStart, j = 0; i < cList.dwCount && j < pageSize; i++, j++)
