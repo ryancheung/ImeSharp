@@ -1,4 +1,5 @@
 using System;
+using IMEString = Microsoft.Xna.Framework.IMEString;
 
 namespace ImeSharp
 {

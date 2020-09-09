@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using ImeSharp.Native;
+using IMEString = Microsoft.Xna.Framework.IMEString;
 
 namespace ImeSharp
 {

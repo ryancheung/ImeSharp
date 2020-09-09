@@ -4,6 +4,7 @@ using System.Runtime.InteropServices;
 using System.Globalization;
 using System.Diagnostics;
 using ImeSharp.Native;
+using IMEString = Microsoft.Xna.Framework.IMEString;
 
 namespace ImeSharp
 {

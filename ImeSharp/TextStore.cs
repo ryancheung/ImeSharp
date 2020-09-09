@@ -7,6 +7,7 @@ using ImeSharp.Native;
 using SharpGen.Runtime;
 using SharpGen.Runtime.Win32;
 using TsfSharp;
+using IMEString = Microsoft.Xna.Framework.IMEString;
 
 namespace ImeSharp
 {
