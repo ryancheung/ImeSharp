@@ -51,7 +51,8 @@ namespace ImeSharp
         /// </summary>
         private TextServicesContext()
         {
-            Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "SetDispatcherThreaad on MTA thread");
+            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
+                Debug.WriteLine("CRASH: ImeSharp won't work on MTA thread!!!");
         }
 
         #endregion Constructors

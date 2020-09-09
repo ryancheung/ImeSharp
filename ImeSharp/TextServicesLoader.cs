@@ -48,7 +48,8 @@ namespace ImeSharp
         /// </returns>
         public static ITfThreadMgrEx Load()
         {
-            Debug.Assert(Thread.CurrentThread.GetApartmentState() == ApartmentState.STA, "Load called on MTA thread!");
+            if (Thread.CurrentThread.GetApartmentState() != ApartmentState.STA)
+                Debug.WriteLine("CRASH: ImeSharp won't work on MTA thread!!!");
 
             if (ServicesInstalled)
             {
