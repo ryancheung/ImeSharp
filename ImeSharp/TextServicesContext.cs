@@ -204,10 +204,17 @@ namespace ImeSharp
             {
                 if (_threadManager == null)
                 {
-                    ITfThreadMgr threadMgr;
-                    Tsf.GetThreadMgr(out threadMgr);
+                    ITfThreadMgr threadMgr = null;
+                    try
+                    {
+                        // This might fail
+                        Tsf.GetThreadMgr(out threadMgr);
+                    }
+                    catch (SharpGen.Runtime.SharpGenException)
+                    {
+                    }
 
-                    // Dispose previous ITfThreadMgr in case something weird happens 
+                    // Dispose previous ITfThreadMgr in case something weird happens
                     if (threadMgr != null)
                     {
                         if (threadMgr.IsThreadFocus)
