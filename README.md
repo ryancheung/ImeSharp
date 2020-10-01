@@ -76,10 +76,6 @@ InputMethod.SetTextInputRect(location.X, location.Y, 0, textBoxHeight);
 IMM32 would be only enabled if TSF service is not available.
 You can `return false` manually in `TextServicesLoader.ServicesInstalled` to mimic TSF unavailable case.
 
-## Discord for Dev
-
-https://discord.gg/BC4GKKr
-
 ## TODO
 
 - Make it work in Unity3d
