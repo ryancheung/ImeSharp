@@ -367,7 +367,7 @@ namespace ImeSharp
                         }
 
                         //extract the specified text range
-                        if (pchPlain != null && cchPlainReq > 0)
+                        if (pchPlain != IntPtr.Zero && cchPlainReq > 0)
                         {
                             //_inputBuffer.CopyTo(acpStart, pchPlain, 0, cchReq);
 
