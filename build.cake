@@ -82,7 +82,7 @@ Task("Prep")
     dnPackSettings.Configuration = configuration;
 });
 
-Task("BuildWindows")
+Task("Build")
     .IsDependentOn("Prep")
     .WithCriteria(() => IsRunningOnWindows())
     .Does(() =>
@@ -91,28 +91,14 @@ Task("BuildWindows")
     PackDotnet("ImeSharp/ImeSharp.csproj");
 });
 
-Task("BuildNetStandard")
-    .IsDependentOn("Prep")
-    .WithCriteria(() => IsRunningOnWindows())
-    .Does(() =>
-{
-    DotNetCoreRestore("ImeSharp/ImeSharp.NetStandard.csproj");
-    PackDotnet("ImeSharp/ImeSharp.NetStandard.csproj");
-});
-
 Task("Default")
-    .IsDependentOn("BuildWindows")
-    .IsDependentOn("BuildNetStandard");
+    .IsDependentOn("Build");
 
 Task("Publish")
     .IsDependentOn("Default")
 .Does(() =>
 {
     var args = $"push -Source \"https://api.nuget.org/v3/index.json\" -ApiKey {apiKey} Artifacts/WinForms/Release/ImeSharp.{version}.nupkg";
-
-    RunProcess(NuGetToolPath, args);
-
-    args = $"push -Source \"https://api.nuget.org/v3/index.json\" -ApiKey {apiKey} Artifacts/NetStandard/Release/ImeSharp.NetStandard.{version}.nupkg";
 
     RunProcess(NuGetToolPath, args);
 });
