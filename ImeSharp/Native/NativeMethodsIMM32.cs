@@ -79,7 +79,7 @@ namespace ImeSharp.Native
         #endregion Constants
 
         [StructLayout(LayoutKind.Sequential)]
-        public struct CANDIDATELIST
+        public unsafe struct CANDIDATELIST
         {
             public uint dwSize;
             public uint dwStyle;
@@ -88,7 +88,7 @@ namespace ImeSharp.Native
             public uint dwPageStart;
             public uint dwPageSize;
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = 1, ArraySubType = UnmanagedType.U4)]
-            public uint[] dwOffset;
+            public fixed uint dwOffset[1];
         }
 
         // CANDIDATEFORM structures

@@ -278,23 +278,30 @@ namespace ImeSharp
                 ArrayPool<IMEString>.Shared.Return(InputMethod.CandidateList);
         }
 
-        private void UpdateCandidates()
+        private unsafe void UpdateCandidates()
         {
             uint length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, IntPtr.Zero, 0);
             if (length > 0)
             {
                 IntPtr pointer = Marshal.AllocHGlobal((int)length);
                 length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, pointer, length);
-                NativeMethods.CANDIDATELIST cList = Marshal.PtrToStructure<NativeMethods.CANDIDATELIST>(pointer);
+                NativeMethods.CANDIDATELIST* cList = (NativeMethods.CANDIDATELIST*)pointer;
 
-                var selection = (int)cList.dwSelection;
-                var pageStart = (int)cList.dwPageStart;
-                var pageSize = (int)cList.dwPageSize;
+                Console.WriteLine("dwSize: {0}", cList->dwSize);
+                Console.WriteLine("dwSelection: {0}", cList->dwSelection);
+                Console.WriteLine("dwPageStart: {0}", cList->dwPageStart);
+                Console.WriteLine("dwPageSize: {0}", cList->dwPageSize);
+
+                var selection = (int)cList->dwSelection;
+                var pageStart = (int)cList->dwPageStart;
+                var pageSize = (int)cList->dwPageSize;
+                if (selection >= pageSize)
+                    selection %= pageSize;
 
                 IMEString[] candidates = ArrayPool<IMEString>.Shared.Rent(pageSize);
 
                 int i, j;
-                for (i = pageStart, j = 0; i < cList.dwCount && j < pageSize; i++, j++)
+                for (i = pageStart, j = 0; i < cList->dwCount && j < pageSize; i++, j++)
                 {
                     int sOffset = Marshal.ReadInt32(pointer, 24 + 4 * i);
                     candidates[j] = new IMEString(pointer + sOffset);
