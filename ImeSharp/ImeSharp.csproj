@@ -1,17 +1,12 @@
-﻿<Project Sdk="Microsoft.NET.Sdk.WindowsDesktop">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFrameworks>net452;netcoreapp3.1</TargetFrameworks>
-    <TargetFramework>netcoreapp3.1</TargetFramework>
-    <DefineConstants>WINDOWS;</DefineConstants>
-    <UseWindowsForms>true</UseWindowsForms>
+    <TargetFrameworks>net46;netstandard2.0;netcoreapp3.0;net5.0</TargetFrameworks>
     <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <PropertyGroup>
-    <Description>C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.
-
-This package provide IME support for WinForms target.</Description>
+    <Description>C# wrapper for Windows IME APIs. Its goal is to support both IMM32 and TSF.</Description>
     <PackageTags>IME;netcoreapp3.1;winforms;windows</PackageTags>
     <PackageId>ImeSharp</PackageId>
     <PackageProjectUrl>https://github.com/ryancheung/ImeSharp</PackageProjectUrl>
@@ -21,15 +16,15 @@ This package provide IME support for WinForms target.</Description>
   </PropertyGroup>
 
   <PropertyGroup>
-    <BaseOutputPath>..\Artifacts\WinForms</BaseOutputPath>
+    <BaseOutputPath>..\Artifacts</BaseOutputPath>
     <AssemblyName>ImeSharp</AssemblyName>
     <RootNamespace>ImeSharp</RootNamespace>
     <LangVersion>5</LangVersion>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="TsfSharp" Version="0.6.0" />
-    <PackageReference Include="System.Buffers" Version="4.5.1" />
+    <PackageReference Include="TsfSharp" Version="1.0.0-preview1" />
+    <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
   </ItemGroup>
 
 </Project>

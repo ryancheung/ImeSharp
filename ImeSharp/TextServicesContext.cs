@@ -154,15 +154,15 @@ namespace ImeSharp
                     //temp variable created to retrieve the value
                     // which is then stored in the critical data.
                     if (InputMethod.ShowOSImeWindow)
-                        threadManager.Activate(out _clientId);
+                        _clientId = threadManager.Activate();
                     else
-                        threadManager.ActivateEx(out _clientId, TfTmaeFlags.Uielementenabledonly);
+                        _clientId = threadManager.ActivateEx(TfTmaeFlags.Uielementenabledonly);
 
                     _istimactivated = true;
                 }
 
                 // Create a TSF document.
-                threadManager.CreateDocumentMgr(out doc);
+                doc = threadManager.CreateDocumentMgr();
                 _defaultTextStore.DocumentManager = doc;
 
                 doc.CreateContext(_clientId, 0 /* flags */, _defaultTextStore, out _editContext, out editCookie);
@@ -209,7 +209,7 @@ namespace ImeSharp
                     try
                     {
                         // This might fail in CoreRT
-                        Tsf.GetThreadMgr(out threadMgr);
+                        threadMgr = Tsf.GetThreadMgr();
                     }
                     catch (SharpGen.Runtime.SharpGenException)
                     {
@@ -275,8 +275,7 @@ namespace ImeSharp
 
             if (threadmgr != null)
             {
-                ITfDocumentMgr prevDocMgr;
-                threadmgr.AssociateFocus(InputMethod.WindowHandle, dim, out prevDocMgr);
+                ITfDocumentMgr prevDocMgr = threadmgr.AssociateFocus(InputMethod.WindowHandle, dim);
             }
         }
 
@@ -284,14 +283,13 @@ namespace ImeSharp
         {
             var source = _uiElementMgr.QueryInterface<ITfSource>();
             var guid = IID_ITfUIElementSink;
-            int sinkCookie;
-            source.AdviseSink(guid, _defaultTextStore, out sinkCookie);
+            int sinkCookie = source.AdviseSink(guid, _defaultTextStore);
             _defaultTextStore.UIElementSinkCookie = sinkCookie;
             source.Dispose();
 
             source = _editContext.QueryInterface<ITfSource>();
             guid = IID_ITfTextEditSink;
-            source.AdviseSink(guid, _defaultTextStore, out sinkCookie);
+            sinkCookie = source.AdviseSink(guid, _defaultTextStore);
             _defaultTextStore.TextEditSinkCookie = sinkCookie;
             source.Dispose();
         }
@@ -337,7 +335,7 @@ namespace ImeSharp
 
                     ITfDocumentMgr dimEmptyTemp;
                     // Create a TSF document.
-                    threadManager.CreateDocumentMgr(out dimEmptyTemp);
+                    dimEmptyTemp = threadManager.CreateDocumentMgr();
                     _dimEmpty = dimEmptyTemp;
                 }
                 return _dimEmpty;

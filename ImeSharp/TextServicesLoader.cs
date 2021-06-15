@@ -2,9 +2,7 @@ using System;
 using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
-#if WINDOWS
 using Microsoft.Win32;
-#endif
 using ImeSharp.Native;
 using TsfSharp;
 
@@ -100,7 +98,6 @@ namespace ImeSharp
         {
             get
             {
-#if WINDOWS
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)
@@ -110,16 +107,11 @@ namespace ImeSharp
                 }
 
                 return (s_servicesInstalled == InstallState.Installed);
-#else
-                // Use IMM32 instead of TSF in Win7 or below.
-                return !IsWindows7OrBelow();
-#endif
             }
         }
 
         #endregion public Properties
 
-#if WINDOWS
         //------------------------------------------------------
         //
         //  public Events
@@ -342,6 +334,5 @@ namespace ImeSharp
         private static object s_servicesInstalledLock = new object();
 
         #endregion Private Fields
-#endif
     }
 }

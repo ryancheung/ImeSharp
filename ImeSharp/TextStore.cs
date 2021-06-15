@@ -127,7 +127,7 @@ namespace ImeSharp
             //if there is a queued lock, grant it
             if (_lockRequestQueue.Count > 0)
             {
-                RequestLock(_lockRequestQueue.Dequeue(), out hr);
+                hr = RequestLock(_lockRequestQueue.Dequeue());
             }
 
             //if any layout changes occurred during the lock, notify the manager
@@ -143,8 +143,10 @@ namespace ImeSharp
             return _locked && (_lockFlags & dwLockType) != 0;
         }
 
-        public void RequestLock(TsfSharp.TsLfFlags dwLockFlags, out Result hrSession)
+        public Result RequestLock(TsfSharp.TsLfFlags dwLockFlags)
         {
+            Result hrSession;
+
             if (_sink == null)
                 throw new COMException("TextStore_NoSink");
 
@@ -174,7 +176,7 @@ namespace ImeSharp
                     hrSession = (int)TsErrors.TsSAsync;
                 }
 
-                return;
+                return hrSession;
             }
 
             //lock the document
@@ -185,12 +187,17 @@ namespace ImeSharp
 
             //unlock the document
             _UnlockDocument();
+
+            return hrSession;
         }
 
-        public void GetStatus(out TsStatus status)
+        public TsStatus GetStatus()
         {
-            status.DwDynamicFlags = 0;
-            status.DwStaticFlags = 0;
+            TsStatus status = new TsStatus();
+            status.DynamicFlags = 0;
+            status.StaticFlags = 0;
+
+            return status;
         }
 
         public void QueryInsert(int acpTestStart, int acpTestEnd, uint cch, out int acpResultStart, out int acpResultEnd)
@@ -210,10 +217,8 @@ namespace ImeSharp
             acpResultEnd = acpTestEnd;
         }
 
-        public void GetSelection(uint index, ref TsSelectionAcp selection, out uint cFetched)
+        public uint GetSelection(uint index, ref TsSelectionAcp selection)
         {
-            cFetched = 0;
-
             //does the caller have a lock
             if (!_IsLocked(TsLfFlags.Read))
             {
@@ -237,7 +242,7 @@ namespace ImeSharp
 
             selection.AcpStart = _acpStart;
             selection.AcpEnd = _acpEnd;
-            selection.Style.FInterimChar = _interimChar;
+            selection.Style.InterimCharFlag = _interimChar;
 
             if (_interimChar)
             {
@@ -254,7 +259,7 @@ namespace ImeSharp
                 selection.Style.Ase = _activeSelectionEnd;
             }
 
-            cFetched = 1;
+            return 1;
         }
 
         public void SetSelection(uint count, ref TsSelectionAcp selections)
@@ -273,7 +278,7 @@ namespace ImeSharp
 
             _acpStart = selections.AcpStart;
             _acpEnd = selections.AcpEnd;
-            _interimChar = selections.Style.FInterimChar;
+            _interimChar = selections.Style.InterimCharFlag;
 
             if (_interimChar)
             {
@@ -422,7 +427,7 @@ namespace ImeSharp
                         of the same type.
                         */
                         rgRunInfo.Type = TsRunType.TsRtPlain;
-                        rgRunInfo.UCount = (uint)cchReq;
+                        rgRunInfo.Count = (uint)cchReq;
                     }
 
                     acpNext = acpStart + cchReq;
@@ -430,47 +435,46 @@ namespace ImeSharp
             }
         }
 
-        public void SetText(int dwFlags, int acpStart, int acpEnd, string pchText, uint cch, out TsfSharp.TsTextchange change)
+        public TsTextchange SetText(int dwFlags, int acpStart, int acpEnd, string pchText, uint cch)
         {
             /*
             dwFlags can be:
             TS_ST_CORRECTION
             */
+            TsTextchange change = new TsTextchange();
 
             //set the selection to the specified range
             TsSelectionAcp tsa = new TsSelectionAcp();
             tsa.AcpStart = acpStart;
             tsa.AcpEnd = acpEnd;
             tsa.Style.Ase = TsActiveSelEnd.TsAeStart;
-            tsa.Style.FInterimChar = false;
+            tsa.Style.InterimCharFlag = false;
 
             SetSelection(1, ref tsa);
 
             int start, end;
             InsertTextAtSelection(TsIasFlags.Noquery, pchText, cch, out start, out end, out change);
+
+            return change;
         }
 
-        public void GetFormattedText(int startIndex, int endIndex, out IDataObject obj)
+        public IDataObject GetFormattedText(int startIndex, int endIndex)
         {
-            obj = null;
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void GetEmbedded(int index, Guid guidService, Guid riid, out IUnknown obj)
+        public IUnknown GetEmbedded(int index, Guid guidService, Guid riid)
         {
-            obj = null;
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void QueryInsertEmbedded(Guid guidService, ref Formatetc formatEtc, out bool insertable)
+        public RawBool QueryInsertEmbedded(Guid guidService, ref Formatetc formatEtc)
         {
-            insertable = false;
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void InsertEmbedded(int flags, int startIndex, int endIndex, TsfSharp.IDataObject dataObjectRef, out TsfSharp.TsTextchange change)
+        public TsTextchange InsertEmbedded(int flags, int startIndex, int endIndex, TsfSharp.IDataObject dataObjectRef)
         {
-            change = new TsTextchange();
             throw new COMException("", Result.NotImplemented.Code);
         }
 
@@ -550,21 +554,21 @@ namespace ImeSharp
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void FindNextAttrTransition(int startIndex, int haltIndex, uint cFilterAttrs, ref Guid filterAttributes, int flags, out int acpNext, out bool found, out int foundOffset)
+        public void FindNextAttrTransition(int startIndex, int haltIndex, uint cFilterAttrs, ref Guid filterAttributes, int flags, out int acpNext, out RawBool found, out int foundOffset)
         {
             acpNext = 0;
             found = false;
             foundOffset = 0;
         }
 
-        public void RetrieveRequestedAttrs(uint ulCount, ref TsfSharp.TsAttrval aAttrValsRef, out uint fetched)
+        public uint RetrieveRequestedAttrs(uint ulCount, ref TsfSharp.TsAttrval aAttrValsRef)
         {
-            fetched = 0;
+            return 0;
         }
 
-        public void GetEndACP(out int acp)
+        public int GetEndACP()
         {
-            acp = 0;
+            int acp = 0;
             //does the caller have a lock
             if (!_IsLocked(TsLfFlags.Read))
             {
@@ -573,20 +577,21 @@ namespace ImeSharp
             }
 
             acp = _inputBuffer.Count;
+
+            return acp;
         }
 
-        public void GetActiveView(out int viewCookie)
+        public int GetActiveView()
         {
-            viewCookie = _viewCookie;
+            return _viewCookie;
         }
 
-        public void GetACPFromPoint(int viewCookie, TsfSharp.Point tsfPoint, int dwFlags, out int positionCP)
+        public int GetACPFromPoint(int viewCookie, TsfSharp.Point tsfPoint, int dwFlags)
         {
-            positionCP = 0;
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void GetTextExt(int viewCookie, int acpStart, int acpEnd, out Rect rect, out bool clipped)
+        public void GetTextExt(int viewCookie, int acpStart, int acpEnd, out Rect rect, out RawBool clipped)
         {
             clipped = false;
             rect = InputMethod.TextInputRect;
@@ -611,25 +616,26 @@ namespace ImeSharp
             NativeMethods.MapWindowPoints(_windowHandle, IntPtr.Zero, ref rect, 2);
         }
 
-        public void GetScreenExt(int viewCookie, out Rect rect)
+        public Rect GetScreenExt(int viewCookie)
         {
-            rect = new Rect();
+            Rect rect = new Rect();
 
             if (_viewCookie != viewCookie)
                 throw new COMException("", Result.InvalidArg.Code);
 
             NativeMethods.GetWindowRect(_windowHandle, out rect);
+
+            return rect;
         }
 
-        public void GetWnd(int viewCookie, out IntPtr hwnd)
+        public IntPtr GetWnd(int viewCookie)
         {
             if (viewCookie != _viewCookie)
             {
-                hwnd = IntPtr.Zero;
                 throw new COMException("", Result.False.Code);
             }
 
-            hwnd = _windowHandle;
+            return _windowHandle;
         }
 
         #endregion ITextStoreACP2
@@ -643,15 +649,17 @@ namespace ImeSharp
 
         #region ITfContextOwnerCompositionSink
 
-        public void OnStartComposition(ITfCompositionView view, out bool ok)
+        public RawBool OnStartComposition(ITfCompositionView view)
         {
             // Return true in ok to start the composition.
-            ok = true;
+            RawBool ok = true;
             _compositionStart = _compositionLength = 0;
             _currentComposition.Clear();
 
             InputMethod.OnTextCompositionStarted(this);
             _compViews.Add(view);
+
+            return ok;
         }
 
         public void OnUpdateComposition(ITfCompositionView view, ITfRange rangeNew)
@@ -692,13 +700,10 @@ namespace ImeSharp
 
         public void OnEndEdit(ITfContext context, int ecReadOnly, ITfEditRecord editRecord)
         {
-            ITfProperty property;
-            context.GetProperty(GUID_PROP_COMPOSING, out property);
+            ITfProperty property = context.GetProperty(GUID_PROP_COMPOSING);
 
-            ITfRangeACP rangeACP;
-            TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionStart + _compositionLength, out rangeACP);
-            Variant val;
-            property.GetValue(ecReadOnly, rangeACP, out val);
+            ITfRangeACP rangeACP = TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionStart + _compositionLength);
+            Variant val = property.GetValue(ecReadOnly, rangeACP);
             property.Dispose();
             rangeACP.Dispose();
             if (val.Value == null || (int)val.Value == 0)
@@ -740,12 +745,14 @@ namespace ImeSharp
 
         #region ITfUIElementSink
 
-        public void BeginUIElement(int dwUIElementId, out bool pbShow)
+        public RawBool BeginUIElement(int dwUIElementId)
         {
             // Hide OS rendered Candidate list Window
-            pbShow = InputMethod.ShowOSImeWindow;
+            RawBool pbShow = InputMethod.ShowOSImeWindow;
 
             OnUIElement(dwUIElementId, true);
+
+            return pbShow;
         }
 
         public void UpdateUIElement(int dwUIElementId)
@@ -757,15 +764,11 @@ namespace ImeSharp
         {
         }
 
-        public const int MaxCandidateCount = 100;
-
         private void OnUIElement(int uiElementId, bool onStart)
         {
             if (InputMethod.ShowOSImeWindow || !_supportUIElement) return;
 
-            ITfUIElement uiElement;
-
-            TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId, out uiElement);
+            ITfUIElement uiElement = TextServicesContext.Current.UIElementMgr.GetUIElement(uiElementId);
 
             ITfCandidateListUIElementBehavior candList;
 
@@ -791,21 +794,17 @@ namespace ImeSharp
             uint pageSize = 0;
             uint i, j;
 
-            candList.GetSelection(out selection);
-            candList.GetCurrentPage(out currentPage);
+            selection = candList.GetSelection();
+            currentPage = candList.GetCurrentPage();
 
-            candList.GetCount(out count);
-            // Limit max candidate count to 100, or candList.GetString() would crash.
-            // Don't know why???
-            if (count > MaxCandidateCount)
-                count = MaxCandidateCount;
+            count = candList.GetCount();
 
-            candList.GetPageIndex(null, 0, out pageCount);
+            pageCount = candList.GetPageIndex(null, 0);
 
             if (pageCount > 0)
             {
                 uint[] pageStartIndexes = ArrayPool<uint>.Shared.Rent((int)pageCount);
-                candList.GetPageIndex(pageStartIndexes, pageCount, out pageCount);
+                pageCount = candList.GetPageIndex(pageStartIndexes, pageCount);
                 pageStart = pageStartIndexes[currentPage];
 
                 if (pageStart >= count - 1)
@@ -830,7 +829,7 @@ namespace ImeSharp
             IntPtr bStrPtr;
             for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
             {
-                candList.GetString(i, out bStrPtr);
+                bStrPtr = candList.GetString(i);
                 candidates[j] = new IMEString(bStrPtr);
             }
 
