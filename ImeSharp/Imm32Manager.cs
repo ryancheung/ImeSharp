@@ -287,11 +287,6 @@ namespace ImeSharp
                 length = NativeMethods.ImmGetCandidateList(DefaultImc, 0, pointer, length);
                 NativeMethods.CANDIDATELIST* cList = (NativeMethods.CANDIDATELIST*)pointer;
 
-                Console.WriteLine("dwSize: {0}", cList->dwSize);
-                Console.WriteLine("dwSelection: {0}", cList->dwSelection);
-                Console.WriteLine("dwPageStart: {0}", cList->dwPageStart);
-                Console.WriteLine("dwPageSize: {0}", cList->dwPageSize);
-
                 var selection = (int)cList->dwSelection;
                 var pageStart = (int)cList->dwPageStart;
                 var pageSize = (int)cList->dwPageSize;
