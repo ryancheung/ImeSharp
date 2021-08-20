@@ -714,8 +714,8 @@ namespace ImeSharp
                 //Debug.WriteLine("Composition result: {0}", new object[] { new string(_inputBuffer.GetRange(_commitStart, _commitLength).ToArray()) });
 
                 _commited = true;
-                for (int i = _commitStart; i < _commitLength; i++)
-                    InputMethod.OnTextInput(this, _inputBuffer[i]);
+                for (int i = 0; i < _commitLength; i++)
+                    InputMethod.OnTextInput(this, _inputBuffer[_commitStart + i]);
             }
 
             if (_commited)
@@ -725,8 +725,8 @@ namespace ImeSharp
                 return;
 
             _currentComposition.Clear();
-            for (int i = _compositionStart; i < _compositionLength; i++)
-                _currentComposition.Add(_inputBuffer[i]);
+            for (int i = 0; i < _compositionLength; i++)
+                _currentComposition.Add(_inputBuffer[_compositionStart + i]);
 
             InputMethod.OnTextComposition(this, new IMEString(_currentComposition), _acpEnd);
 
