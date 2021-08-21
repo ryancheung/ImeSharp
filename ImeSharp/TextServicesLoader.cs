@@ -98,6 +98,8 @@ namespace ImeSharp
         {
             get
             {
+                if (InputMethod.TsfForceDisabled) return false;
+
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)

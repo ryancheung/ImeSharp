@@ -12,6 +12,12 @@ namespace ImeSharp
         private static IntPtr _windowHandle;
         public static IntPtr WindowHandle { get { return _windowHandle; } }
 
+        /// <summary>
+        /// Option to force to disable TSF.
+        /// </summary>
+        public static bool TsfForceDisabled { get { return _tsfForceDisabled; } }
+        private static bool _tsfForceDisabled;
+
         private static IntPtr _prevWndProc;
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
 
@@ -99,13 +105,14 @@ namespace ImeSharp
         /// Initialize InputMethod with a Window Handle.
         /// Let the OS render the candidate window by set <see paramref="showOSImeWindow"/> to <c>true</c>.
         /// </summary>
-        public static void Initialize(IntPtr windowHandle, bool showOSImeWindow = true)
+        public static void Initialize(IntPtr windowHandle, bool showOSImeWindow = true, bool tsfForceDisabled = false)
         {
             if (_windowHandle != IntPtr.Zero)
                 throw new InvalidOperationException("InputMethod can only be initialized once!");
 
             _windowHandle = windowHandle;
             _showOSImeWindow = showOSImeWindow;
+            _tsfForceDisabled = tsfForceDisabled;
 
             _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
