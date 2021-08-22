@@ -1,9 +1,8 @@
+using ImeSharp.Native;
+using Microsoft.Win32;
 using System;
-using System.Runtime.InteropServices;
 using System.Diagnostics;
 using System.Threading;
-using Microsoft.Win32;
-using ImeSharp.Native;
 using TsfSharp;
 
 namespace ImeSharp
@@ -26,7 +25,9 @@ namespace ImeSharp
         #region Constructors
 
         // Private ctor to prevent anyone from instantiating this static class.
-        private TextServicesLoader() { }
+        private TextServicesLoader()
+        {
+        }
 
         #endregion Constructors
 
@@ -83,6 +84,8 @@ namespace ImeSharp
             return false;
         }
 
+        public static bool IsTSFEnabled = true;
+
         /// <summary>
         /// Informs the caller if text services are installed for the current user.
         /// </summary>
@@ -94,16 +97,20 @@ namespace ImeSharp
         /// Callers can use this information to avoid overhead that would otherwise be
         /// required to support text services.
         /// </remarks>
-        public static bool ServicesInstalled
-        {
-            get
-            {
+        public static bool ServicesInstalled {
+            get {
                 lock (s_servicesInstalledLock)
                 {
                     if (s_servicesInstalled == InstallState.Unknown)
                     {
                         s_servicesInstalled = TIPsWantToRun() ? InstallState.Installed : InstallState.NotInstalled;
+                        IsTSFEnabled = s_servicesInstalled == InstallState.Installed;
                     }
+                }
+
+                if (!IsTSFEnabled)
+                {
+                    return false;
                 }
 
                 return (s_servicesInstalled == InstallState.Installed);
@@ -173,14 +180,16 @@ namespace ImeSharp
             }
 
             // Loop through all the TIP entries for machine and current user.
-            tipsWantToRun = IterateSubKeys(Registry.LocalMachine, "SOFTWARE\\Microsoft\\CTF\\TIP", new IterateHandler(SingleTIPWantsToRun), true) == EnableState.Enabled;
+            tipsWantToRun = IterateSubKeys(Registry.LocalMachine, "SOFTWARE\\Microsoft\\CTF\\TIP",
+                new IterateHandler(SingleTIPWantsToRun), true) == EnableState.Enabled;
 
             return tipsWantToRun;
         }
 
         // Returns EnableState.Enabled if one or more TIPs are installed and
         // enabled for the current user.
-        private static EnableState SingleTIPWantsToRun(RegistryKey keyLocalMachine, string subKeyName, bool localMachine)
+        private static EnableState SingleTIPWantsToRun(RegistryKey keyLocalMachine, string subKeyName,
+            bool localMachine)
         {
             EnableState result;
 
@@ -191,13 +200,16 @@ namespace ImeSharp
             // Loop through all the langid entries for TIP.
 
             // First, check current user.
-            result = IterateSubKeys(Registry.CurrentUser, "SOFTWARE\\Microsoft\\CTF\\TIP\\" + subKeyName + "\\LanguageProfile", new IterateHandler(IsLangidEnabled), false);
+            result = IterateSubKeys(Registry.CurrentUser,
+                "SOFTWARE\\Microsoft\\CTF\\TIP\\" + subKeyName + "\\LanguageProfile",
+                new IterateHandler(IsLangidEnabled), false);
 
             // Any explicit value short circuits the process.
             // Otherwise check local machine.
             if (result == EnableState.None || result == EnableState.Error)
             {
-                result = IterateSubKeys(keyLocalMachine, subKeyName + "\\LanguageProfile", new IterateHandler(IsLangidEnabled), true);
+                result = IterateSubKeys(keyLocalMachine, subKeyName + "\\LanguageProfile",
+                    new IterateHandler(IsLangidEnabled), true);
 
                 if (result == EnableState.None)
                 {
@@ -246,7 +258,8 @@ namespace ImeSharp
         }
 
         // Calls the supplied delegate on each of the children of keyBase.
-        private static EnableState IterateSubKeys(RegistryKey keyBase, string subKey, IterateHandler handler, bool localMachine)
+        private static EnableState IterateSubKeys(RegistryKey keyBase, string subKey, IterateHandler handler,
+            bool localMachine)
         {
             RegistryKey key;
             string[] subKeyNames;
@@ -275,6 +288,7 @@ namespace ImeSharp
                         {
                             state = EnableState.None;
                         }
+
                         break;
                     case EnableState.Disabled:
                         state = EnableState.Disabled;
@@ -304,16 +318,16 @@ namespace ImeSharp
         #region Private Fields
 
         // String consts used to validate registry entires.
-        private const int CLSIDLength = 38;  // {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
+        private const int CLSIDLength = 38; // {xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx}
         private const int LANGIDLength = 10; // 0x12345678
 
         // Status of a TIP assembly.
         private enum EnableState
         {
-            Error,      // Invalid entry.
-            None,       // No explicit Enable entry on the assembly.
-            Enabled,    // Assembly is enabled.
-            Disabled    // Assembly is disabled.
+            Error, // Invalid entry.
+            None, // No explicit Enable entry on the assembly.
+            Enabled, // Assembly is enabled.
+            Disabled // Assembly is disabled.
         };
 
         // Callback delegate for the IterateSubKeys method.
@@ -322,9 +336,9 @@ namespace ImeSharp
         // Install state.
         private enum InstallState
         {
-            Unknown,        // Haven't checked to see if any TIPs are installed yet.
-            Installed,      // Checked and installed.
-            NotInstalled    // Checked and not installed.
+            Unknown, // Haven't checked to see if any TIPs are installed yet.
+            Installed, // Checked and installed.
+            NotInstalled // Checked and not installed.
         }
 
         // Cached install state value.

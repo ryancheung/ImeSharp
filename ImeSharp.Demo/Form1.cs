@@ -1,15 +1,7 @@
-﻿using System;
+﻿using ImeSharp.Native;
+using System;
 using System.Runtime.InteropServices;
-using System.Diagnostics;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
-using ImeSharp.Native;
 using NativeMessage = ImeSharp.Native.NativeMethods.NativeMessage;
 
 namespace ImeSharp.Demo
@@ -38,7 +30,8 @@ namespace ImeSharp.Demo
             textBoxResult.Text = _inputContent;
         }
 
-        private void OnTextComposition(IMEString compositionText, int cursorPosition, IMEString[] candidateList, int candidatePageStart, int candidatePageSize, int candidateSelection)
+        private void OnTextComposition(IMEString compositionText, int cursorPosition, IMEString[] candidateList,
+            int candidatePageStart, int candidatePageSize, int candidateSelection)
         {
             var str = compositionText.ToString();
             str = str.Insert(cursorPosition, "|");
@@ -47,11 +40,13 @@ namespace ImeSharp.Demo
             string candidateText = string.Empty;
 
             for (int i = 0; candidateList != null && i < candidatePageSize; i++)
-                candidateText += string.Format("  {2}{0}.{1}\r\n", i + 1, candidateList[i], i == candidateSelection ? "*" : "");
+                candidateText += string.Format("  {2}{0}.{1}\r\n", i + 1, candidateList[i],
+                    i == candidateSelection ? "*" : "");
 
             textBoxCandidates.Text = candidateText;
 
-            InputMethod.SetTextInputRect(labelComp.Location.X + labelComp.Size.Width, labelComp.Location.Y, 0, labelComp.Size.Height);
+            InputMethod.SetTextInputRect(labelComp.Location.X + labelComp.Size.Width, labelComp.Location.Y, 0,
+                labelComp.Size.Height);
         }
 
         public Form1()
@@ -67,6 +62,8 @@ namespace ImeSharp.Demo
             InputMethod.TextInputCallback = OnTextInput;
             InputMethod.TextCompositionCallback = OnTextComposition;
 
+            tsfStatus.Text = InputMethod.IsTSFEnabled ? "Enabled" : "Disabled";
+
             //InputMethod.TextInput += (s, e) =>
             //{
             //    OnTextInput(e.Character);
@@ -79,7 +76,8 @@ namespace ImeSharp.Demo
         }
 
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
-        private static extern bool PeekMessage(out NativeMessage msg, IntPtr hWnd, uint messageFilterMin, uint messageFilterMax, uint flags);
+        private static extern bool PeekMessage(out NativeMessage msg, IntPtr hWnd, uint messageFilterMin,
+            uint messageFilterMax, uint flags);
 
         // Mimic MonoGame game loop
         private void Application_Idle(object sender, EventArgs e)
@@ -88,8 +86,7 @@ namespace ImeSharp.Demo
             do
             {
                 FakeDraw();
-            }
-            while (!PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) && IsDisposed == false);
+            } while (!PeekMessage(out msg, IntPtr.Zero, 0, 0, 0) && IsDisposed == false);
 
             // Enables custom message pumping to fix frame stuck randomly.
             InputMethod.PumpMessage();
@@ -111,8 +108,17 @@ namespace ImeSharp.Demo
 
         private void Form1_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.F1)
-                InputMethod.Enabled = !InputMethod.Enabled;
+            switch (e.KeyCode)
+            {
+                case Keys.F1:
+                    InputMethod.Enabled = !InputMethod.Enabled;
+                    imeStatus.Text = InputMethod.Enabled ? "Enabled" : "Disabled";
+                    break;
+                case Keys.F2:
+                    InputMethod.IsTSFEnabled = !InputMethod.IsTSFEnabled;
+                    tsfStatus.Text = InputMethod.IsTSFEnabled ? "Enabled" : "Disabled";
+                    break;
+            }
         }
 
         private void FakeDraw()
@@ -125,6 +131,5 @@ namespace ImeSharp.Demo
 
             _lastFakeDrawTime = now;
         }
-
     }
 }

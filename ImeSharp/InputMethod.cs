@@ -1,52 +1,59 @@
-using System;
-using System.Globalization;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using ImeSharp.Native;
+using System;
+using System.Runtime.InteropServices;
 
 namespace ImeSharp
 {
     public static class InputMethod
     {
         private static IntPtr _windowHandle;
-        public static IntPtr WindowHandle { get { return _windowHandle; } }
+
+        public static IntPtr WindowHandle {
+            get { return _windowHandle; }
+        }
 
         private static IntPtr _prevWndProc;
         private static NativeMethods.WndProcDelegate _wndProcDelegate;
 
         private static TextServicesContext _textServicesContext;
-        internal static TextServicesContext TextServicesContext
-        {
+
+        internal static TextServicesContext TextServicesContext {
             get { return _textServicesContext; }
             set { _textServicesContext = value; }
         }
 
         private static TextStore _defaultTextStore;
-        internal static TextStore DefaultTextStore
-        {
+
+        internal static TextStore DefaultTextStore {
             get { return _defaultTextStore; }
             set { _defaultTextStore = value; }
         }
 
         private static Imm32Manager _defaultImm32Manager;
-        internal static Imm32Manager DefaultImm32Manager
-        {
+
+        internal static Imm32Manager DefaultImm32Manager {
             get { return _defaultImm32Manager; }
             set { _defaultImm32Manager = value; }
         }
 
         private static bool _enabled;
-        public static bool Enabled
-        {
+
+        public static bool Enabled {
             get { return _enabled; }
-            set
-            {
+            set {
                 if (_enabled == value) return;
 
                 _enabled = value;
 
                 EnableOrDisableInputMethod(_enabled);
+            }
+        }
+
+        public static bool IsTSFEnabled {
+            get { return TextServicesLoader.IsTSFEnabled; }
+            set {
+                TextServicesLoader.IsTSFEnabled = value;
+                OnEnableOrDisableTSF(value);
             }
         }
 
@@ -74,7 +81,9 @@ namespace ImeSharp
         /// <summary>
         /// Return if let OS render IME Candidate window or not.
         /// </summary>
-        public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
+        public static bool ShowOSImeWindow {
+            get { return _showOSImeWindow; }
+        }
 
         internal static int CandidatePageStart;
         internal static int CandidatePageSize;
@@ -110,6 +119,11 @@ namespace ImeSharp
             _wndProcDelegate = new NativeMethods.WndProcDelegate(WndProc);
             _prevWndProc = (IntPtr)NativeMethods.SetWindowLongPtr(_windowHandle, NativeMethods.GWL_WNDPROC,
                 Marshal.GetFunctionPointerForDelegate(_wndProcDelegate));
+
+            if (TextServicesLoader.ServicesInstalled)
+            {
+                // Dummy check to see if TSF is installed
+            }
         }
 
         internal static void OnTextInput(object sender, char character)
@@ -138,17 +152,19 @@ namespace ImeSharp
             if (compositionText.Count == 0) // Crash guard
                 cursorPos = 0;
 
-            if (cursorPos > compositionText.Count)  // Another crash guard
+            if (cursorPos > compositionText.Count) // Another crash guard
                 cursorPos = compositionText.Count;
 
             if (TextComposition != null)
             {
                 TextComposition.Invoke(sender,
-                    new IMETextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
+                    new IMETextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart,
+                        CandidatePageSize, CandidateSelection));
             }
 
             if (TextCompositionCallback != null)
-                TextCompositionCallback(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection);
+                TextCompositionCallback(compositionText, cursorPos, CandidateList, CandidatePageStart,
+                    CandidatePageSize, CandidateSelection);
         }
 
         internal static void OnTextCompositionEnded(object sender)
@@ -178,6 +194,18 @@ namespace ImeSharp
                     Imm32Manager.Current.Enable();
                 else
                     Imm32Manager.Current.Disable();
+            }
+        }
+
+        private static void OnEnableOrDisableTSF(bool bEnabled)
+        {
+            if (bEnabled)
+            {
+                TextStore.Current.Register();
+            }
+            else
+            {
+                TextServicesContext.Current.Uninitialize(true);
             }
         }
 

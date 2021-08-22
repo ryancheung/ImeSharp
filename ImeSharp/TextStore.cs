@@ -1,22 +1,23 @@
-using System;
-using System.Buffers;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Runtime.InteropServices;
 using ImeSharp.Native;
 using SharpGen.Runtime;
 using SharpGen.Runtime.Win32;
+using System;
+using System.Buffers;
+using System.Collections.Generic;
+using System.Runtime.InteropServices;
 using TsfSharp;
 
 namespace ImeSharp
 {
     internal class TextStore : CallbackBase,
-                             ITextStoreACP,
-                             ITfContextOwnerCompositionSink,
-                             ITfTextEditSink,
-                             ITfUIElementSink
+        ITextStoreACP,
+        ITfContextOwnerCompositionSink,
+        ITfTextEditSink,
+        ITfUIElementSink
     {
-        public static readonly Guid IID_ITextStoreACPSink = new Guid(0x22d44c94, 0xa419, 0x4542, 0xa2, 0x72, 0xae, 0x26, 0x09, 0x3e, 0xce, 0xcf);
+        public static readonly Guid IID_ITextStoreACPSink =
+            new Guid(0x22d44c94, 0xa419, 0x4542, 0xa2, 0x72, 0xae, 0x26, 0x09, 0x3e, 0xce, 0xcf);
+
         public static readonly Guid GUID_PROP_COMPOSING = new Guid("e12ac060-af15-11d2-afc5-00105a2799b5");
 
         //------------------------------------------------------
@@ -200,7 +201,8 @@ namespace ImeSharp
             return status;
         }
 
-        public void QueryInsert(int acpTestStart, int acpTestEnd, uint cch, out int acpResultStart, out int acpResultEnd)
+        public void QueryInsert(int acpTestStart, int acpTestEnd, uint cch, out int acpResultStart,
+            out int acpResultEnd)
         {
             acpResultStart = acpResultEnd = 0;
 
@@ -478,7 +480,8 @@ namespace ImeSharp
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void InsertTextAtSelection(TsfSharp.TsIasFlags dwFlags, string pchText, uint cch, out int pacpStart, out int pacpEnd, out TsfSharp.TsTextchange pChange)
+        public void InsertTextAtSelection(TsfSharp.TsIasFlags dwFlags, string pchText, uint cch, out int pacpStart,
+            out int pacpEnd, out TsfSharp.TsTextchange pChange)
         {
             pacpStart = pacpEnd = 0;
             pChange = new TsTextchange();
@@ -532,7 +535,8 @@ namespace ImeSharp
             _layoutChanged = true;
         }
 
-        public void InsertEmbeddedAtSelection(int flags, IDataObject obj, out int startIndex, out int endIndex, out TsTextchange change)
+        public void InsertEmbeddedAtSelection(int flags, IDataObject obj, out int startIndex, out int endIndex,
+            out TsTextchange change)
         {
             startIndex = endIndex = 0;
             change = new TsTextchange();
@@ -549,12 +553,14 @@ namespace ImeSharp
         }
 
 
-        public void RequestAttrsTransitioningAtPosition(int position, uint cFilterAttrs, ref Guid filterAttributes, int flags)
+        public void RequestAttrsTransitioningAtPosition(int position, uint cFilterAttrs, ref Guid filterAttributes,
+            int flags)
         {
             throw new COMException("", Result.NotImplemented.Code);
         }
 
-        public void FindNextAttrTransition(int startIndex, int haltIndex, uint cFilterAttrs, ref Guid filterAttributes, int flags, out int acpNext, out RawBool found, out int foundOffset)
+        public void FindNextAttrTransition(int startIndex, int haltIndex, uint cFilterAttrs, ref Guid filterAttributes,
+            int flags, out int acpNext, out RawBool found, out int foundOffset)
         {
             acpNext = 0;
             found = false;
@@ -689,7 +695,7 @@ namespace ImeSharp
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
             view.Dispose();
-            foreach(var item in _compViews)
+            foreach (var item in _compViews)
                 item.Dispose();
             _compViews.Clear();
         }
@@ -702,7 +708,9 @@ namespace ImeSharp
         {
             ITfProperty property = context.GetProperty(GUID_PROP_COMPOSING);
 
-            ITfRangeACP rangeACP = TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart, _compositionStart + _compositionLength);
+            ITfRangeACP rangeACP =
+                TextServicesContext.Current.ContextOwnerServices.CreateRange(_compositionStart,
+                    _compositionStart + _compositionLength);
             Variant val = property.GetValue(ecReadOnly, rangeACP);
             property.Dispose();
             rangeACP.Dispose();
@@ -861,10 +869,8 @@ namespace ImeSharp
         //
         //------------------------------------------------------
 
-        public static TextStore Current
-        {
-            get
-            {
+        public static TextStore Current {
+            get {
                 TextStore defaultTextStore = InputMethod.DefaultTextStore;
                 if (defaultTextStore == null)
                 {
@@ -877,32 +883,30 @@ namespace ImeSharp
             }
         }
 
-        public ITfDocumentMgr DocumentManager
-        {
+        public ITfDocumentMgr DocumentManager {
             get { return _documentMgr; }
             set { _documentMgr = value; }
         }
 
         // EditCookie for ITfContext.
-        public int EditCookie
-        {
+        public int EditCookie {
             // get { return _editCookie; }
             set { _editCookie = value; }
         }
 
-        public int UIElementSinkCookie
-        {
+        public int UIElementSinkCookie {
             get { return _uiElementSinkCookie; }
             set { _uiElementSinkCookie = value; }
         }
 
-        public int TextEditSinkCookie
-        {
+        public int TextEditSinkCookie {
             get { return _textEditSinkCookie; }
             set { _textEditSinkCookie = value; }
         }
 
-        public bool SupportUIElement { get { return _supportUIElement; } }
+        public bool SupportUIElement {
+            get { return _supportUIElement; }
+        }
 
 
         //------------------------------------------------------
@@ -912,7 +916,7 @@ namespace ImeSharp
         //------------------------------------------------------
 
         // This function calls TextServicesContext to create TSF document and start transitory extension.
-        private void Register()
+        public void Register()
         {
             // Create TSF document and advise the sink to it.
             TextServicesContext.Current.RegisterTextStore(this);
@@ -958,6 +962,5 @@ namespace ImeSharp
         private List<ITfCompositionView> _compViews = new List<ITfCompositionView>();
 
         private ArrayPool<IMEString> _IMEStringPool;
-
     }
 }
