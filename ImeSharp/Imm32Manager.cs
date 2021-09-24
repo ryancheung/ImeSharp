@@ -290,8 +290,8 @@ namespace ImeSharp
                 var selection = (int)cList->dwSelection;
                 var pageStart = (int)cList->dwPageStart;
                 var pageSize = (int)cList->dwPageSize;
-                if (selection >= pageSize)
-                    selection %= pageSize;
+
+                selection -= pageStart;
 
                 IMEString[] candidates = ArrayPool<IMEString>.Shared.Rent(pageSize);
 
