@@ -2,13 +2,22 @@
 
   <ItemGroup>
     <ProjectReference Include="..\ImeSharp\ImeSharp.csproj" />
-    <!--<PackageReference Include="Microsoft.DotNet.ILCompiler" Version="7.0.0-*" />-->
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="WinFormsComInterop" Version="0.4.3" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <RdXmlFile Include="rd.xml" />
   </ItemGroup>
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
-    <TargetFramework>net8.0-windows</TargetFramework>
+    <TargetFramework>net7.0-windows</TargetFramework>
     <UseWindowsForms>true</UseWindowsForms>
+    <PublishAot>true</PublishAot>
+    <_SuppressWinFormsTrimError>true</_SuppressWinFormsTrimError>
   </PropertyGroup>
 
 </Project>
