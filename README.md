@@ -39,19 +39,11 @@ private void Application_Idle(object sender, EventArgs e)
 ### Hook events
 
 ```c#
-InputMethod.TextComposition += (o, e) =>
-{
-    // get composition or candidate infos
-};
+InputMethod.TextInputCallback = OnTextInput;
+InputMethod.TextCompositionCallback = OnTextComposition;
 ```
-**Retrieve other composition info from `InputMethod.CandidateList` and other fields.**
 
-```c#
-InputMethod.TextInput += (o, e) =>
-{
-    // get composition result.
-};
-```
+**Retrieve other composition info from `InputMethod.CandidateList` and other fields for CJK IMEs.**
 
 ### Set position of OS rendered IME Candidate Window
 

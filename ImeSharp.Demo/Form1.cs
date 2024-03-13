@@ -19,9 +19,9 @@ namespace ImeSharp.Demo
         private string _inputContent = string.Empty;
         private DateTime _lastFakeDrawTime = DateTime.Now;
 
-        private void OnTextInput(object sender, IMETextInputEventArgs e)
+        private void OnTextInput(char character)
         {
-            switch (e.Character)
+            switch (character)
             {
                 case '\b':
                     if (_inputContent.Length > 0)
@@ -31,17 +31,17 @@ namespace ImeSharp.Demo
                     _inputContent = "";
                     break;
                 default:
-                    _inputContent += e.Character;
+                    _inputContent += character;
                     break;
             }
 
             textBoxResult.Text = _inputContent;
         }
 
-        private void OnTextComposition(object sender, IMETextCompositionEventArgs e)
+        private void OnTextComposition(string compositionText, int cursorPosition)
         {
-            var str = e.CompositionText.ToString();
-            str = str.Insert(e.CursorPosition, "|");
+            var str = compositionText.ToString();
+            str = str.Insert(cursorPosition, "|");
             labelComp.Text = str;
 
             string candidateText = string.Empty;
@@ -64,8 +64,8 @@ namespace ImeSharp.Demo
             KeyDown += Form1_KeyDown;
 
             InputMethod.Initialize(this.Handle, false);
-            InputMethod.TextInput += OnTextInput;
-            InputMethod.TextComposition += OnTextComposition;
+            InputMethod.TextInputCallback = OnTextInput;
+            InputMethod.TextCompositionCallback = OnTextComposition;
         }
 
         [DllImport("User32.dll", CharSet = CharSet.Auto)]
