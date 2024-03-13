@@ -13,6 +13,7 @@
     <RepositoryUrl>https://github.com/ryancheung/ImeSharp</RepositoryUrl>
     <Authors>ryancheung</Authors>
     <PackageLicenseExpression>MIT</PackageLicenseExpression>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <PropertyGroup>
@@ -25,6 +26,10 @@
   <ItemGroup>
     <PackageReference Include="TsfSharp" Version="1.1.0" />
     <PackageReference Include="Microsoft.Win32.Registry" Version="5.0.0" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <None Include="../README.md" Pack="true" PackagePath="\"/>
   </ItemGroup>
 
 </Project>

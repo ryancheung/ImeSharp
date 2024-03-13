@@ -1,4 +1,4 @@
-#tool nuget:?package=vswhere&version=2.6.7
+#tool nuget:?package=vswhere&version=3.1.7
 
 //////////////////////////////////////////////////////////////////////
 // ARGUMENTS
@@ -14,12 +14,12 @@ var apiKey = Argument("api-key", "");
 //////////////////////////////////////////////////////////////////////
 
 MSBuildSettings msPackSettings;
-DotNetCoreMSBuildSettings dnBuildSettings;
-DotNetCorePackSettings dnPackSettings;
+DotNetMSBuildSettings dnBuildSettings;
+DotNetPackSettings dnPackSettings;
 
 private void PackDotnet(string filePath)
 {
-    DotNetCorePack(filePath, dnPackSettings);
+    DotNetPack(filePath, dnPackSettings);
 }
 
 private void PackMSBuild(string filePath)
@@ -73,12 +73,12 @@ Task("Prep")
     msPackSettings.WithProperty("Version", version);
     msPackSettings.WithTarget("Pack");
 
-    dnBuildSettings = new DotNetCoreMSBuildSettings();
+    dnBuildSettings = new DotNetMSBuildSettings();
     dnBuildSettings.WithProperty("Version", version);
 
-    dnPackSettings = new DotNetCorePackSettings();
+    dnPackSettings = new DotNetPackSettings();
     dnPackSettings.MSBuildSettings = dnBuildSettings;
-    dnPackSettings.Verbosity = DotNetCoreVerbosity.Minimal;
+    dnPackSettings.Verbosity = DotNetVerbosity.Minimal;
     dnPackSettings.Configuration = configuration;
 });
 
@@ -87,7 +87,7 @@ Task("Build")
     .WithCriteria(() => IsRunningOnWindows())
     .Does(() =>
 {
-    DotNetCoreRestore("ImeSharp/ImeSharp.csproj");
+    DotNetRestore("ImeSharp/ImeSharp.csproj");
     PackDotnet("ImeSharp/ImeSharp.csproj");
 });
 
