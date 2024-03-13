@@ -52,13 +52,6 @@ InputMethod.TextInput += (o, e) =>
 };
 ```
 
-### Or you prefer callbacks
-
-```c#
-InputMethod.TextInputCallback = OnTextInput;
-InputMethod.TextCompositionCallback = OnTextComposition;
-```
-
 ### Set position of OS rendered IME Candidate Window
 
 ```c#

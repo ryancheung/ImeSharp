@@ -82,24 +82,18 @@ namespace ImeSharp
         /// </summary>
         public static bool ShowOSImeWindow { get { return _showOSImeWindow; } }
 
-        internal static int CandidatePageStart;
-        internal static int CandidatePageSize;
-        internal static int CandidateSelection;
-        internal static IMEString[] CandidateList;
+        public static int CandidatePageSize;
+        public static int CandidateSelection;
+        public static readonly IMEString[] CandidateList = new IMEString[16];
 
         internal static void ClearCandidates()
         {
-            CandidateList = null;
-            CandidatePageStart = 0;
             CandidatePageSize = 0;
             CandidateSelection = 0;
         }
 
         public static event EventHandler<IMETextCompositionEventArgs> TextComposition;
         public static event EventHandler<IMETextInputEventArgs> TextInput;
-
-        public static TextInputCallback TextInputCallback { get; set; }
-        public static TextCompositionCallback TextCompositionCallback { get; set; }
 
         /// <summary>
         /// Initialize InputMethod with a Window Handle.
@@ -123,9 +117,6 @@ namespace ImeSharp
         {
             if (TextInput != null)
                 TextInput.Invoke(sender, new IMETextInputEventArgs(character));
-
-            if (TextInputCallback != null)
-                TextInputCallback(character);
         }
 
         // Some Chinese IME only send composition start event but no composition update event.
@@ -134,9 +125,6 @@ namespace ImeSharp
         {
             if (TextComposition != null)
                 TextComposition.Invoke(sender, new IMETextCompositionEventArgs(IMEString.Empty, 0));
-
-            if (TextCompositionCallback != null)
-                TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
         }
 
         // On text composition update.
@@ -151,20 +139,14 @@ namespace ImeSharp
             if (TextComposition != null)
             {
                 TextComposition.Invoke(sender,
-                    new IMETextCompositionEventArgs(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection));
+                    new IMETextCompositionEventArgs(compositionText, cursorPos));
             }
-
-            if (TextCompositionCallback != null)
-                TextCompositionCallback(compositionText, cursorPos, CandidateList, CandidatePageStart, CandidatePageSize, CandidateSelection);
         }
 
         internal static void OnTextCompositionEnded(object sender)
         {
             if (TextComposition != null)
                 TextComposition.Invoke(sender, new IMETextCompositionEventArgs(IMEString.Empty, 0));
-
-            if (TextCompositionCallback != null)
-                TextCompositionCallback(IMEString.Empty, 0, null, 0, 0, 0);
         }
 
         private static void EnableOrDisableInputMethod(bool bEnabled)

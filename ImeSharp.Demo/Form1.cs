@@ -19,9 +19,9 @@ namespace ImeSharp.Demo
         private string _inputContent = string.Empty;
         private DateTime _lastFakeDrawTime = DateTime.Now;
 
-        private void OnTextInput(char character)
+        private void OnTextInput(object sender, IMETextInputEventArgs e)
         {
-            switch (character)
+            switch (e.Character)
             {
                 case '\b':
                     if (_inputContent.Length > 0)
@@ -31,23 +31,23 @@ namespace ImeSharp.Demo
                     _inputContent = "";
                     break;
                 default:
-                    _inputContent += character;
+                    _inputContent += e.Character;
                     break;
             }
 
             textBoxResult.Text = _inputContent;
         }
 
-        private void OnTextComposition(IMEString compositionText, int cursorPosition, IMEString[] candidateList, int candidatePageStart, int candidatePageSize, int candidateSelection)
+        private void OnTextComposition(object sender, IMETextCompositionEventArgs e)
         {
-            var str = compositionText.ToString();
-            str = str.Insert(cursorPosition, "|");
+            var str = e.CompositionText.ToString();
+            str = str.Insert(e.CursorPosition, "|");
             labelComp.Text = str;
 
             string candidateText = string.Empty;
 
-            for (int i = 0; candidateList != null && i < candidatePageSize; i++)
-                candidateText += string.Format("  {2}{0}.{1}\r\n", i + 1, candidateList[i], i == candidateSelection ? "*" : "");
+            for (int i = 0; i < InputMethod.CandidatePageSize; i++)
+                candidateText += string.Format("  {2}{0}.{1}\r\n", i + 1, InputMethod.CandidateList[i], i == InputMethod.CandidateSelection ? "*" : "");
 
             textBoxCandidates.Text = candidateText;
 
@@ -64,18 +64,8 @@ namespace ImeSharp.Demo
             KeyDown += Form1_KeyDown;
 
             InputMethod.Initialize(this.Handle, false);
-            InputMethod.TextInputCallback = OnTextInput;
-            InputMethod.TextCompositionCallback = OnTextComposition;
-
-            //InputMethod.TextInput += (s, e) =>
-            //{
-            //    OnTextInput(e.Character);
-            //};
-
-            //InputMethod.TextComposition += (s, e) =>
-            //{
-            //    OnTextComposition(e.CompositionText, e.CursorPosition, e.CandidateList, e.CandidatePageStart, e.CandidatePageSize, e.CandidateSelection);
-            //};
+            InputMethod.TextInput += OnTextInput;
+            InputMethod.TextComposition += OnTextComposition;
         }
 
         [DllImport("User32.dll", CharSet = CharSet.Auto)]

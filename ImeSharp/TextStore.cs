@@ -38,8 +38,6 @@ namespace ImeSharp
             _editCookie = Tsf.TF_INVALID_COOKIE;
             _uiElementSinkCookie = Tsf.TF_INVALID_COOKIE;
             _textEditSinkCookie = Tsf.TF_INVALID_COOKIE;
-
-            _IMEStringPool = ArrayPool<IMEString>.Shared;
         }
 
         #endregion Constructors
@@ -824,13 +822,11 @@ namespace ImeSharp
 
             selection -= pageStart;
 
-            IMEString[] candidates = _IMEStringPool.Rent((int)pageSize);
-
             IntPtr bStrPtr;
             for (i = pageStart, j = 0; i < count && j < pageSize; i++, j++)
             {
                 bStrPtr = candList.GetString(i);
-                candidates[j] = new IMEString(bStrPtr);
+                InputMethod.CandidateList[j] = new IMEString(bStrPtr);
             }
 
             //Debug.WriteLine("TSF========TSF");
@@ -839,15 +835,12 @@ namespace ImeSharp
             //    Debug.WriteLine("  {2}{0}.{1}", k + 1, candidates[k], k == selection ? "*" : "");
             //Debug.WriteLine("TSF++++++++TSF");
 
-            InputMethod.CandidatePageStart = (int)pageStart;
             InputMethod.CandidatePageSize = (int)pageSize;
             InputMethod.CandidateSelection = (int)selection;
-            InputMethod.CandidateList = candidates;
 
             if (_currentComposition != null)
             {
                 InputMethod.OnTextComposition(this, new IMEString(_currentComposition), _acpEnd);
-                _IMEStringPool.Return(candidates);
             }
 
             candList.Dispose();
@@ -956,8 +949,6 @@ namespace ImeSharp
 
         private bool _supportUIElement = true;
         private List<ITfCompositionView> _compViews = new List<ITfCompositionView>();
-
-        private ArrayPool<IMEString> _IMEStringPool;
 
     }
 }
