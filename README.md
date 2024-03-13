@@ -44,6 +44,7 @@ InputMethod.TextComposition += (o, e) =>
     // get composition or candidate infos
 };
 ```
+**Retrieve other composition info from `InputMethod.CandidateList` and other fields.**
 
 ```c#
 InputMethod.TextInput += (o, e) =>
