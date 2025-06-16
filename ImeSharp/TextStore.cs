@@ -686,9 +686,9 @@ namespace ImeSharp
 
             InputMethod.ClearCandidates();
             InputMethod.OnTextCompositionEnded(this);
-            view.Dispose();
-            foreach(var item in _compViews)
-                item.Dispose();
+            _compViews.Add(view);
+            //foreach(var item in _compViews)
+            //    item.Dispose();
             _compViews.Clear();
         }
 
@@ -948,7 +948,7 @@ namespace ImeSharp
         private bool _commited;
 
         private bool _supportUIElement = true;
-        private List<ITfCompositionView> _compViews = new List<ITfCompositionView>();
+        private HashSet<ITfCompositionView> _compViews = new HashSet<ITfCompositionView>();
 
     }
 }
